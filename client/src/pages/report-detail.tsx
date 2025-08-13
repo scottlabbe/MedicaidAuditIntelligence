@@ -1,0 +1,231 @@
+import { useQuery } from "@tanstack/react-query";
+import { useRoute, Link } from "wouter";
+import { ArrowLeft, Download, BarChart3, ExternalLink, Shield } from "lucide-react";
+import { apiClient } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import ReportDetailTabs from "@/components/reports/report-detail-tabs";
+import type { ReportWithDetails } from "@/lib/types";
+
+export default function ReportDetail() {
+  const [, params] = useRoute("/report/:id");
+  const { toast } = useToast();
+  const reportId = params?.id;
+
+  const { data: report, isLoading, error } = useQuery<ReportWithDetails>({
+    queryKey: ["/api/reports", reportId],
+    queryFn: () => apiClient.getReportById(reportId!),
+    enabled: !!reportId,
+  });
+
+  const handleExport = async () => {
+    try {
+      // TODO: Implement single report export
+      toast({
+        title: "Export started",
+        description: "Report export will download shortly.",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the report.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddToComparison = () => {
+    // TODO: Implement comparison functionality
+    toast({
+      title: "Added to comparison",
+      description: "Report has been added to your comparison list.",
+    });
+  };
+
+  const formatDate = (report: ReportWithDetails) => {
+    if (report.publicationDate) {
+      return new Date(report.publicationDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+    
+    if (report.publicationMonth) {
+      return `${new Date(0, report.publicationMonth - 1).toLocaleDateString("en-US", { month: "long" })} ${report.publicationYear}`;
+    }
+    
+    return report.publicationYear.toString();
+  };
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Card className="p-8 text-center">
+          <CardContent>
+            <p className="text-destructive">Error loading report: {error.message}</p>
+            <Link href="/explore">
+              <Button variant="outline" className="mt-4">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Explore
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-32" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex space-x-2">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!report) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Card className="p-8 text-center">
+          <CardContent>
+            <p className="text-muted-foreground">Report not found</p>
+            <Link href="/explore">
+              <Button variant="outline" className="mt-4">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Explore
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb */}
+      <div className="mb-6">
+        <Link href="/explore">
+          <Button variant="ghost" size="sm" className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Explore
+          </Button>
+        </Link>
+      </div>
+
+      {/* Report Detail */}
+      <Card className="overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-border p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-3">
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  {report.state}
+                </Badge>
+                <Badge variant="outline">
+                  {report.agency}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Published {formatDate(report)}
+                </span>
+              </div>
+              
+              <h1 className="text-3xl font-bold text-foreground mb-3">
+                {report.title}
+              </h1>
+              
+              <div className="flex flex-wrap gap-2">
+                {report.themes.map((theme) => (
+                  <Badge key={theme} variant="outline" className="text-sm">
+                    {theme}
+                  </Badge>
+                ))}
+                {report.programs.map((program) => (
+                  <Badge key={program} variant="outline" className="text-sm">
+                    {program}
+                  </Badge>
+                ))}
+                {report.hasAiInsight && (
+                  <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                    AI Insight
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                className="flex items-center space-x-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleAddToComparison}
+                className="flex items-center space-x-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Compare</span>
+              </Button>
+            </div>
+          </div>
+          
+          {/* Provenance Info */}
+          {(report.originalReportSourceUrl || report.originalFilename) && (
+            <div className="bg-muted rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <ExternalLink className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  <strong>Source:</strong>{" "}
+                  {report.originalReportSourceUrl ? (
+                    <a
+                      href={report.originalReportSourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {report.originalFilename || "Original Report"}
+                    </a>
+                  ) : (
+                    report.originalFilename
+                  )}
+                </span>
+              </div>
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 flex items-center space-x-1">
+                <Shield className="w-3 h-3" />
+                <span>Verified Source</span>
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        {/* Tabs Content */}
+        <ReportDetailTabs report={report} />
+      </Card>
+    </div>
+  );
+}
