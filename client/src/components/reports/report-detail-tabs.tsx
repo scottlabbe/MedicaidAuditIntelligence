@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import type { ReportWithDetails } from "@/lib/types";
 
 interface ReportDetailTabsProps { report: ReportWithDetails }
@@ -40,42 +41,49 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* Overall Conclusion */}
             {overallConclusion && (
               <div>
-                <h3 className="text-lg font-semibold mb-3">Overall Conclusion</h3>
-                <Card><CardContent className="p-6">
-                  <p className="leading-relaxed font-serif">{overallConclusion}</p>
+                <h3 className="text-xl font-semibold mb-3 text-slate-900">Overall Conclusion</h3>
+                <Card className="bg-white border border-slate-200 shadow-sm relative"><CardContent className="p-6">
+                  <div className="absolute left-0 top-0 h-full w-1 bg-indigo-600 rounded-l-md" />
+                  <p className="leading-relaxed font-serif text-slate-900 pl-2">{overallConclusion}</p>
                 </CardContent></Card>
               </div>
             )}
+
+            {/* Separator */}
+            {overallConclusion && auditScope && <Separator className="my-6 border-slate-200" />}
 
             {/* Original Scope (moved here) */}
             {auditScope && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Audit Scope</h3>
-                <Card><CardContent className="p-6">
-                  <p className="text-muted-foreground leading-relaxed font-serif">{auditScope}</p>
+              <div className="mt-10">
+                <h3 className="text-xl font-semibold mb-3 text-slate-900">Audit Scope</h3>
+                <Card className="bg-white border border-slate-200 shadow-sm"><CardContent className="p-6">
+                  <p className="text-slate-700 leading-relaxed font-serif">{auditScope}</p>
                 </CardContent></Card>
               </div>
             )}
 
+            {/* Separator */}
+            {(overallConclusion || auditScope) && findings.length > 0 && <Separator className="my-6 border-slate-200" />}
+
             {/* Key Findings Summary (simple, no labels) */}
             {findings.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Key Findings Summary</h3>
-                <div className="space-y-3">
+              <div className="mt-10">
+                <h3 className="text-xl font-semibold mb-3 text-slate-900">Key Findings Summary</h3>
+                <div className="space-y-4">
                   {findings.slice(0, 3).map((f: any, i: number) => {
                     const text = get<string>(f, "findingText", "finding_text") ?? "";
-                    const preview = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+                    const preview = text.length > 360 ? `${text.slice(0, 360)}…` : text;
                     return (
-                      <Card key={f.id ?? i}><CardContent className="p-4">
+                      <Card key={f.id ?? i} className="bg-white border border-slate-200 shadow-sm"><CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">{(f.order ?? i+1)}</div>
-                          <p className="font-medium">{preview}</p>
+                          <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold">{(f.order ?? i+1)}</div>
+                          <p className="text-slate-900 leading-relaxed">{preview}</p>
                         </div>
                       </CardContent></Card>
                     );
                   })}
                   {findings.length > 3 && (
-                    <p className="text-sm text-muted-foreground text-center py-2">
+                    <p className="text-sm text-slate-600 text-center py-2">
                       View the Findings tab to see all {findings.length} findings
                     </p>
                   )}
@@ -83,21 +91,24 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             )}
 
+            {/* Separator */}
+            {(overallConclusion || auditScope || findings.length > 0) && (aiScopeSummary || aiInsight) && <Separator className="my-6 border-slate-200" />}
+
             {/* AI-Assisted (AI Scope Summary + AI Insight) */}
             {(aiScopeSummary || aiInsight) && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">AI-Assisted</h3>
-                <div className="rounded-xl p-5 border border-primary/20 bg-primary/5 space-y-4">
+              <div className="mt-10">
+                <h3 className="text-xl font-semibold mb-3 text-slate-900">AI-Assisted</h3>
+                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 space-y-4">
                   {aiScopeSummary && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">AI Scope Summary</p>
-                      <p className="font-serif leading-relaxed">{aiScopeSummary}</p>
+                      <p className="text-xs uppercase tracking-wide text-slate-700 mb-1">AI Scope Summary</p>
+                      <p className="font-serif leading-relaxed text-slate-900">{aiScopeSummary}</p>
                     </div>
                   )}
                   {aiInsight && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">AI-Generated Insight</p>
-                      <p className="font-serif leading-relaxed">{aiInsight}</p>
+                      <p className="text-xs uppercase tracking-wide text-slate-700 mb-1">AI-Generated Insight</p>
+                      <p className="font-serif leading-relaxed text-slate-900">{aiInsight}</p>
                     </div>
                   )}
                 </div>
@@ -109,18 +120,18 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* OBJECTIVES */}
         <TabsContent value="objectives" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold mb-4">Audit Objectives</h3>
+            <h3 className="text-xl font-semibold mb-4 text-slate-900">Audit Objectives</h3>
             {objectives.length ? (
               <div className="space-y-4">
                 {objectives.map((o: any, idx: number) => {
                   const text = get<string>(o, "objectiveText", "objective_text") ?? "";
                   return (
-                    <Card key={o.id ?? idx}><CardContent className="p-4">
+                    <Card key={o.id ?? idx} className="bg-white border border-slate-200 shadow-sm"><CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-semibold">
+                        <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-semibold">
                           {(o.order ?? idx+1)}
                         </div>
-                        <p className="font-serif leading-relaxed">{text}</p>
+                        <p className="font-serif leading-relaxed text-slate-900">{text}</p>
                       </div>
                     </CardContent></Card>
                   );
@@ -128,8 +139,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Info className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No specific objectives documented for this audit</p>
+                <Info className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-600">No specific objectives documented for this audit</p>
               </div>
             )}
           </div>
@@ -138,18 +149,18 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* FINDINGS */}
         <TabsContent value="findings" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold mb-4">Audit Findings ({findings.length})</h3>
+            <h3 className="text-xl font-semibold mb-4 text-slate-900">Audit Findings ({findings.length})</h3>
             {findings.length ? (
               <div className="space-y-4">
                 {findings.map((f: any, idx: number) => {
                   const text = get<string>(f, "findingText", "finding_text") ?? "";
                   return (
-                    <Card key={f.id ?? idx}><CardContent className="p-6">
+                    <Card key={f.id ?? idx} className="bg-white border border-slate-200 shadow-sm"><CardContent className="p-6">
                       <div className="flex items-start gap-4">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-semibold">
                           {(f.order ?? idx+1)}
                         </div>
-                        <p className="font-serif leading-relaxed">{text}</p>
+                        <p className="font-serif leading-relaxed text-slate-900">{text}</p>
                       </div>
                     </CardContent></Card>
                   );
@@ -157,8 +168,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Info className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No findings documented for this audit</p>
+                <Info className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-600">No findings documented for this audit</p>
               </div>
             )}
           </div>
@@ -167,18 +178,18 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* RECOMMENDATIONS */}
         <TabsContent value="recommendations" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold mb-4">Recommendations ({recommendations.length})</h3>
+            <h3 className="text-xl font-semibold mb-4 text-slate-900">Recommendations ({recommendations.length})</h3>
             {recommendations.length ? (
               <div className="space-y-4">
                 {recommendations.map((r: any, idx: number) => {
                   const text = get<string>(r, "recommendationText", "recommendation_text") ?? "";
                   return (
-                    <Card key={r.id ?? idx}><CardContent className="p-6">
+                    <Card key={r.id ?? idx} className="bg-white border border-slate-200 shadow-sm"><CardContent className="p-6">
                       <div className="flex items-start gap-4">
-                        <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center">
-                          <span className="text-emerald-700 dark:text-emerald-300 text-sm font-semibold">{(r.order ?? idx+1)}</span>
+                        <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-semibold">{(r.order ?? idx+1)}</span>
                         </div>
-                        <p className="font-serif leading-relaxed">{text}</p>
+                        <p className="font-serif leading-relaxed text-slate-900">{text}</p>
                       </div>
                     </CardContent></Card>
                   );
@@ -186,8 +197,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Info className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No recommendations provided for this audit</p>
+                <Info className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-600">No recommendations provided for this audit</p>
               </div>
             )}
           </div>

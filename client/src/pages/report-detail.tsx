@@ -106,50 +106,39 @@ export default function ReportDetail() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link href="/explore">
-          <Button variant="ghost" size="sm" className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Explore
-          </Button>
-        </Link>
-      </div>
+    <div className="bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <div className="mb-6">
+          <Link href="/explore">
+            <Button variant="ghost" size="sm" className="mb-4 text-slate-600 hover:text-slate-900">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Explore
+            </Button>
+          </Link>
+        </div>
 
-      {/* Report Detail */}
-      <Card className="overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-border p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-3">
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  {report.state}
-                </Badge>
-                <Badge variant="outline">
-                  {report.auditOrganization}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  Published {formatDate(report)}
-                </span>
-              </div>
-              
-              <h1 className="text-3xl font-bold text-foreground mb-3">
-                {report.reportTitle}
-              </h1>
-              
-              <div className="flex flex-wrap gap-2">
-                {report.themes && report.themes.map((theme: string) => (
-                  <Badge key={theme} variant="outline" className="text-sm">
-                    {theme}
+        {/* Report Detail */}
+        <Card className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="border-b border-slate-200 p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-700">
+                    {report.state}
                   </Badge>
-                ))}
-                {report.programs && report.programs.map((program: string) => (
-                  <Badge key={program} variant="outline" className="text-sm">
-                    {program}
+                  <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">
+                    {report.auditOrganization}
                   </Badge>
-                ))}
+                  <span className="text-sm text-slate-600">
+                    Published {formatDate(report)}
+                  </span>
+                </div>
+                
+                <h1 className="text-3xl font-bold text-slate-900 mb-3 leading-tight">
+                  {report.reportTitle}
+                </h1>
               </div>
             </div>
             
@@ -157,20 +146,18 @@ export default function ReportDetail() {
               <Button
                 size="sm"
                 onClick={handleAddToComparison}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 <BarChart3 className="w-4 h-4" />
                 <span>Compare</span>
               </Button>
             </div>
           </div>
-          
 
-        </div>
-
-        {/* Tabs Content */}
-        <ReportDetailTabs report={report} />
-      </Card>
+          {/* Tabs Content */}
+          <ReportDetailTabs report={report} />
+        </Card>
+      </div>
     </div>
   );
 }

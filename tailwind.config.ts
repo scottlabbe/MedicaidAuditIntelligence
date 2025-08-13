@@ -8,11 +8,11 @@ export default {
       fontSize: {
         'xs': ['12px', { lineHeight: '18px' }],
         'sm': ['14px', { lineHeight: '21px' }],
-        'base': ['16px', { lineHeight: '24px' }],
-        'lg': ['18px', { lineHeight: '27px' }],
-        'xl': ['24px', { lineHeight: '36px' }],
-        '2xl': ['30px', { lineHeight: '45px' }],
-        '3xl': ['36px', { lineHeight: '54px' }],
+        'base': ['16px', { lineHeight: '25.6px' }], // 1.6 line-height
+        'lg': ['18px', { lineHeight: '28.8px' }],   // 20px from notes
+        'xl': ['20px', { lineHeight: '32px' }],     // H3 section heads  
+        '2xl': ['30px', { lineHeight: '36px' }],    // H1 title 28-32px
+        '3xl': ['32px', { lineHeight: '38.4px' }],  // H1 title tight 1.2
       },
       spacing: {
         '18': '4.5rem',
