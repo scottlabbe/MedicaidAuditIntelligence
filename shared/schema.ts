@@ -38,26 +38,23 @@ export const reports = pgTable("reports", {
 });
 
 export const objectives = pgTable("objectives", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  reportId: varchar("report_id").references(() => reports.id).notNull(),
-  text: text("text").notNull(),
-  order: integer("order"),
+  id: integer("id").primaryKey(),
+  reportId: integer("report_id").references(() => reports.id).notNull(),
+  objectiveText: text("objective_text").notNull(),
 });
 
 export const findings = pgTable("findings", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  reportId: varchar("report_id").references(() => reports.id).notNull(),
-  text: text("text").notNull(),
-  severity: severityEnum("severity"),
-  order: integer("order"),
+  id: integer("id").primaryKey(),
+  reportId: integer("report_id").references(() => reports.id).notNull(),
+  findingText: text("finding_text").notNull(),
+  financialImpact: integer("financial_impact"),
 });
 
 export const recommendations = pgTable("recommendations", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  reportId: varchar("report_id").references(() => reports.id).notNull(),
-  text: text("text").notNull(),
-  relatedFindingId: varchar("related_finding_id").references(() => findings.id),
-  order: integer("order"),
+  id: integer("id").primaryKey(),
+  reportId: integer("report_id").references(() => reports.id).notNull(),
+  recommendationText: text("recommendation_text").notNull(),
+  relatedFindingId: integer("related_finding_id").references(() => findings.id),
 });
 
 export const keywords = pgTable("keywords", {
@@ -182,51 +179,7 @@ export type InsertTheme = z.infer<typeof insertThemeSchema>;
 export type Program = typeof programs.$inferSelect;
 export type InsertProgram = z.infer<typeof insertProgramSchema>;
 
-// API response types
-export interface ReportWithDetails extends Report {
-  objectives: Objective[];
-  findings: Finding[];
-  recommendations: Recommendation[];
-  keywords: string[];
-  themes: string[];
-  programs: string[];
-}
-
-export interface ReportListItem extends Report {
-  keywords: string[];
-  themes: string[];
-  programs: string[];
-  conclusionExcerpt?: string;
-}
-
-export interface DashboardStats {
-  totalReports: number;
-  statesWithReports: number;
-  criticalFindings: number;
-  recentReports: ReportListItem[];
-}
-
-export interface SearchFilters {
-  query?: string;
-  state?: string;
-  agency?: string;
-  year?: number;
-  theme?: string;
-  program?: string;
-  hasAiInsight?: boolean;
-  featured?: boolean;
-  severity?: string;
-}
-
-export interface SearchResponse {
-  items: ReportListItem[];
-  total: number;
-  page: number;
-  pageSize: number;
-  filters: SearchFilters;
-}
-
-// Legacy user tables (kept for compatibility)
+// Legacy user types (kept for backwards compatibility)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),

@@ -171,9 +171,9 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                       </Badge>
                       <div className="flex-1">
                         <p className="font-medium">
-                          {finding.text.length > 200 
-                            ? `${finding.text.substring(0, 200)}...` 
-                            : finding.text}
+                          {finding.findingText.length > 200 
+                            ? `${finding.findingText.substring(0, 200)}...` 
+                            : finding.findingText}
                         </p>
                       </div>
                     </div>
@@ -204,7 +204,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                           </span>
                         </div>
                         <p className="text-foreground font-serif leading-relaxed">
-                          {objective.text}
+                          {objective.objectiveText}
                         </p>
                       </div>
                     </CardContent>
@@ -270,7 +270,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                             </span>
                           </div>
                           <p className="text-foreground font-serif leading-relaxed">
-                            {finding.text}
+                            {finding.findingText}
                           </p>
                         </div>
                       </div>
@@ -320,15 +320,15 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                               )}
                             </div>
                             <p className="text-foreground font-serif leading-relaxed">
-                              {recommendation.text}
+                              {recommendation.recommendationText}
                             </p>
                             {relatedFinding && (
                               <div className="mt-3 p-3 bg-muted rounded-lg">
                                 <p className="text-sm text-muted-foreground">
                                   <strong>Related Finding:</strong> {
-                                    relatedFinding.text.length > 150 
-                                      ? `${relatedFinding.text.substring(0, 150)}...`
-                                      : relatedFinding.text
+                                    relatedFinding.findingText.length > 150 
+                                      ? `${relatedFinding.findingText.substring(0, 150)}...`
+                                      : relatedFinding.findingText
                                   }
                                 </p>
                               </div>
@@ -360,9 +360,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                     <h4 className="font-medium text-foreground mb-2">Primary Citation</h4>
                     <div className="bg-muted rounded-lg p-4">
                       <p className="font-mono text-sm text-foreground">
-                        {report.title}. {report.agency}, {report.state}. 
-                        {report.publicationDate || 
-                          `${report.publicationYear}${report.publicationMonth ? `-${report.publicationMonth.toString().padStart(2, '0')}` : ''}${report.publicationDay ? `-${report.publicationDay.toString().padStart(2, '0')}` : ''}`}.
+                        {report.reportTitle}. {report.auditOrganization}, {report.state}. 
+                        {`${report.publicationYear}${report.publicationMonth ? `-${report.publicationMonth.toString().padStart(2, '0')}` : ''}${report.publicationDay ? `-${report.publicationDay.toString().padStart(2, '0')}` : ''}`}.
                       </p>
                     </div>
                   </div>
@@ -375,7 +374,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <span className="text-sm font-medium text-muted-foreground">Agency:</span>
-                        <p className="text-sm text-foreground">{report.agency}</p>
+                        <p className="text-sm text-foreground">{report.auditOrganization}</p>
                       </div>
                       <div>
                         <span className="text-sm font-medium text-muted-foreground">State:</span>

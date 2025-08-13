@@ -50,9 +50,9 @@ export class DatabaseStorage implements IStorage {
     let query = db
       .select({
         id: reports.id,
-        title: reports.reportTitle,
+        reportTitle: reports.reportTitle,
         state: reports.state,
-        agency: reports.auditOrganization,
+        auditOrganization: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
         publicationDay: reports.publicationDay,
@@ -178,9 +178,9 @@ export class DatabaseStorage implements IStorage {
     const items = await db
       .select({
         id: reports.id,
-        title: reports.reportTitle,
+        reportTitle: reports.reportTitle,
         state: reports.state,
-        agency: reports.auditOrganization,
+        auditOrganization: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
         publicationDay: reports.publicationDay,

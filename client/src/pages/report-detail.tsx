@@ -189,23 +189,23 @@ export default function ReportDetail() {
           </div>
           
           {/* Provenance Info */}
-          {(report.sourceUrl || report.filename) && (
+          {(report.originalReportSourceUrl || report.originalFilename) && (
             <div className="bg-muted rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <ExternalLink className="w-5 h-5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
                   <strong>Source:</strong>{" "}
-                  {report.sourceUrl ? (
+                  {report.originalReportSourceUrl ? (
                     <a
-                      href={report.sourceUrl}
+                      href={report.originalReportSourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary/80"
                     >
-                      {report.filename || "Original Report"}
+                      {report.originalFilename || "Original Report"}
                     </a>
                   ) : (
-                    report.filename
+                    report.originalFilename
                   )}
                 </span>
               </div>
