@@ -201,39 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export reports
-  app.get("/api/export", rateLimit, async (req, res) => {
-    try {
-      const filters = searchFiltersSchema.parse(req.query);
-      const format = req.query.format === "csv" ? "csv" : "json";
-      
-      const data = await storage.exportReports(filters, format);
-      
-      if (format === "csv") {
-        res.set("Content-Type", "text/csv");
-        res.set("Content-Disposition", "attachment; filename=medicaid-audit-reports.csv");
-        
-        // Convert array to CSV string
-        const csvContent = data.map((row: any[]) => 
-          row.map((field: any) => `"${String(field).replace(/"/g, '""')}"`).join(",")
-        ).join("\n");
-        
-        res.send(csvContent);
-      } else {
-        res.set("Content-Type", "application/json");
-        res.set("Content-Disposition", "attachment; filename=medicaid-audit-reports.json");
-        res.json(data);
-      }
-    } catch (error) {
-      console.error("Error exporting reports:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          error: "Invalid query parameters", 
-          details: error.errors 
-        });
-      }
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
+
 
   // Protected admin endpoints (require HMAC auth)
   

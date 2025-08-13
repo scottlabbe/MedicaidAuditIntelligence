@@ -25,18 +25,7 @@ const US_STATES = [
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i);
 
-const THEMES = [
-  "Program Integrity",
-  "Financial Oversight",
-  "Data Quality",
-  "Provider Screening",
-  "Managed Care",
-  "Quality Oversight",
-  "Fraud Detection",
-  "Compliance",
-  "Eligibility",
-  "Claims Processing"
-];
+
 
 const PROGRAMS = [
   "Medicaid",
@@ -163,25 +152,7 @@ export default function SearchFilters({ filters, onFiltersChange }: SearchFilter
             </div>
 
             {/* Theme */}
-            <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
-              <Select
-                value={filters.theme || ""}
-                onValueChange={(value) => updateFilter("theme", value === "all" ? "" : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All themes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All themes</SelectItem>
-                  {THEMES.map((theme) => (
-                    <SelectItem key={theme} value={theme}>
-                      {theme}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
 
             {/* Program */}
             <div className="space-y-2">

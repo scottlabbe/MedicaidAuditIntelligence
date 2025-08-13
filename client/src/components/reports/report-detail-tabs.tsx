@@ -62,7 +62,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       {/* Tab Navigation */}
       <div className="border-b border-border">
-        <TabsList className="grid w-full grid-cols-6 h-auto p-0 bg-transparent">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-0 bg-transparent">
           <TabsTrigger
             value="summary"
             className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none py-4 px-6"
@@ -93,12 +93,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
           >
             Recommendations
           </TabsTrigger>
-          <TabsTrigger
-            value="citations"
-            className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none py-4 px-6"
-          >
-            Citations
-          </TabsTrigger>
+
         </TabsList>
       </div>
 
@@ -109,7 +104,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* Executive Summary */}
             {report.potentialObjectiveSummary && (
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-3">Executive Summary</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-3">AI Scope Summary</h3>
                 <div className="prose prose-slate max-w-none dark:prose-invert">
                   <p className="text-muted-foreground leading-relaxed font-serif">
                     {report.potentialObjectiveSummary}
@@ -123,36 +118,14 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-3">Overall Conclusion</h3>
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-                  <div className="flex items-start space-x-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-amber-800 dark:text-amber-200 font-medium">
-                        {report.overallConclusion}
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-amber-800 dark:text-amber-200 font-medium">
+                    {report.overallConclusion}
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* AI Insight */}
-            {report.llmInsight && (
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-3">AI-Generated Insight</h3>
-                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary-foreground text-xs font-bold">AI</span>
-                    </div>
-                    <div>
-                      <p className="text-foreground font-serif leading-relaxed">
-                        {report.llmInsight}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {/* Key Findings Summary */}
             {report.findings.length > 0 && (
@@ -167,7 +140,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                       <Badge
                         className={`text-xs px-2 py-1 font-semibold ${getSeverityBadgeColor(finding.severity)}`}
                       >
-                        {finding.severity?.charAt(0).toUpperCase() + (finding.severity?.slice(1) || "")}
+                        {finding.severity ? finding.severity.charAt(0).toUpperCase() + finding.severity.slice(1) : "Info"}
                       </Badge>
                       <div className="flex-1">
                         <p className="font-medium">
@@ -183,6 +156,18 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                       View the Findings tab to see all {report.findings.length} findings
                     </p>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* AI Insight - moved to bottom */}
+            {report.llmInsight && (
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-3">AI-Generated Insight</h3>
+                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                  <p className="text-foreground font-serif leading-relaxed">
+                    {report.llmInsight}
+                  </p>
                 </div>
               </div>
             )}
@@ -259,7 +244,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                             <Badge
                               className={`text-xs px-2 py-1 font-semibold ${getSeverityBadgeColor(finding.severity)}`}
                             >
-                              {finding.severity?.toUpperCase() || "INFO"}
+                              {finding.severity ? finding.severity.toUpperCase() : "INFO"}
                             </Badge>
                           </div>
                         </div>
@@ -349,95 +334,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="citations" className="mt-0">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Citations & References</h3>
-            <Card>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {/* Primary Citation */}
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">Primary Citation</h4>
-                    <div className="bg-muted rounded-lg p-4">
-                      <p className="font-mono text-sm text-foreground">
-                        {report.reportTitle}. {report.auditOrganization}, {report.state}. 
-                        {`${report.publicationYear}${report.publicationMonth ? `-${report.publicationMonth.toString().padStart(2, '0')}` : ''}${report.publicationDay ? `-${report.publicationDay.toString().padStart(2, '0')}` : ''}`}.
-                      </p>
-                    </div>
-                  </div>
 
-                  <Separator />
-
-                  {/* Source Information */}
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">Source Information</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">Agency:</span>
-                        <p className="text-sm text-foreground">{report.auditOrganization}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">State:</span>
-                        <p className="text-sm text-foreground">{report.state}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">Publication Year:</span>
-                        <p className="text-sm text-foreground">{report.publicationYear}</p>
-                      </div>
-                      {report.originalFilename && (
-                        <div>
-                          <span className="text-sm font-medium text-muted-foreground">Original File:</span>
-                          <p className="text-sm text-foreground">{report.originalFilename}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Original Source Link */}
-                  {report.originalReportSourceUrl && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h4 className="font-medium text-foreground mb-2">Original Source</h4>
-                        <a
-                          href={report.originalReportSourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          <span>View Original Document</span>
-                        </a>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Keywords & Topics */}
-                  {(report.keywords.length > 0 || report.themes.length > 0) && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h4 className="font-medium text-foreground mb-2">Keywords & Topics</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {report.themes.map((theme) => (
-                            <Badge key={theme} variant="secondary">
-                              {theme}
-                            </Badge>
-                          ))}
-                          {report.keywords.map((keyword) => (
-                            <Badge key={keyword} variant="outline" className="text-xs">
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </div>
     </Tabs>
   );

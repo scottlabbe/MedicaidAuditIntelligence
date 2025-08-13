@@ -64,20 +64,7 @@ export default function ReportCard({ report }: ReportCardProps) {
         )}
 
         <div className="flex flex-wrap gap-2">
-          {report.themes?.slice(0, 2).map((theme: string) => (
-            <Badge
-              key={theme}
-              variant="secondary"
-              className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-200"
-            >
-              {theme}
-            </Badge>
-          ))}
-          {report.themes && report.themes.length > 2 && (
-            <Badge variant="outline" className="text-xs">
-              +{report.themes.length - 2} more
-            </Badge>
-          )}
+
         </div>
       </CardContent>
       

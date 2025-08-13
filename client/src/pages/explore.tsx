@@ -31,7 +31,7 @@ export default function Explore() {
     if (urlParams.get("state")) newFilters.state = urlParams.get("state")!;
     if (urlParams.get("agency")) newFilters.agency = urlParams.get("agency")!;
     if (urlParams.get("year")) newFilters.year = parseInt(urlParams.get("year")!);
-    if (urlParams.get("theme")) newFilters.theme = urlParams.get("theme")!;
+
     if (urlParams.get("program")) newFilters.program = urlParams.get("program")!;
     if (urlParams.get("hasAiInsight")) newFilters.hasAiInsight = urlParams.get("hasAiInsight") === "true";
     if (urlParams.get("featured")) newFilters.featured = urlParams.get("featured") === "true";
@@ -70,22 +70,7 @@ export default function Explore() {
     setFilters(newFilters);
   };
 
-  const handleExport = async () => {
-    try {
-      const format = "csv"; // Could be made configurable
-      await apiClient.exportReports(filters, format);
-      toast({
-        title: "Export started",
-        description: "Your report export will download shortly.",
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "There was an error exporting the reports.",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const activeFilterCount = Object.values(filters).filter(v => v !== undefined && v !== null && v !== "").length;
 
@@ -204,15 +189,7 @@ export default function Explore() {
                     </Button>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExport}
-                    className="flex items-center space-x-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Export</span>
-                  </Button>
+
                 </div>
               </div>
             </div>

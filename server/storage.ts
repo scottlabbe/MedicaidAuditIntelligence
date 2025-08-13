@@ -129,7 +129,6 @@ export class DatabaseStorage implements IStorage {
     const enhancedItems: ReportListItem[] = items.map((item) => ({
       ...item,
       keywords: [],
-      themes: [],
       programs: [],
       conclusionExcerpt: item.overallConclusion ? 
         item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
@@ -169,7 +168,6 @@ export class DatabaseStorage implements IStorage {
       findings: findingsList,
       recommendations: recommendationsList,
       keywords: [],
-      themes: [],
       programs: [],
     };
   }
@@ -204,7 +202,6 @@ export class DatabaseStorage implements IStorage {
     return items.map((item) => ({
       ...item,
       keywords: [],
-      themes: [],
       programs: [],
       conclusionExcerpt: item.overallConclusion ? 
         item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
@@ -233,27 +230,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async exportReports(filters: SearchFilters = {}, format: "csv" | "json" = "json"): Promise<any> {
-    const { items } = await this.getReports(filters, 1, 1000); // Export up to 1000 reports
-    
-    if (format === "csv") {
-      // Convert to CSV format
-      const headers = ["ID", "Title", "State", "Agency", "Publication Date", "Themes", "Programs"];
-      const rows = items.map(item => [
-        item.id,
-        item.title,
-        item.state,
-        item.agency,
-        item.publicationDate || `${item.publicationYear}-${item.publicationMonth || 1}-${item.publicationDay || 1}`,
-        item.themes.join(", "),
-        item.programs.join(", ")
-      ]);
-      
-      return [headers, ...rows];
-    }
-    
-    return items;
-  }
+
 
   private async getReportKeywords(reportId: string): Promise<string[]> {
     const result = await db
@@ -265,17 +242,7 @@ export class DatabaseStorage implements IStorage {
     return result.map(r => r.keyword);
   }
 
-  private async getReportThemes(reportId: string): Promise<string[]> {
-    const result = await db
-      .select({ name: themes.name })
-      .from(reportKeywords)
-      .innerJoin(keywords, eq(reportKeywords.keywordId, keywords.id))
-      .innerJoin(keywordThemes, eq(keywords.id, keywordThemes.keywordId))
-      .innerJoin(themes, eq(keywordThemes.themeId, themes.id))
-      .where(eq(reportKeywords.reportId, reportId));
-    
-    return Array.from(new Set(result.map(r => r.name)));
-  }
+
 
   private async getReportPrograms(reportId: string): Promise<string[]> {
     const result = await db

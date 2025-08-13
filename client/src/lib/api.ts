@@ -56,34 +56,7 @@ export class ApiClient {
     return this.request("/dashboard/stats");
   }
 
-  // Export
-  async exportReports(filters?: SearchFilters, format: "csv" | "json" = "json") {
-    const params = new URLSearchParams();
-    
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          params.append(key, String(value));
-        }
-      });
-    }
-    
-    params.append("format", format);
-    
-    const response = await fetch(`${API_BASE}/export?${params.toString()}`, {
-      credentials: "include",
-    });
 
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.statusText}`);
-    }
-
-    if (format === "csv") {
-      return response.text();
-    }
-    
-    return response.json();
-  }
 
   // Search utilities
   invalidateReports() {

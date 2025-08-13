@@ -20,21 +20,7 @@ export default function ReportDetail() {
     enabled: !!reportId,
   }) as { data: ReportWithDetails | undefined; isLoading: boolean; error: Error | null };
 
-  const handleExport = async () => {
-    try {
-      // TODO: Implement single report export
-      toast({
-        title: "Export started",
-        description: "Report export will download shortly.",
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "There was an error exporting the report.",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleAddToComparison = () => {
     // TODO: Implement comparison functionality
@@ -169,15 +155,6 @@ export default function ReportDetail() {
             
             <div className="flex items-center space-x-3">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExport}
-                className="flex items-center space-x-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-              </Button>
-              <Button
                 size="sm"
                 onClick={handleAddToComparison}
                 className="flex items-center space-x-2"
@@ -188,33 +165,7 @@ export default function ReportDetail() {
             </div>
           </div>
           
-          {/* Provenance Info */}
-          {(report.originalReportSourceUrl || report.originalFilename) && (
-            <div className="bg-muted rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <ExternalLink className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  <strong>Source:</strong>{" "}
-                  {report.originalReportSourceUrl ? (
-                    <a
-                      href={report.originalReportSourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:text-primary/80"
-                    >
-                      {report.originalFilename || "Original Report"}
-                    </a>
-                  ) : (
-                    report.originalFilename
-                  )}
-                </span>
-              </div>
-              <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 flex items-center space-x-1">
-                <Shield className="w-3 h-3" />
-                <span>Verified Source</span>
-              </Badge>
-            </div>
-          )}
+
         </div>
 
         {/* Tabs Content */}

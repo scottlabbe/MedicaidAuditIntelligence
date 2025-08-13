@@ -3,7 +3,7 @@ export interface SearchFilters {
   state?: string;
   agency?: string;
   year?: number;
-  theme?: string;
+
   program?: string;
   hasAiInsight?: boolean;
   featured?: boolean;
@@ -39,7 +39,7 @@ export interface ReportListItem {
   createdAt?: Date;
   updatedAt?: Date;
   keywords: string[];
-  themes: string[];
+
   programs: string[];
   conclusionExcerpt?: string;
 }
