@@ -14,7 +14,7 @@ export default function ReportCard({ report }: ReportCardProps) {
   const { toast } = useToast();
 
   const handleCopyCitation = () => {
-    const citation = `${report.agencyName} (${report.year}). ${report.title}. State: ${report.state}.`;
+    const citation = `${report.auditOrganization} (${report.publicationYear}). ${report.reportTitle}. State: ${report.state}.`;
     navigator.clipboard.writeText(citation);
     toast({
       title: "Citation copied",
@@ -31,7 +31,7 @@ export default function ReportCard({ report }: ReportCardProps) {
               {report.state}
             </Badge>
             <Badge variant="outline" className="text-xs">
-              {report.year}
+              {report.publicationYear}
             </Badge>
           </div>
           {report.featured && (
@@ -42,29 +42,29 @@ export default function ReportCard({ report }: ReportCardProps) {
         </div>
         
         <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
-          {report.title}
+          {report.reportTitle}
         </h3>
         
         <div className="space-y-2 mb-4">
           <div className="flex items-center text-sm text-muted-foreground">
             <Building className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="truncate">{report.agencyName}</span>
+            <span className="truncate">{report.auditOrganization}</span>
           </div>
           
           <div className="flex items-center text-sm text-muted-foreground">
             <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span>Published {report.year}</span>
+            <span>Published {report.publicationYear}</span>
           </div>
         </div>
 
-        {report.description && (
+        {report.conclusionExcerpt && (
           <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-            {report.description}
+            {report.conclusionExcerpt}
           </p>
         )}
 
         <div className="flex flex-wrap gap-2">
-          {report.themes?.slice(0, 2).map((theme) => (
+          {report.themes?.slice(0, 2).map((theme: string) => (
             <Badge
               key={theme}
               variant="secondary"
@@ -94,7 +94,7 @@ export default function ReportCard({ report }: ReportCardProps) {
         
         <Link href={`/reports/${report.id}`}>
           <Button size="sm" className="flex items-center space-x-1">
-            <span>View Report</span>
+            <span>View Summary</span>
             <ExternalLink className="w-3 h-3" />
           </Button>
         </Link>

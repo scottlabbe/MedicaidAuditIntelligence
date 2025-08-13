@@ -11,15 +11,14 @@ import ReportDetailTabs from "@/components/reports/report-detail-tabs";
 import type { ReportWithDetails } from "@/lib/types";
 
 export default function ReportDetail() {
-  const [, params] = useRoute("/report/:id");
+  const [, params] = useRoute("/reports/:id");
   const { toast } = useToast();
   const reportId = params?.id;
 
-  const { data: report, isLoading, error } = useQuery<ReportWithDetails>({
+  const { data: report, isLoading, error } = useQuery({
     queryKey: ["/api/reports", reportId],
-    queryFn: () => apiClient.getReportById(reportId!),
     enabled: !!reportId,
-  });
+  }) as { data: ReportWithDetails | undefined; isLoading: boolean; error: Error | null };
 
   const handleExport = async () => {
     try {
@@ -46,8 +45,8 @@ export default function ReportDetail() {
   };
 
   const formatDate = (report: ReportWithDetails) => {
-    if (report.publicationDate) {
-      return new Date(report.publicationDate).toLocaleDateString("en-US", {
+    if (report.publicationDay && report.publicationMonth && report.publicationYear) {
+      return new Date(report.publicationYear, report.publicationMonth - 1, report.publicationDay).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -58,7 +57,7 @@ export default function ReportDetail() {
       return `${new Date(0, report.publicationMonth - 1).toLocaleDateString("en-US", { month: "long" })} ${report.publicationYear}`;
     }
     
-    return report.publicationYear.toString();
+    return report.publicationYear?.toString() || 'Unknown';
   };
 
   if (error) {
@@ -143,7 +142,7 @@ export default function ReportDetail() {
                   {report.state}
                 </Badge>
                 <Badge variant="outline">
-                  {report.agency}
+                  {report.auditOrganization}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
                   Published {formatDate(report)}
@@ -151,25 +150,20 @@ export default function ReportDetail() {
               </div>
               
               <h1 className="text-3xl font-bold text-foreground mb-3">
-                {report.title}
+                {report.reportTitle}
               </h1>
               
               <div className="flex flex-wrap gap-2">
-                {report.themes.map((theme) => (
+                {report.themes && report.themes.map((theme: string) => (
                   <Badge key={theme} variant="outline" className="text-sm">
                     {theme}
                   </Badge>
                 ))}
-                {report.programs.map((program) => (
+                {report.programs && report.programs.map((program: string) => (
                   <Badge key={program} variant="outline" className="text-sm">
                     {program}
                   </Badge>
                 ))}
-                {report.hasAiInsight && (
-                  <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                    AI Insight
-                  </Badge>
-                )}
               </div>
             </div>
             
@@ -195,23 +189,23 @@ export default function ReportDetail() {
           </div>
           
           {/* Provenance Info */}
-          {(report.originalReportSourceUrl || report.originalFilename) && (
+          {(report.sourceUrl || report.filename) && (
             <div className="bg-muted rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <ExternalLink className="w-5 h-5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
                   <strong>Source:</strong>{" "}
-                  {report.originalReportSourceUrl ? (
+                  {report.sourceUrl ? (
                     <a
-                      href={report.originalReportSourceUrl}
+                      href={report.sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary/80"
                     >
-                      {report.originalFilename || "Original Report"}
+                      {report.filename || "Original Report"}
                     </a>
                   ) : (
-                    report.originalFilename
+                    report.filename
                   )}
                 </span>
               </div>
