@@ -144,6 +144,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get featured reports (must come before /:id route)
+  app.get("/api/reports/featured", rateLimit, async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 6;
+      
+      if (limit < 1 || limit > 20) {
+        return res.status(400).json({ error: "Limit must be between 1 and 20" });
+      }
+      
+      const reports = await storage.getFeaturedReports(limit);
+      
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(reports);
+    } catch (error) {
+      console.error("Error fetching featured reports:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Get single report by ID
   app.get("/api/reports/:id", rateLimit, async (req, res) => {
     try {
@@ -164,25 +183,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(report);
     } catch (error) {
       console.error("Error fetching report:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // Get featured reports
-  app.get("/api/reports/featured", rateLimit, async (req, res) => {
-    try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 6;
-      
-      if (limit < 1 || limit > 20) {
-        return res.status(400).json({ error: "Limit must be between 1 and 20" });
-      }
-      
-      const reports = await storage.getFeaturedReports(limit);
-      
-      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
-      res.json(reports);
-    } catch (error) {
-      console.error("Error fetching featured reports:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

@@ -50,13 +50,12 @@ export class DatabaseStorage implements IStorage {
     let query = db
       .select({
         id: reports.id,
-        title: reports.title,
+        title: reports.reportTitle,
         state: reports.state,
-        agency: reports.agency,
+        agency: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
         publicationDay: reports.publicationDay,
-        publicationDate: reports.publicationDate,
         overallConclusion: reports.overallConclusion,
         llmInsight: reports.llmInsight,
         potentialObjectiveSummary: reports.potentialObjectiveSummary,
@@ -65,7 +64,7 @@ export class DatabaseStorage implements IStorage {
         originalFilename: reports.originalFilename,
         fileHash: reports.fileHash,
         featured: reports.featured,
-        hasAiInsight: reports.hasAiInsight,
+        status: reports.status,
         createdAt: reports.createdAt,
         updatedAt: reports.updatedAt,
       })
@@ -77,8 +76,8 @@ export class DatabaseStorage implements IStorage {
     if (filters.query) {
       conditions.push(
         or(
-          ilike(reports.title, `%${filters.query}%`),
-          ilike(reports.agency, `%${filters.query}%`),
+          ilike(reports.reportTitle, `%${filters.query}%`),
+          ilike(reports.auditOrganization, `%${filters.query}%`),
           ilike(reports.overallConclusion, `%${filters.query}%`)
         )
       );
@@ -89,7 +88,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters.agency) {
-      conditions.push(ilike(reports.agency, `%${filters.agency}%`));
+      conditions.push(ilike(reports.auditOrganization, `%${filters.agency}%`));
     }
 
     if (filters.year) {
@@ -100,9 +99,8 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(reports.featured, filters.featured));
     }
 
-    if (filters.hasAiInsight !== undefined) {
-      conditions.push(eq(reports.hasAiInsight, filters.hasAiInsight));
-    }
+    // Filter out hidden reports
+    conditions.push(eq(reports.hidden, false));
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
@@ -127,26 +125,16 @@ export class DatabaseStorage implements IStorage {
 
     const total = totalResult[0]?.count || 0;
 
-    // Enhance items with related data
-    const enhancedItems: ReportListItem[] = await Promise.all(
-      items.map(async (item) => {
-        const [keywordData, themeData, programData] = await Promise.all([
-          this.getReportKeywords(item.id),
-          this.getReportThemes(item.id),
-          this.getReportPrograms(item.id),
-        ]);
-
-        return {
-          ...item,
-          keywords: keywordData,
-          themes: themeData,
-          programs: programData,
-          conclusionExcerpt: item.overallConclusion ? 
-            item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
-            undefined,
-        };
-      })
-    );
+    // Return items with basic data (no complex relationships for now)
+    const enhancedItems: ReportListItem[] = items.map((item) => ({
+      ...item,
+      keywords: [],
+      themes: [],
+      programs: [],
+      conclusionExcerpt: item.overallConclusion ? 
+        item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
+        undefined,
+    }));
 
     return {
       items: enhancedItems,
@@ -158,19 +146,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getReportById(id: string): Promise<ReportWithDetails | undefined> {
-    const report = await db.select().from(reports).where(eq(reports.id, id)).limit(1);
+    const reportId = parseInt(id);
+    if (isNaN(reportId)) {
+      return undefined;
+    }
+    
+    const report = await db.select().from(reports).where(eq(reports.id, reportId)).limit(1);
     
     if (!report[0]) {
       return undefined;
     }
 
-    const [objectivesList, findingsList, recommendationsList, keywordsList, themesList, programsList] = await Promise.all([
-      db.select().from(objectives).where(eq(objectives.reportId, id)).orderBy(objectives.order),
-      db.select().from(findings).where(eq(findings.reportId, id)).orderBy(findings.order),
-      db.select().from(recommendations).where(eq(recommendations.reportId, id)).orderBy(recommendations.order),
-      this.getReportKeywords(id),
-      this.getReportThemes(id),
-      this.getReportPrograms(id),
+    const [objectivesList, findingsList, recommendationsList] = await Promise.all([
+      db.select().from(objectives).where(eq(objectives.reportId, reportId)),
+      db.select().from(findings).where(eq(findings.reportId, reportId)),
+      db.select().from(recommendations).where(eq(recommendations.reportId, reportId)),
     ]);
 
     return {
@@ -178,39 +168,48 @@ export class DatabaseStorage implements IStorage {
       objectives: objectivesList,
       findings: findingsList,
       recommendations: recommendationsList,
-      keywords: keywordsList,
-      themes: themesList,
-      programs: programsList,
+      keywords: [],
+      themes: [],
+      programs: [],
     };
   }
 
   async getFeaturedReports(limit = 6): Promise<ReportListItem[]> {
     const items = await db
-      .select()
+      .select({
+        id: reports.id,
+        title: reports.reportTitle,
+        state: reports.state,
+        agency: reports.auditOrganization,
+        publicationYear: reports.publicationYear,
+        publicationMonth: reports.publicationMonth,
+        publicationDay: reports.publicationDay,
+        overallConclusion: reports.overallConclusion,
+        llmInsight: reports.llmInsight,
+        potentialObjectiveSummary: reports.potentialObjectiveSummary,
+        auditScope: reports.auditScope,
+        originalReportSourceUrl: reports.originalReportSourceUrl,
+        originalFilename: reports.originalFilename,
+        fileHash: reports.fileHash,
+        featured: reports.featured,
+        status: reports.status,
+        createdAt: reports.createdAt,
+        updatedAt: reports.updatedAt,
+      })
       .from(reports)
-      .where(eq(reports.featured, true))
+      .where(and(eq(reports.featured, true), eq(reports.hidden, false)))
       .orderBy(desc(reports.publicationYear), desc(reports.publicationMonth))
       .limit(limit);
 
-    return Promise.all(
-      items.map(async (item) => {
-        const [keywordData, themeData, programData] = await Promise.all([
-          this.getReportKeywords(item.id),
-          this.getReportThemes(item.id),
-          this.getReportPrograms(item.id),
-        ]);
-
-        return {
-          ...item,
-          keywords: keywordData,
-          themes: themeData,
-          programs: programData,
-          conclusionExcerpt: item.overallConclusion ? 
-            item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
-            undefined,
-        };
-      })
-    );
+    return items.map((item) => ({
+      ...item,
+      keywords: [],
+      themes: [],
+      programs: [],
+      conclusionExcerpt: item.overallConclusion ? 
+        item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
+        undefined,
+    }));
   }
 
   async createReport(report: InsertReport): Promise<Report> {
@@ -219,17 +218,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDashboardStats(): Promise<DashboardStats> {
-    const [totalReportsResult, statesResult, criticalFindingsResult, recentReportsResult] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(reports),
-      db.select({ count: sql<number>`count(distinct state)` }).from(reports),
-      db.select({ count: sql<number>`count(*)` }).from(findings).where(eq(findings.severity, "high")),
+    const [totalReportsResult, statesResult, findingsResult, recentReportsResult] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(reports).where(eq(reports.hidden, false)),
+      db.select({ count: sql<number>`count(distinct state)` }).from(reports).where(eq(reports.hidden, false)),
+      db.select({ count: sql<number>`count(*)` }).from(findings),
       this.getFeaturedReports(4),
     ]);
 
     return {
       totalReports: totalReportsResult[0]?.count || 0,
       statesWithReports: statesResult[0]?.count || 0,
-      criticalFindings: criticalFindingsResult[0]?.count || 0,
+      criticalFindings: findingsResult[0]?.count || 0,
       recentReports: recentReportsResult,
     };
   }
