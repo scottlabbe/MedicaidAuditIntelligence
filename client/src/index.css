@@ -3,77 +3,96 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(210, 20%, 98%);
-  --foreground: hsl(210, 40%, 8%);
+  /* Slate 50-900 Neutral Scale */
+  --slate-50: 248 250 252;
+  --slate-100: 241 245 249;
+  --slate-200: 226 232 240;
+  --slate-300: 203 213 225;
+  --slate-400: 148 163 184;
+  --slate-500: 100 116 139;
+  --slate-600: 71 85 105;
+  --slate-700: 51 65 85;
+  --slate-800: 30 41 59;
+  --slate-900: 15 23 42;
+  
+  /* Accent Colors from Spec */
+  --indigo-600: 79 70 229;
+  --emerald-600: 5 150 105;
+  --amber-600: 217 119 6;
+  --rose-600: 225 29 72;
+  
+  /* Design System Colors */
+  --background: hsl(var(--slate-50));
+  --foreground: hsl(var(--slate-900));
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(210, 40%, 8%);
+  --card-foreground: hsl(var(--slate-900));
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(210, 40%, 8%);
-  --primary: hsl(221, 83%, 53%);
+  --popover-foreground: hsl(var(--slate-900));
+  --primary: hsl(var(--indigo-600));
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(210, 40%, 8%);
-  --muted: hsl(210, 40%, 96%);
-  --muted-foreground: hsl(210, 40%, 38%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(221, 83%, 53%);
-  --destructive: hsl(0, 84%, 60%);
+  --secondary: hsl(var(--slate-100));
+  --secondary-foreground: hsl(var(--slate-800));
+  --muted: hsl(var(--slate-100));
+  --muted-foreground: hsl(var(--slate-500));
+  --accent: hsl(var(--slate-100));
+  --accent-foreground: hsl(var(--slate-800));
+  --destructive: hsl(var(--rose-600));
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(214, 32%, 91%);
-  --input: hsl(214, 32%, 91%);
-  --ring: hsl(221, 83%, 53%);
-  --chart-1: hsl(221, 83%, 53%);
-  --chart-2: hsl(142, 76%, 36%);
-  --chart-3: hsl(38, 92%, 50%);
-  --chart-4: hsl(142, 76%, 36%);
-  --chart-5: hsl(0, 84%, 60%);
+  --border: hsl(var(--slate-200));
+  --input: hsl(var(--slate-200));
+  --ring: hsl(var(--indigo-600));
+  --chart-1: hsl(var(--indigo-600));
+  --chart-2: hsl(var(--emerald-600));
+  --chart-3: hsl(var(--amber-600));
+  --chart-4: hsl(var(--emerald-600));
+  --chart-5: hsl(var(--rose-600));
   --sidebar: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(210, 40%, 8%);
-  --sidebar-primary: hsl(221, 83%, 53%);
+  --sidebar-foreground: hsl(var(--slate-900));
+  --sidebar-primary: hsl(var(--indigo-600));
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(210, 40%, 96%);
-  --sidebar-accent-foreground: hsl(221, 83%, 53%);
-  --sidebar-border: hsl(214, 32%, 91%);
-  --sidebar-ring: hsl(221, 83%, 53%);
+  --sidebar-accent: hsl(var(--slate-100));
+  --sidebar-accent-foreground: hsl(var(--slate-800));
+  --sidebar-border: hsl(var(--slate-200));
+  --sidebar-ring: hsl(var(--indigo-600));
   --font-sans: 'Inter', sans-serif;
-  --font-serif: 'Source Serif Pro', serif;
+  --font-serif: 'Source Serif 4', serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
   --radius: 1rem;
 }
 
 .dark {
-  --background: hsl(222, 84%, 5%);
-  --foreground: hsl(210, 40%, 98%);
-  --card: hsl(222, 84%, 5%);
-  --card-foreground: hsl(210, 40%, 98%);
-  --popover: hsl(222, 84%, 5%);
-  --popover-foreground: hsl(210, 40%, 98%);
-  --primary: hsl(217, 91%, 60%);
-  --primary-foreground: hsl(222, 84%, 5%);
-  --secondary: hsl(217, 32%, 17%);
-  --secondary-foreground: hsl(210, 40%, 98%);
-  --muted: hsl(217, 32%, 17%);
-  --muted-foreground: hsl(215, 20%, 65%);
-  --accent: hsl(217, 32%, 17%);
-  --accent-foreground: hsl(210, 40%, 98%);
-  --destructive: hsl(0, 62%, 30%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  --border: hsl(217, 32%, 17%);
-  --input: hsl(217, 32%, 17%);
-  --ring: hsl(217, 91%, 60%);
-  --chart-1: hsl(217, 91%, 60%);
-  --chart-2: hsl(142, 76%, 36%);
-  --chart-3: hsl(38, 92%, 50%);
-  --chart-4: hsl(142, 76%, 36%);
-  --chart-5: hsl(0, 84%, 60%);
-  --sidebar: hsl(222, 84%, 5%);
-  --sidebar-foreground: hsl(210, 40%, 98%);
-  --sidebar-primary: hsl(217, 91%, 60%);
-  --sidebar-primary-foreground: hsl(222, 84%, 5%);
-  --sidebar-accent: hsl(217, 32%, 17%);
-  --sidebar-accent-foreground: hsl(210, 40%, 98%);
-  --sidebar-border: hsl(217, 32%, 17%);
-  --sidebar-ring: hsl(217, 91%, 60%);
+  --background: hsl(var(--slate-900));
+  --foreground: hsl(var(--slate-50));
+  --card: hsl(var(--slate-800));
+  --card-foreground: hsl(var(--slate-50));
+  --popover: hsl(var(--slate-800));
+  --popover-foreground: hsl(var(--slate-50));
+  --primary: hsl(99 102 241);
+  --primary-foreground: hsl(var(--slate-900));
+  --secondary: hsl(var(--slate-800));
+  --secondary-foreground: hsl(var(--slate-200));
+  --muted: hsl(var(--slate-800));
+  --muted-foreground: hsl(var(--slate-400));
+  --accent: hsl(var(--slate-800));
+  --accent-foreground: hsl(var(--slate-200));
+  --destructive: hsl(239 68 68);
+  --destructive-foreground: hsl(var(--slate-50));
+  --border: hsl(var(--slate-700));
+  --input: hsl(var(--slate-700));
+  --ring: hsl(99 102 241);
+  --chart-1: hsl(99 102 241);
+  --chart-2: hsl(34 197 94);
+  --chart-3: hsl(251 146 60);
+  --chart-4: hsl(34 197 94);
+  --chart-5: hsl(239 68 68);
+  --sidebar: hsl(var(--slate-900));
+  --sidebar-foreground: hsl(var(--slate-50));
+  --sidebar-primary: hsl(99 102 241);
+  --sidebar-primary-foreground: hsl(var(--slate-900));
+  --sidebar-accent: hsl(var(--slate-800));
+  --sidebar-accent-foreground: hsl(var(--slate-200));
+  --sidebar-border: hsl(var(--slate-700));
+  --sidebar-ring: hsl(99 102 241);
 }
 
 @layer base {
@@ -111,5 +130,31 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+  }
+  
+  /* Sharp Design System Utilities */
+  .card-hover {
+    @apply transition-all duration-200 ease-out hover:animate-lift hover:border-slate-300;
+  }
+  
+  .filter-transition {
+    @apply transition-all duration-150 ease-out;
+  }
+  
+  .prose-content {
+    @apply font-serif text-slate-700 leading-relaxed;
+  }
+  
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2;
+  }
+  
+  /* Generous whitespace patterns */
+  .section-spacing {
+    @apply py-12 lg:py-16;
+  }
+  
+  .content-spacing {
+    @apply space-y-8 lg:space-y-12;
   }
 }

@@ -56,21 +56,21 @@ export default function SearchFilters({ filters, onFiltersChange }: SearchFilter
   const activeFilterCount = Object.values(filters).filter(v => v !== undefined && v !== null && v !== "").length;
 
   return (
-    <Card>
+    <Card className="border border-slate-200 rounded-2xl">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="pb-3">
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full justify-between p-0">
-              <CardTitle className="flex items-center space-x-2">
-                <Filter className="w-5 h-5" />
+            <Button variant="ghost" className="w-full justify-between p-0 focus-ring hover:bg-slate-50 filter-transition">
+              <CardTitle className="flex items-center space-x-2 text-slate-800">
+                <Filter className="w-5 h-5 text-slate-600" />
                 <span>Filters</span>
                 {activeFilterCount > 0 && (
-                  <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                  <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full border border-indigo-200">
                     {activeFilterCount}
                   </span>
                 )}
               </CardTitle>
-              <X className={`w-4 h-4 transition-transform ${isOpen ? "rotate-45" : ""}`} />
+              <X className={`w-4 h-4 text-slate-500 transition-transform filter-transition ${isOpen ? "rotate-45" : ""}`} />
             </Button>
           </CollapsibleTrigger>
           {activeFilterCount > 0 && (
@@ -78,7 +78,7 @@ export default function SearchFilters({ filters, onFiltersChange }: SearchFilter
               variant="outline"
               size="sm"
               onClick={clearAllFilters}
-              className="mt-2"
+              className="mt-2 border-slate-300 text-slate-600 hover:bg-slate-50 focus-ring"
             >
               Clear all
             </Button>

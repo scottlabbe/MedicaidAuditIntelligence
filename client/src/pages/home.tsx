@@ -23,13 +23,13 @@ export default function Home() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-6 lg:px-8 section-spacing">
       {/* Hero Section */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-foreground mb-4">
+      <div className="text-center content-spacing">
+        <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
           Find insights from {stats?.totalReports || 105}+ Medicaid audit reports
         </h1>
-        <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+        <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
           Search, compare, and analyze audit findings across states, agencies, and topics 
           to inform program management decisions.
         </p>
@@ -39,10 +39,10 @@ export default function Home() {
 
       {/* Featured Reports Section */}
       <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground">Featured Reports</h2>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-slate-900">Featured Reports</h2>
           <Link href="/explore">
-            <Button variant="outline" className="flex items-center space-x-2">
+            <Button variant="outline" className="flex items-center space-x-2 border-slate-300 text-slate-700 hover:bg-slate-50 focus-ring">
               <span>View all reports</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
@@ -87,10 +87,10 @@ export default function Home() {
 
       {/* Dashboard Preview Section */}
       <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground">Quick Insights</h2>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-slate-900">Quick Insights</h2>
           <Link href="/dashboard">
-            <Button variant="outline" className="flex items-center space-x-2">
+            <Button variant="outline" className="flex items-center space-x-2 border-slate-300 text-slate-700 hover:bg-slate-50 focus-ring">
               <span>View full dashboard</span>
               <ArrowRight className="w-4 h-4" />
             </Button>

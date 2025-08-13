@@ -23,25 +23,25 @@ export default function ReportCard({ report }: ReportCardProps) {
   };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-shadow duration-200">
+    <Card className="h-full card-hover border border-slate-200 rounded-2xl">
       <CardContent className="p-6 flex-1">
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex space-x-2">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 border-indigo-200">
               {report.state}
             </Badge>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs px-3 py-1 border-slate-300 text-slate-600">
               {report.publicationYear}
             </Badge>
           </div>
           {report.featured && (
-            <Badge variant="default" className="text-xs">
+            <Badge variant="default" className="text-xs px-3 py-1 bg-amber-100 text-amber-800 border-amber-200">
               Featured
             </Badge>
           )}
         </div>
         
-        <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
+        <h3 className="font-semibold text-slate-900 mb-3 line-clamp-2 text-lg leading-tight">
           {report.reportTitle}
         </h3>
         
@@ -58,7 +58,7 @@ export default function ReportCard({ report }: ReportCardProps) {
         </div>
 
         {report.conclusionExcerpt && (
-          <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+          <p className="text-sm text-slate-600 line-clamp-3 mb-4 prose-content">
             {report.conclusionExcerpt}
           </p>
         )}
@@ -73,14 +73,14 @@ export default function ReportCard({ report }: ReportCardProps) {
           variant="ghost"
           size="sm"
           onClick={handleCopyCitation}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-slate-500 hover:text-slate-700 focus-ring"
         >
           <Copy className="w-4 h-4 mr-1" />
           <span className="text-xs">Cite</span>
         </Button>
         
         <Link href={`/reports/${report.id}`}>
-          <Button size="sm" className="flex items-center space-x-1">
+          <Button size="sm" className="flex items-center space-x-1 bg-indigo-600 hover:bg-indigo-700 focus-ring">
             <span>View Summary</span>
             <ExternalLink className="w-3 h-3" />
           </Button>
