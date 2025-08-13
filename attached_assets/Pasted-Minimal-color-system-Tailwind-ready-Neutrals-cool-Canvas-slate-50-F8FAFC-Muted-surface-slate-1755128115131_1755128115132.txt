@@ -1,0 +1,47 @@
+Minimal color system (Tailwind-ready)
+Neutrals (cool):
+Canvas: slate-50 #F8FAFC
+Muted surface: slate-100 #F1F5F9
+Card border/dividers: slate-200 #E2E8F0
+Text primary: slate-900 #0F172A
+Text secondary: slate-600 #475569
+Accent (primary):
+Primary: indigo-600 #4F46E5
+Primary hover: indigo-700 #4338CA
+Tints for emphasis blocks: indigo-50 / border indigo-200
+This keeps things cool/administrative. If you want warmer, swap slate→stone and indigo→violet or emerald. But stick to one accent.
+Surface ladder (use this everywhere)
+L0 Canvas (page): bg-slate-50
+L1 Sections (page bands/summaries): bg-white with border-slate-200
+L2 Cards (findings/blocks): bg-white with border, small shadow
+L3 Emphasis (AI-assisted card, notices): tinted bg-indigo-50 with border-indigo-200
+L4 Action (primary buttons, chips): filled bg-indigo-600 text-white
+Concrete UI changes to your page
+(assumes you’re using Tailwind + shadcn cards)
+1) Page wrapper & header
+Page container: className="bg-slate-50"
+Report header card: bg-white border border-slate-200 shadow-sm
+Title: text-slate-900 (make it the darkest thing on the page)
+Meta chips: bg-slate-100 text-slate-700 (keep subtle)
+Primary action (Open PDF): bg-indigo-600 hover:bg-indigo-700 text-white
+2) Summary section
+“Overall Conclusion” card: white card, left border accent for a crisp cue
+className="bg-white border border-slate-200 shadow-sm relative" and add a left edge:
+<div className="absolute left-0 top-0 h-full w-1 bg-indigo-600 rounded-l-md" />
+“Audit Scope” (original text) card: white card with standard border; body text in text-slate-700.
+3) AI-assisted block (your request)
+Combine AI Scope Summary + AI Insight in one card at the bottom of Summary:
+className="bg-indigo-50 border border-indigo-200 rounded-xl p-5"
+Headings in text-slate-700, body in text-slate-900. This reads clearly as “different,” yet restrained.
+4) Findings & Recommendations
+Cards: white with border-slate-200 shadow-sm.
+Number badge only (no severity, no theme):
+badge bg-slate-100 text-slate-700 so numbering is visible but quiet.
+Preview truncation: 300–360 chars (not 200) to reduce “dot-dot-dot” fatigue.
+5) Dividers & spacing
+Add Separator components (border-slate-200) between major blocks inside Summary so content breathes.
+Increase vertical rhythm: section headings mt-10 mb-3, cards mb-4. You want consistent gaps to read as intentional design.
+6) Typography scale & weight
+H1 title: 28–32 px, 700 weight, tight line-height (1.15–1.2)
+H3 section heads: 18–20 px, 600 weight
+Body: 16 px, line-height 1.6; long paragraphs in font-serif if you like that scholarly tone (you already use it—keep it).
