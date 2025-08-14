@@ -98,7 +98,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                 </h3>
                 <Card className="bg-card border warm-shadow">
                   <CardContent className="p-6">
-                    <p className="text-secondary leading-relaxed">
+                    <p className="text-black leading-relaxed">
                       {auditScope}
                     </p>
                   </CardContent>
