@@ -26,10 +26,10 @@ export default function Home() {
     <div className="max-w-7xl mx-auto px-6 lg:px-8 section-spacing">
       {/* Hero Section */}
       <div className="text-center content-spacing">
-        <h1 className="text-4xl lg:text-5xl font-bold text-primary mb-6 tracking-tight">
+        <h1 className="text-4xl lg:text-5xl font-bold text-black mb-6 tracking-tight">
           Find insights from {stats?.totalReports || 105}+ Medicaid audit reports
         </h1>
-        <p className="text-xl text-secondary mb-8 max-w-3xl mx-auto leading-relaxed">
+        <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed" style={{ color: '#C2410C' }}>
           Search, compare, and analyze audit findings across states, agencies, and topics 
           to inform program management decisions.
         </p>

@@ -58,7 +58,7 @@ export default function ReportCard({ report }: ReportCardProps) {
         </div>
 
         {report.conclusionExcerpt && (
-          <p className="text-sm text-muted line-clamp-3 mb-4 leading-relaxed">
+          <p className="text-sm text-black line-clamp-3 mb-4 leading-relaxed">
             {report.conclusionExcerpt}
           </p>
         )}
