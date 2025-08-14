@@ -43,7 +43,7 @@ export default function FilterChips({ filters, onRemoveFilter, onClearAll }: Fil
   const getChipColor = (key: string) => {
     switch (key) {
       case 'state':
-        return 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200';
+        return 'bg-primary/10 text-primary hover:bg-primary/20';
       case 'year':
         return 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-200';
       case 'theme':
@@ -51,9 +51,9 @@ export default function FilterChips({ filters, onRemoveFilter, onClearAll }: Fil
       case 'hasAiInsight':
         return 'bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900 dark:text-rose-200';
       case 'featured':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-accent text-accent-foreground hover:bg-accent/80';
       default:
-        return 'bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200';
+        return 'bg-secondary text-secondary-foreground hover:bg-secondary/80';
     }
   };
 

@@ -88,7 +88,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
 
             {/* Separator */}
             {overallConclusion && auditScope && (
-              <Separator className="my-6 border-slate-200" />
+              <Separator className="my-6 " />
             )}
 
             {/* Original Scope (moved here) */}
@@ -109,7 +109,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
 
             {/* Separator */}
             {(overallConclusion || auditScope) && findings.length > 0 && (
-              <Separator className="my-6 border-slate-200" />
+              <Separator className="my-6 " />
             )}
 
             {/* Key Findings Summary (simple, no labels) */}
@@ -143,7 +143,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                     );
                   })}
                   {findings.length > 3 && (
-                    <p className="text-sm text-slate-600 text-center py-2">
+                    <p className="text-sm text-muted-foreground text-center py-2">
                       View the Findings tab to see all {findings.length}{" "}
                       findings
                     </p>
@@ -155,7 +155,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* Separator */}
             {(overallConclusion || auditScope || findings.length > 0) &&
               (aiScopeSummary || aiInsight) && (
-                <Separator className="my-6 border-slate-200" />
+                <Separator className="my-6 " />
               )}
 
             {/* AI-Assisted (AI Scope Summary + AI Insight) */}
@@ -223,8 +223,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Info className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-600">
+                <Info className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
                   No specific objectives documented for this audit
                 </p>
               </div>
@@ -264,8 +264,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Info className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-600">
+                <Info className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
                   No findings documented for this audit
                 </p>
               </div>
@@ -311,8 +311,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Info className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-600">
+                <Info className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
                   No recommendations provided for this audit
                 </p>
               </div>

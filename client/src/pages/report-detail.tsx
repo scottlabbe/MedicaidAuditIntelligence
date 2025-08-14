@@ -106,12 +106,12 @@ export default function ReportDetail() {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link href="/explore">
-            <Button variant="ghost" size="sm" className="mb-4 text-slate-600 hover:text-slate-900">
+            <Button variant="ghost" size="sm" className="mb-4 text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Explore
             </Button>
@@ -119,24 +119,24 @@ export default function ReportDetail() {
         </div>
 
         {/* Report Detail */}
-        <Card className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+        <Card className="bg-card border shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="border-b border-slate-200 p-6">
+          <div className="border-b p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-3">
-                  <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-700">
+                  <Badge variant="secondary" className="text-xs">
                     {report.state}
                   </Badge>
-                  <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">
+                  <Badge variant="outline" className="text-xs">
                     {report.auditOrganization}
                   </Badge>
-                  <span className="text-sm text-slate-600">
+                  <span className="text-sm text-muted-foreground">
                     Published {formatDate(report)}
                   </span>
                 </div>
                 
-                <h1 className="text-3xl font-bold text-slate-900 mb-3 leading-tight">
+                <h1 className="text-3xl font-bold text-foreground mb-3 leading-tight">
                   {report.reportTitle}
                 </h1>
               </div>

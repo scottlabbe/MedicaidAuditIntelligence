@@ -119,7 +119,7 @@ export default function Home() {
                 subtitle="Last 5 years"
                 trend="+12%"
                 icon={FileText}
-                color="indigo"
+                color="orange"
               />
               <StatsCard
                 title="States Covered"

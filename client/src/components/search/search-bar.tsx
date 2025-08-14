@@ -40,8 +40,8 @@ export default function SearchBar({
     : "absolute right-2 top-2 px-3 py-1 rounded-md text-sm";
 
   const iconClasses = size === "large"
-    ? "absolute left-4 top-5 w-6 h-6 text-slate-400"
-    : "absolute left-3 top-3 w-4 h-4 text-slate-400";
+    ? "absolute left-4 top-5 w-6 h-6 text-muted-foreground"
+    : "absolute left-3 top-3 w-4 h-4 text-muted-foreground";
 
   return (
     <form onSubmit={handleSubmit} className={`relative ${className}`}>
@@ -55,7 +55,7 @@ export default function SearchBar({
       <Search className={iconClasses} />
       <Button
         type="submit"
-        className={`${buttonClasses} bg-indigo-600 hover:bg-indigo-700 text-white transition-colors`}
+        className={`${buttonClasses} bg-primary hover:bg-primary/90 text-primary-foreground transition-colors`}
       >
         Search
       </Button>

@@ -8,29 +8,29 @@ interface StatsCardProps {
   subtitle: string;
   trend: string;
   icon: LucideIcon;
-  color: "indigo" | "emerald" | "amber" | "rose";
+  color: "orange" | "emerald" | "amber" | "rose";
 }
 
 const colorClasses = {
-  indigo: {
-    iconBg: "bg-orange-light",
-    iconColor: "text-orange-primary",
+  orange: {
+    iconBg: "bg-accent",
+    iconColor: "text-primary",
     trendColor: "text-emerald-600",
   },
   emerald: {
-    iconBg: "bg-surface-2",
+    iconBg: "bg-secondary",
     iconColor: "text-emerald-600",
     trendColor: "text-primary",
   },
   amber: {
-    iconBg: "bg-surface-2",
+    iconBg: "bg-secondary",
     iconColor: "text-amber-600",
-    trendColor: "text-orange-primary",
+    trendColor: "text-primary",
   },
   rose: {
-    iconBg: "bg-surface-2",
+    iconBg: "bg-secondary",
     iconColor: "text-rose-600",
-    trendColor: "text-orange-primary",
+    trendColor: "text-primary",
   },
 };
 
