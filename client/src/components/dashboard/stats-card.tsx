@@ -13,24 +13,24 @@ interface StatsCardProps {
 
 const colorClasses = {
   indigo: {
-    iconBg: "bg-indigo-100 dark:bg-indigo-900",
-    iconColor: "text-indigo-600 dark:text-indigo-400",
-    trendColor: "text-emerald-600 dark:text-emerald-400",
+    iconBg: "bg-orange-light",
+    iconColor: "text-orange-primary",
+    trendColor: "text-emerald-600",
   },
   emerald: {
-    iconBg: "bg-emerald-100 dark:bg-emerald-900",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
+    iconBg: "bg-surface-2",
+    iconColor: "text-emerald-600",
     trendColor: "text-primary",
   },
   amber: {
-    iconBg: "bg-amber-100 dark:bg-amber-900",
-    iconColor: "text-amber-600 dark:text-amber-400",
-    trendColor: "text-rose-600 dark:text-rose-400",
+    iconBg: "bg-surface-2",
+    iconColor: "text-amber-600",
+    trendColor: "text-orange-primary",
   },
   rose: {
-    iconBg: "bg-rose-100 dark:bg-rose-900",
-    iconColor: "text-rose-600 dark:text-rose-400",
-    trendColor: "text-rose-600 dark:text-rose-400",
+    iconBg: "bg-surface-2",
+    iconColor: "text-rose-600",
+    trendColor: "text-orange-primary",
   },
 };
 
@@ -38,7 +38,7 @@ export default function StatsCard({ title, value, subtitle, trend, icon: Icon, c
   const colors = colorClasses[color];
 
   return (
-    <Card>
+    <Card className="warm-shadow">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className={`w-12 h-12 ${colors.iconBg} rounded-xl flex items-center justify-center`}>
@@ -48,11 +48,11 @@ export default function StatsCard({ title, value, subtitle, trend, icon: Icon, c
             {trend}
           </Badge>
         </div>
-        <h3 className="text-2xl font-bold text-foreground mb-1">
+        <h3 className="text-2xl font-bold text-primary mb-1">
           {value.toLocaleString()}
         </h3>
-        <p className="text-sm text-muted-foreground">{title}</p>
-        <p className="text-xs text-muted-foreground mt-2">{subtitle}</p>
+        <p className="text-sm text-secondary">{title}</p>
+        <p className="text-xs text-muted mt-2">{subtitle}</p>
       </CardContent>
     </Card>
   );

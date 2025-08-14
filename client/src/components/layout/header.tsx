@@ -31,15 +31,15 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-card border-b border-border sticky top-0 z-50">
+      <header className="bg-card border-b border warm-shadow sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <Link href="/" className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-primary-foreground" />
+                <div className="w-8 h-8 bg-orange-primary rounded-lg flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-semibold text-foreground">
+                <span className="text-xl font-semibold text-primary">
                   Medicaid Audit Explorer
                 </span>
               </Link>
@@ -52,8 +52,8 @@ export default function Header() {
                     href={item.href}
                     className={`font-medium transition-colors ${
                       location === item.href
-                        ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "text-orange-primary"
+                        : "text-secondary hover:text-orange-primary"
                     }`}
                   >
                     {item.name}
@@ -68,11 +68,11 @@ export default function Header() {
                 variant="outline"
                 size="sm"
                 onClick={() => setCommandOpen(true)}
-                className="flex items-center space-x-2 bg-muted hover:bg-muted/80"
+                className="flex items-center space-x-2 bg-surface-2 hover:bg-surface-3 border focus-ring"
               >
                 <Search className="w-4 h-4" />
                 <span className="hidden sm:inline">Search reports...</span>
-                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 bg-background rounded text-xs text-muted-foreground border">
+                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 bg-background rounded text-xs text-muted border">
                   ⌘K
                 </kbd>
               </Button>
@@ -102,8 +102,8 @@ export default function Header() {
                         href={item.href}
                         className={`block py-2 px-3 rounded-lg transition-colors ${
                           location === item.href
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted"
+                            ? "bg-orange-primary text-white"
+                            : "hover:bg-surface-2"
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >

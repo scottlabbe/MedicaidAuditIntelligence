@@ -12,15 +12,15 @@ import ReportCard from "@/components/reports/report-card";
 import type { DashboardStats, ReportListItem } from "@/lib/types";
 
 export default function Home() {
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
     queryFn: () => apiClient.getDashboardStats(),
-  });
+  }) as { data: DashboardStats | undefined, isLoading: boolean };
 
-  const { data: featuredReports, isLoading: reportsLoading } = useQuery<ReportListItem[]>({
+  const { data: featuredReports, isLoading: reportsLoading } = useQuery({
     queryKey: ["/api/reports/featured"],
     queryFn: () => apiClient.getFeaturedReports(6),
-  });
+  }) as { data: ReportListItem[] | undefined, isLoading: boolean };
 
   return (
     <div className="max-w-7xl mx-auto px-6 lg:px-8 section-spacing">
@@ -88,9 +88,9 @@ export default function Home() {
       {/* Dashboard Preview Section */}
       <section className="mb-12">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Quick Insights</h2>
+          <h2 className="text-2xl font-bold text-primary">Quick Insights</h2>
           <Link href="/dashboard">
-            <Button variant="outline" className="flex items-center space-x-2 border-slate-300 text-slate-700 hover:bg-slate-50 focus-ring">
+            <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
               <span>View full dashboard</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
