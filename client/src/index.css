@@ -3,7 +3,22 @@
 @tailwind utilities;
 
 :root {
-  /* Slate 50-900 Neutral Scale */
+  /* Warm Cream & Neutral Scale */
+  --canvas: 255 248 243;        /* #FFF8F3 - L0 Canvas */
+  --surface-1: 255 255 255;     /* white - L1 Cards */
+  --surface-2: 255 240 229;     /* #FFF0E5 - L2 Badges */
+  --border: 253 230 138;        /* #FDE68A - Golden borders */
+  --text-primary: 24 24 27;     /* #18181B - Near black */
+  --text-secondary: 113 113 122; /* #71717A - Neutral gray */
+  --text-muted: 161 161 170;    /* #A1A1AA - Placeholders */
+  --text-subtle: 212 212 216;   /* #D4D4D8 - Empty state icons */
+  
+  /* Burnt Orange Accent System */
+  --orange-primary: 234 88 12;      /* #EA580C - Primary actions */
+  --orange-light: 254 215 170;      /* #FED7AA - Hover/selected */
+  --orange-dark: 194 65 12;         /* #C2410C - Button hover */
+  
+  /* Legacy Slate Colors (for gradual migration) */
   --slate-50: 248 250 252;
   --slate-100: 241 245 249;
   --slate-200: 226 232 240;
@@ -15,45 +30,44 @@
   --slate-800: 30 41 59;
   --slate-900: 15 23 42;
   
-  /* Accent Colors from Spec */
-  --indigo-600: 79 70 229;
+  /* Chart Colors */
   --emerald-600: 5 150 105;
   --amber-600: 217 119 6;
   --rose-600: 225 29 72;
   
-  /* Design System Colors */
-  --background: hsl(var(--slate-50));
-  --foreground: hsl(var(--slate-900));
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(var(--slate-900));
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(var(--slate-900));
-  --primary: hsl(var(--indigo-600));
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(var(--slate-100));
-  --secondary-foreground: hsl(var(--slate-800));
-  --muted: hsl(var(--slate-100));
-  --muted-foreground: hsl(var(--slate-500));
-  --accent: hsl(var(--slate-100));
-  --accent-foreground: hsl(var(--slate-800));
+  /* Design System Colors - Warm Cream & Burnt Orange */
+  --background: hsl(var(--canvas));
+  --foreground: hsl(var(--text-primary));
+  --card: hsl(var(--surface-1));
+  --card-foreground: hsl(var(--text-primary));
+  --popover: hsl(var(--surface-1));
+  --popover-foreground: hsl(var(--text-primary));
+  --primary: hsl(var(--orange-primary));
+  --primary-foreground: hsl(var(--surface-1));
+  --secondary: hsl(var(--surface-2));
+  --secondary-foreground: hsl(var(--text-secondary));
+  --muted: hsl(var(--surface-2));
+  --muted-foreground: hsl(var(--text-muted));
+  --accent: hsl(var(--orange-light));
+  --accent-foreground: hsl(var(--orange-primary));
   --destructive: hsl(var(--rose-600));
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(var(--slate-200));
-  --input: hsl(var(--slate-200));
-  --ring: hsl(var(--indigo-600));
-  --chart-1: hsl(var(--indigo-600));
+  --destructive-foreground: hsl(var(--surface-1));
+  --border: hsl(var(--border));
+  --input: hsl(var(--border));
+  --ring: hsl(var(--orange-primary));
+  --chart-1: hsl(var(--orange-primary));
   --chart-2: hsl(var(--emerald-600));
   --chart-3: hsl(var(--amber-600));
   --chart-4: hsl(var(--emerald-600));
   --chart-5: hsl(var(--rose-600));
-  --sidebar: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(var(--slate-900));
-  --sidebar-primary: hsl(var(--indigo-600));
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(var(--slate-100));
-  --sidebar-accent-foreground: hsl(var(--slate-800));
-  --sidebar-border: hsl(var(--slate-200));
-  --sidebar-ring: hsl(var(--indigo-600));
+  --sidebar: hsl(var(--surface-1));
+  --sidebar-foreground: hsl(var(--text-primary));
+  --sidebar-primary: hsl(var(--orange-primary));
+  --sidebar-primary-foreground: hsl(var(--surface-1));
+  --sidebar-accent: hsl(var(--surface-2));
+  --sidebar-accent-foreground: hsl(var(--text-secondary));
+  --sidebar-border: hsl(var(--border));
+  --sidebar-ring: hsl(var(--orange-primary));
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Source Serif 4', serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -61,38 +75,48 @@
 }
 
 .dark {
-  --background: hsl(var(--slate-900));
-  --foreground: hsl(var(--slate-50));
-  --card: hsl(var(--slate-800));
-  --card-foreground: hsl(var(--slate-50));
-  --popover: hsl(var(--slate-800));
-  --popover-foreground: hsl(var(--slate-50));
-  --primary: hsl(99 102 241);
-  --primary-foreground: hsl(var(--slate-900));
-  --secondary: hsl(var(--slate-800));
-  --secondary-foreground: hsl(var(--slate-200));
-  --muted: hsl(var(--slate-800));
-  --muted-foreground: hsl(var(--slate-400));
-  --accent: hsl(var(--slate-800));
-  --accent-foreground: hsl(var(--slate-200));
+  /* Dark mode maintains warm undertones */
+  --canvas: 20 20 23;           /* Dark warm canvas */
+  --surface-1: 39 39 42;        /* Dark cards */
+  --surface-2: 63 63 70;        /* Dark badges */
+  --border: 82 82 91;           /* Dark borders */
+  --text-primary: 244 244 245;  /* Light text */
+  --text-secondary: 161 161 170; /* Medium text */
+  --text-muted: 113 113 122;    /* Muted text */
+  --text-subtle: 82 82 91;      /* Subtle text */
+  
+  --background: hsl(var(--canvas));
+  --foreground: hsl(var(--text-primary));
+  --card: hsl(var(--surface-1));
+  --card-foreground: hsl(var(--text-primary));
+  --popover: hsl(var(--surface-1));
+  --popover-foreground: hsl(var(--text-primary));
+  --primary: hsl(var(--orange-primary));
+  --primary-foreground: hsl(var(--surface-1));
+  --secondary: hsl(var(--surface-2));
+  --secondary-foreground: hsl(var(--text-secondary));
+  --muted: hsl(var(--surface-2));
+  --muted-foreground: hsl(var(--text-muted));
+  --accent: hsl(var(--orange-light));
+  --accent-foreground: hsl(var(--orange-primary));
   --destructive: hsl(239 68 68);
-  --destructive-foreground: hsl(var(--slate-50));
-  --border: hsl(var(--slate-700));
-  --input: hsl(var(--slate-700));
-  --ring: hsl(99 102 241);
-  --chart-1: hsl(99 102 241);
+  --destructive-foreground: hsl(var(--text-primary));
+  --border: hsl(var(--border));
+  --input: hsl(var(--border));
+  --ring: hsl(var(--orange-primary));
+  --chart-1: hsl(var(--orange-primary));
   --chart-2: hsl(34 197 94);
   --chart-3: hsl(251 146 60);
   --chart-4: hsl(34 197 94);
   --chart-5: hsl(239 68 68);
-  --sidebar: hsl(var(--slate-900));
-  --sidebar-foreground: hsl(var(--slate-50));
-  --sidebar-primary: hsl(99 102 241);
-  --sidebar-primary-foreground: hsl(var(--slate-900));
-  --sidebar-accent: hsl(var(--slate-800));
-  --sidebar-accent-foreground: hsl(var(--slate-200));
-  --sidebar-border: hsl(var(--slate-700));
-  --sidebar-ring: hsl(99 102 241);
+  --sidebar: hsl(var(--surface-1));
+  --sidebar-foreground: hsl(var(--text-primary));
+  --sidebar-primary: hsl(var(--orange-primary));
+  --sidebar-primary-foreground: hsl(var(--surface-1));
+  --sidebar-accent: hsl(var(--surface-2));
+  --sidebar-accent-foreground: hsl(var(--text-secondary));
+  --sidebar-border: hsl(var(--border));
+  --sidebar-ring: hsl(var(--orange-primary));
 }
 
 @layer base {
@@ -132,9 +156,9 @@
     -webkit-line-clamp: 3;
   }
   
-  /* Sharp Design System Utilities */
+  /* Warm Design System Utilities */
   .card-hover {
-    @apply transition-all duration-200 ease-out hover:animate-lift hover:border-slate-300;
+    @apply transition-all duration-200 ease-out hover:animate-lift;
   }
   
   .filter-transition {
@@ -142,11 +166,22 @@
   }
   
   .prose-content {
-    @apply font-serif text-slate-700 leading-relaxed;
+    @apply font-serif leading-relaxed;
+    color: hsl(var(--text-secondary));
   }
   
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: hsl(var(--orange-primary));
+  }
+  
+  /* Warm shadows */
+  .warm-shadow {
+    box-shadow: 0 2px 4px rgba(234, 88, 12, 0.05);
+  }
+  
+  .warm-shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.1), 0 4px 6px -4px rgba(234, 88, 12, 0.05);
   }
   
   /* Generous whitespace patterns */
