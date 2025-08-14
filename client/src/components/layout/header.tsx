@@ -31,7 +31,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-card border-b border warm-shadow sticky top-0 z-50">
+      <header className="sticky top-0 z-50 warm-shadow" style={{ backgroundColor: '#FFFDFB', borderBottom: '1px solid #FDE68A' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
@@ -39,7 +39,7 @@ export default function Header() {
                 <div className="w-8 h-8 bg-orange-primary rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-semibold text-primary">
+                <span className="text-xl font-semibold text-black">
                   Medicaid Audit Explorer
                 </span>
               </Link>
