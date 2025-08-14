@@ -30,7 +30,7 @@ export default function ReportCard({ report }: ReportCardProps) {
             <Badge variant="secondary" className="text-xs px-3 py-1 bg-orange-light text-orange-primary border-orange-primary/20">
               {report.state}
             </Badge>
-            <Badge variant="secondary" className="text-xs px-3 py-1" style={{ backgroundColor: '#FED7AA', color: '#C2410C', border: '1px solid #EA580C20' }}>
+            <Badge variant="secondary" className="text-xs px-3 py-1 bg-transparent text-orange-primary border-orange-primary/20">
               {report.publicationYear}
             </Badge>
           </div>
