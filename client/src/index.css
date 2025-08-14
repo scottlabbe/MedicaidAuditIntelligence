@@ -184,6 +184,25 @@
     box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.1), 0 4px 6px -4px rgba(234, 88, 12, 0.05);
   }
   
+  /* Explicit Color Utilities */
+  .text-primary { color: hsl(var(--text-primary)) !important; }
+  .text-secondary { color: hsl(var(--text-secondary)) !important; }
+  .text-muted { color: hsl(var(--text-muted)) !important; }
+  
+  .bg-surface-2 { background-color: hsl(var(--surface-2)) !important; }
+  .bg-surface-3 { background-color: hsl(var(--surface-2)) !important; }
+  
+  .bg-orange-primary { background-color: hsl(var(--orange-primary)) !important; }
+  .bg-orange-light { background-color: hsl(var(--orange-light)) !important; }
+  .bg-orange-dark { background-color: hsl(var(--orange-dark)) !important; }
+  
+  .text-orange-primary { color: hsl(var(--orange-primary)) !important; }
+  .text-orange-light { color: hsl(var(--orange-light)) !important; }
+  .text-orange-dark { color: hsl(var(--orange-dark)) !important; }
+  
+  .border-orange-primary { border-color: hsl(var(--orange-primary)) !important; }
+  .border-orange-light { border-color: hsl(var(--orange-light)) !important; }
+  
   /* Generous whitespace patterns */
   .section-spacing {
     @apply py-12 lg:py-16;
