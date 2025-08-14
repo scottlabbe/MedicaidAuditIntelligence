@@ -131,10 +131,10 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                       >
                         <CardContent className="p-4">
                           <div className="flex items-start gap-3">
-                            <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-semibold">
                               {f.order ?? i + 1}
                             </div>
-                            <p className="text-slate-900 leading-relaxed">
+                            <p className="font-serif leading-relaxed text-slate-900">
                               {preview}
                             </p>
                           </div>
@@ -248,8 +248,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                       key={f.id ?? idx}
                       className="bg-white border border-slate-200 shadow-sm"
                     >
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
                           <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-semibold">
                             {f.order ?? idx + 1}
                           </div>
@@ -293,8 +293,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                       key={r.id ?? idx}
                       className="bg-white border border-slate-200 shadow-sm"
                     >
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
                           <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center">
                             <span className="text-sm font-semibold">
                               {r.order ?? idx + 1}
