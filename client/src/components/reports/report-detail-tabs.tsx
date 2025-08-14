@@ -78,7 +78,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                 <Card className="bg-white border border-slate-200 shadow-sm relative">
                   <CardContent className="p-6">
                     <div className="absolute left-0 top-0 h-full w-1 bg-indigo-600 rounded-l-md" />
-                    <p className="leading-relaxed font-serif text-slate-900 pl-2">
+                    <p className="leading-relaxed text-slate-900 pl-2">
                       {overallConclusion}
                     </p>
                   </CardContent>
@@ -99,7 +99,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                 </h3>
                 <Card className="bg-white border border-slate-200 shadow-sm">
                   <CardContent className="p-6">
-                    <p className="text-slate-700 leading-relaxed font-serif">
+                    <p className="text-slate-700 leading-relaxed">
                       {auditScope}
                     </p>
                   </CardContent>
@@ -134,7 +134,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                             <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-semibold">
                               {f.order ?? i + 1}
                             </div>
-                            <p className="font-serif leading-relaxed text-slate-900">
+                            <p className="leading-relaxed text-slate-900">
                               {preview}
                             </p>
                           </div>
@@ -212,7 +212,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                           <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-semibold">
                             {o.order ?? idx + 1}
                           </div>
-                          <p className="font-serif leading-relaxed text-slate-900">
+                          <p className="leading-relaxed text-slate-900">
                             {text}
                           </p>
                         </div>
@@ -253,7 +253,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                           <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-semibold">
                             {f.order ?? idx + 1}
                           </div>
-                          <p className="font-serif leading-relaxed text-slate-900">
+                          <p className="leading-relaxed text-slate-900">
                             {text}
                           </p>
                         </div>
@@ -300,7 +300,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                               {r.order ?? idx + 1}
                             </span>
                           </div>
-                          <p className="font-serif leading-relaxed text-slate-900">
+                          <p className="leading-relaxed text-slate-900">
                             {text}
                           </p>
                         </div>
