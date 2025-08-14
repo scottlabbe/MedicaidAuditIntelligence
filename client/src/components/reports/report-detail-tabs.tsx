@@ -72,13 +72,13 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* Overall Conclusion */}
             {overallConclusion && (
               <div className="mt-10">
-                <h3 className="text-xl font-semibold mb-3 text-slate-900">
+                <h3 className="text-xl font-semibold mb-3 text-primary">
                   Overall Conclusion
                 </h3>
-                <Card className="bg-white border border-slate-200 shadow-sm relative">
+                <Card className="bg-card border warm-shadow relative">
                   <CardContent className="p-6">
-                    <div className="absolute left-0 top-0 h-full w-1 bg-indigo-600 rounded-l-md" />
-                    <p className="leading-relaxed text-slate-900 pl-2">
+                    <div className="absolute left-0 top-0 h-full w-1 bg-orange-primary rounded-l-md" />
+                    <p className="leading-relaxed text-primary pl-2">
                       {overallConclusion}
                     </p>
                   </CardContent>
@@ -94,12 +94,12 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* Original Scope (moved here) */}
             {auditScope && (
               <div className="mt-10">
-                <h3 className="text-xl font-semibold mb-3 text-slate-900">
+                <h3 className="text-xl font-semibold mb-3 text-primary">
                   Audit Scope
                 </h3>
-                <Card className="bg-white border border-slate-200 shadow-sm">
+                <Card className="bg-card border warm-shadow">
                   <CardContent className="p-6">
-                    <p className="text-slate-700 leading-relaxed">
+                    <p className="text-secondary leading-relaxed">
                       {auditScope}
                     </p>
                   </CardContent>
@@ -115,7 +115,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* Key Findings Summary (simple, no labels) */}
             {findings.length > 0 && (
               <div className="mt-10">
-                <h3 className="text-xl font-semibold mb-3 text-slate-900">
+                <h3 className="text-xl font-semibold mb-3 text-primary">
                   Key Findings Summary
                 </h3>
                 <div className="space-y-4">
@@ -127,14 +127,14 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                     return (
                       <Card
                         key={f.id ?? i}
-                        className="bg-white border border-slate-200 shadow-sm"
+                        className="bg-card border warm-shadow"
                       >
                         <CardContent className="p-4">
                           <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-surface-2 text-secondary flex items-center justify-center text-sm font-semibold">
                               {f.order ?? i + 1}
                             </div>
-                            <p className="leading-relaxed text-slate-900">
+                            <p className="leading-relaxed text-primary">
                               {preview}
                             </p>
                           </div>
@@ -161,26 +161,26 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* AI-Assisted (AI Scope Summary + AI Insight) */}
             {(aiScopeSummary || aiInsight) && (
               <div className="mt-10">
-                <h3 className="text-xl font-semibold mb-3 text-slate-900">
+                <h3 className="text-xl font-semibold mb-3 text-primary">
                   AI-Assisted
                 </h3>
-                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 space-y-4">
+                <div className="bg-orange-light border border-orange-primary/20 rounded-xl p-5 space-y-4 warm-shadow">
                   {aiScopeSummary && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-700 mb-1">
+                      <p className="text-xs uppercase tracking-wide text-secondary mb-1">
                         AI Scope Summary
                       </p>
-                      <p className="font-serif leading-relaxed text-slate-900">
+                      <p className="font-serif leading-relaxed text-primary">
                         {aiScopeSummary}
                       </p>
                     </div>
                   )}
                   {aiInsight && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-700 mb-1">
+                      <p className="text-xs uppercase tracking-wide text-secondary mb-1">
                         AI-Generated Insight
                       </p>
-                      <p className="font-serif leading-relaxed text-slate-900">
+                      <p className="font-serif leading-relaxed text-primary">
                         {aiInsight}
                       </p>
                     </div>
@@ -194,7 +194,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* OBJECTIVES */}
         <TabsContent value="objectives" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold mb-4 text-slate-900">
+            <h3 className="text-xl font-semibold mb-4 text-primary">
               Audit Objectives
             </h3>
             {objectives.length ? (
@@ -205,14 +205,14 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                   return (
                     <Card
                       key={o.id ?? idx}
-                      className="bg-white border border-slate-200 shadow-sm"
+                      className="bg-card border warm-shadow"
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-semibold">
+                          <div className="w-8 h-8 bg-surface-2 text-secondary rounded-full flex items-center justify-center text-sm font-semibold">
                             {o.order ?? idx + 1}
                           </div>
-                          <p className="leading-relaxed text-slate-900">
+                          <p className="leading-relaxed text-primary">
                             {text}
                           </p>
                         </div>
@@ -235,7 +235,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* FINDINGS */}
         <TabsContent value="findings" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold mb-4 text-slate-900">
+            <h3 className="text-xl font-semibold mb-4 text-primary">
               Audit Findings ({findings.length})
             </h3>
             {findings.length ? (
@@ -246,14 +246,14 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                   return (
                     <Card
                       key={f.id ?? idx}
-                      className="bg-white border border-slate-200 shadow-sm"
+                      className="bg-card border warm-shadow"
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-sm font-semibold">
+                          <div className="w-8 h-8 bg-surface-2 text-secondary rounded-full flex items-center justify-center text-sm font-semibold">
                             {f.order ?? idx + 1}
                           </div>
-                          <p className="leading-relaxed text-slate-900">
+                          <p className="leading-relaxed text-primary">
                             {text}
                           </p>
                         </div>
@@ -276,7 +276,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* RECOMMENDATIONS */}
         <TabsContent value="recommendations" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold mb-4 text-slate-900">
+            <h3 className="text-xl font-semibold mb-4 text-primary">
               Recommendations ({recommendations.length})
             </h3>
             {recommendations.length ? (
@@ -291,16 +291,16 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                   return (
                     <Card
                       key={r.id ?? idx}
-                      className="bg-white border border-slate-200 shadow-sm"
+                      className="bg-card border warm-shadow"
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-surface-2 text-secondary rounded-full flex items-center justify-center">
                             <span className="text-sm font-semibold">
                               {r.order ?? idx + 1}
                             </span>
                           </div>
-                          <p className="leading-relaxed text-slate-900">
+                          <p className="leading-relaxed text-primary">
                             {text}
                           </p>
                         </div>

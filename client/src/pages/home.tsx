@@ -26,10 +26,10 @@ export default function Home() {
     <div className="max-w-7xl mx-auto px-6 lg:px-8 section-spacing">
       {/* Hero Section */}
       <div className="text-center content-spacing">
-        <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
+        <h1 className="text-4xl lg:text-5xl font-bold text-primary mb-6 tracking-tight">
           Find insights from {stats?.totalReports || 105}+ Medicaid audit reports
         </h1>
-        <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+        <p className="text-xl text-secondary mb-8 max-w-3xl mx-auto leading-relaxed">
           Search, compare, and analyze audit findings across states, agencies, and topics 
           to inform program management decisions.
         </p>
@@ -40,9 +40,9 @@ export default function Home() {
       {/* Featured Reports Section */}
       <section className="mb-12">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Featured Reports</h2>
+          <h2 className="text-2xl font-bold text-primary">Featured Reports</h2>
           <Link href="/explore">
-            <Button variant="outline" className="flex items-center space-x-2 border-slate-300 text-slate-700 hover:bg-slate-50 focus-ring">
+            <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
               <span>View all reports</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
