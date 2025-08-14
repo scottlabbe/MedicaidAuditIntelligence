@@ -40,7 +40,7 @@ export default function Home() {
       {/* Featured Reports Section */}
       <section className="mb-12">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-primary">Featured Reports</h2>
+          <h2 className="text-2xl font-bold text-black">Featured Reports</h2>
           <Link href="/explore">
             <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
               <span>View all reports</span>
@@ -88,7 +88,7 @@ export default function Home() {
       {/* Dashboard Preview Section */}
       <section className="mb-12">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-primary">Quick Insights</h2>
+          <h2 className="text-2xl font-bold text-black">Quick Insights</h2>
           <Link href="/dashboard">
             <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
               <span>View full dashboard</span>

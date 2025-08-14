@@ -101,7 +101,7 @@ export default function Explore() {
         <div className="flex-1">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Explore Reports</h1>
+            <h1 className="text-3xl font-bold text-black mb-2">Explore Reports</h1>
             <p className="text-muted-foreground">
               {searchResults ? `${searchResults.total} reports found` : "Loading reports..."}
             </p>
@@ -113,7 +113,7 @@ export default function Explore() {
               <div className="flex flex-wrap items-center gap-4">
                 {/* Active Filters */}
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-foreground flex items-center space-x-2">
+                  <span className="text-sm font-medium text-black flex items-center space-x-2">
                     <Filter className="w-4 h-4" />
                     <span>Filters:</span>
                   </span>

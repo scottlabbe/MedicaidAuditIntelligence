@@ -194,7 +194,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* OBJECTIVES */}
         <TabsContent value="objectives" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold mb-4 text-primary">
+            <h3 className="text-xl font-semibold mb-4 text-black">
               Audit Objectives
             </h3>
             {objectives.length ? (
@@ -235,7 +235,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* FINDINGS */}
         <TabsContent value="findings" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold mb-4 text-primary">
+            <h3 className="text-xl font-semibold mb-4 text-black">
               Audit Findings ({findings.length})
             </h3>
             {findings.length ? (
@@ -276,7 +276,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         {/* RECOMMENDATIONS */}
         <TabsContent value="recommendations" className="mt-0">
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold mb-4 text-primary">
+            <h3 className="text-xl font-semibold mb-4 text-black">
               Recommendations ({recommendations.length})
             </h3>
             {recommendations.length ? (

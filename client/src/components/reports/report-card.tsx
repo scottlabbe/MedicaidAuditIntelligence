@@ -41,17 +41,17 @@ export default function ReportCard({ report }: ReportCardProps) {
           )}
         </div>
         
-        <h3 className="font-semibold text-primary mb-3 line-clamp-2 text-lg leading-tight">
+        <h3 className="font-semibold text-black mb-3 line-clamp-2 text-lg leading-tight">
           {report.reportTitle}
         </h3>
         
         <div className="space-y-2 mb-4">
-          <div className="flex items-center text-sm text-secondary">
+          <div className="flex items-center text-sm text-black">
             <Building className="w-4 h-4 mr-2 flex-shrink-0" />
             <span className="truncate">{report.auditOrganization}</span>
           </div>
           
-          <div className="flex items-center text-sm text-secondary">
+          <div className="flex items-center text-sm text-black">
             <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
             <span>Published {report.publicationYear}</span>
           </div>

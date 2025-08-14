@@ -4,7 +4,7 @@
 
 :root {
   /* Warm Cream & Neutral Scale */
-  --canvas: 28 20 8;            /* #FFF8F3 - L0 Canvas */
+  --canvas: 28 82 94;           /* #FFF0E5 - Warm light orange background */
   --surface-1: 0 0 100;         /* white - L1 Cards */
   --surface-2: 28 82 94;        /* #FFF0E5 - L2 Badges */
   --border: 48 88 79;           /* #FDE68A - Golden borders */

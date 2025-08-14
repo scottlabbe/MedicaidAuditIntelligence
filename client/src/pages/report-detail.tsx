@@ -136,7 +136,7 @@ export default function ReportDetail() {
                   </span>
                 </div>
                 
-                <h1 className="text-3xl font-bold text-foreground mb-3 leading-tight">
+                <h1 className="text-3xl font-bold text-black mb-3 leading-tight">
                   {report.reportTitle}
                 </h1>
               </div>
