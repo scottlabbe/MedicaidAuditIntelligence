@@ -75,10 +75,9 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                 <h3 className="text-xl font-semibold mb-3 text-black">
                   Overall Conclusion
                 </h3>
-                <Card className="bg-card border warm-shadow relative">
+                <Card className="bg-card border warm-shadow border-l-4 border-l-orange-primary">
                   <CardContent className="p-6">
-                    <div className="absolute left-0 top-0 h-full w-1 bg-orange-primary rounded-l-md" />
-                    <p className="leading-relaxed text-black pl-2">
+                    <p className="leading-relaxed text-black">
                       {overallConclusion}
                     </p>
                   </CardContent>
