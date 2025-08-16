@@ -65,7 +65,7 @@ export default function USMap({
                     default: {
                       fill: has ? "var(--map-has-data)" : "var(--map-no-data)",
                       stroke: "var(--map-stroke)",
-                      strokeWidth: 0.5,
+                      strokeWidth: 0.6,
                     },
                     hover: {
                       fill: "var(--map-hover)",
@@ -89,7 +89,7 @@ export default function USMap({
               fill="none"
               stroke="var(--map-stroke)" 
               strokeWidth={0.6} 
-              style={{ pointerEvents: "none" }}
+              pointerEvents="none"
             />
           ))}
         </Geographies>
@@ -119,6 +119,24 @@ export default function USMap({
           />
         </div>
       )}
+
+      {/* Map Legend */}
+      <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <span 
+            className="h-3 w-3 rounded-sm inline-block" 
+            style={{background:'var(--map-has-data)'}} 
+          /> 
+          Has recent reports
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span 
+            className="h-3 w-3 rounded-sm inline-block" 
+            style={{background:'var(--map-no-data)'}} 
+          /> 
+          No recent reports
+        </span>
+      </div>
     </div>
   );
 }

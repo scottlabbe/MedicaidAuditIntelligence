@@ -38,7 +38,7 @@ export default function StatsCard({ title, value, subtitle, trend, icon: Icon, c
   const colors = colorClasses[color];
 
   return (
-    <Card className="warm-shadow">
+    <Card className="warm-shadow bg-card">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className={`w-12 h-12 ${colors.iconBg} rounded-xl flex items-center justify-center`}>
@@ -51,8 +51,8 @@ export default function StatsCard({ title, value, subtitle, trend, icon: Icon, c
         <h3 className="text-2xl font-bold text-primary mb-1">
           {value.toLocaleString()}
         </h3>
-        <p className="text-sm text-secondary">{title}</p>
-        <p className="text-xs text-muted mt-2">{subtitle}</p>
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground mt-2">{subtitle}</p>
       </CardContent>
     </Card>
   );

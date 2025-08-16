@@ -126,17 +126,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <Card>
-          <CardContent className="p-4 md:p-6">
-            {mapError ? (
-              <p className="text-destructive text-center py-8">Failed to load map data.</p>
-            ) : mapLoading || !mapData ? (
-              <div className="h-[520px] animate-pulse bg-muted/30 rounded-xl" />
-            ) : (
-              <USMap data={mapData} scope={scope} />
-            )}
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border p-4 md:p-6" style={{background: "var(--map-canvas)"}}>
+          {mapError ? (
+            <p className="text-destructive text-center py-8">Failed to load map data.</p>
+          ) : mapLoading || !mapData ? (
+            <div className="h-[520px] animate-pulse bg-muted/30 rounded-xl" />
+          ) : (
+            <USMap data={mapData} scope={scope} />
+          )}
+        </div>
 
         {mapData?.updatedAt && (
           <p className="mt-3 text-xs text-muted-foreground">
@@ -176,10 +174,10 @@ export default function Dashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground line-clamp-1">
-                        {report.title}
+                        {report.reportTitle}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {report.state} • {report.agency}
+                        {report.state} • {report.auditOrganization}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {report.publicationYear}
