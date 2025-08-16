@@ -1,18 +1,29 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, MapPin, Zap, TrendingUp, Calendar, Building } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/stats-card";
-import type { DashboardStats } from "@/lib/types";
+import USMap from "@/components/dashboard/USMap";
+import type { DashboardStats, StateLatestResponse } from "@/lib/types";
 
 export default function Dashboard() {
+  const [scope, setScope] = useState<"state" | "federal">("state");
+  
   const { data: stats, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
     queryFn: async () => {
       const result = await apiClient.getDashboardStats();
       return result as DashboardStats;
     },
+  });
+
+  const { data: mapData, isLoading: mapLoading, error: mapError } = useQuery<StateLatestResponse>({
+    queryKey: ["/api/reports/state-latest", scope],
+    queryFn: () => apiClient.getLatestReportsByState({ scope, limit: 3 }),
+    staleTime: 5 * 60 * 1000,
   });
 
   if (error) {
@@ -90,8 +101,52 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Interactive Map */}
+      <div className="mt-8">
+        <div className="mb-6 flex items-end justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Report Map</h2>
+            <p className="text-muted-foreground">Hover over a state to see its latest reports</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={scope === "state" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setScope("state")}
+            >
+              State
+            </Button>
+            <Button
+              variant={scope === "federal" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setScope("federal")}
+            >
+              Federal
+            </Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-4 md:p-6">
+            {mapError ? (
+              <p className="text-destructive text-center py-8">Failed to load map data.</p>
+            ) : mapLoading || !mapData ? (
+              <div className="h-[520px] animate-pulse bg-muted/30 rounded-xl" />
+            ) : (
+              <USMap data={mapData} scope={scope} />
+            )}
+          </CardContent>
+        </Card>
+
+        {mapData?.updatedAt && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Data updated {new Date(mapData.updatedAt).toLocaleString()}.
+          </p>
+        )}
+      </div>
+
       {/* Recent Reports */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">

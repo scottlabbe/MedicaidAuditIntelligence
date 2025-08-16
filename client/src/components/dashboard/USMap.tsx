@@ -1,0 +1,166 @@
+import { useRef, useState } from "react";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import { Link } from "wouter";
+import type { ReportPreview, StateLatestResponse } from "@/lib/types";
+
+const TOPO_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+
+// US State codes mapping from FIPS to USPS
+const USPS_BY_ID: Record<string, string> = {
+  "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT", "10": "DE",
+  "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA",
+  "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN",
+  "28": "MS", "29": "MO", "30": "MT", "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM",
+  "36": "NY", "37": "NC", "38": "ND", "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI",
+  "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA",
+  "54": "WV", "55": "WI", "56": "WY"
+};
+
+export default function USMap({ 
+  data, 
+  scope 
+}: { 
+  data: StateLatestResponse; 
+  scope: "state" | "federal" 
+}) {
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  const [pt, setPt] = useState<{ x: number; y: number } | null>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  const onMove = (e: React.MouseEvent) => {
+    const r = boxRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setPt({ x: e.clientX - r.left, y: e.clientY - r.top });
+  };
+
+  const itemsFor = (k: string | null): ReportPreview[] | undefined => 
+    k ? data.byKey[k] : undefined;
+
+  return (
+    <div ref={boxRef} className="relative">
+      <ComposableMap projection="geoAlbersUsa" className="w-full h-[520px]">
+        <Geographies geography={TOPO_URL}>
+          {({ geographies }) =>
+            geographies.map((geo) => {
+              const fips = String(geo.id).padStart(2, "0");
+              const key = scope === "federal" ? "FED" : USPS_BY_ID[fips];
+              const has = !!(key && data.byKey[key] && data.byKey[key].length);
+              
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  onMouseEnter={(evt) => {
+                    setHoverKey(key || null);
+                    onMove(evt as any);
+                  }}
+                  onMouseMove={onMove}
+                  onMouseLeave={() => {
+                    setHoverKey(null);
+                    setPt(null);
+                  }}
+                  tabIndex={0}
+                  style={{
+                    default: {
+                      fill: has ? "hsl(var(--card))" : "hsl(var(--muted))",
+                      stroke: "hsl(var(--border))",
+                      strokeWidth: 0.5,
+                    },
+                    hover: {
+                      fill: "hsl(var(--primary))",
+                    },
+                    pressed: {
+                      fill: "hsl(var(--primary))",
+                    },
+                  }}
+                />
+              );
+            })
+          }
+        </Geographies>
+      </ComposableMap>
+
+      {hoverKey && pt && (
+        <div
+          className="pointer-events-none absolute z-10 w-80 max-w-[calc(100%-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl p-3"
+          style={{
+            left: Math.min(
+              pt.x + 16,
+              (boxRef.current?.clientWidth ?? 0) - 340
+            ),
+            top: Math.max(8, pt.y - 8),
+          }}
+        >
+          <TooltipContent
+            keyStr={hoverKey}
+            scope={scope}
+            items={itemsFor(hoverKey)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TooltipContent({
+  keyStr,
+  scope,
+  items,
+}: {
+  keyStr: string;
+  scope: "state" | "federal";
+  items?: ReportPreview[];
+}) {
+  const title = scope === "federal" ? "Federal (shown at Washington, DC)" : keyStr;
+  
+  if (!items || items.length === 0) {
+    return (
+      <div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+          {title}
+        </div>
+        <div className="text-sm text-muted-foreground">No recent reports.</div>
+      </div>
+    );
+  }
+  
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+        {title}
+      </div>
+      <ul className="space-y-2">
+        {items.slice(0, 3).map((r) => (
+          <li key={r.id} className="text-sm">
+            <Link
+              href={`/report/${r.id}`}
+              className="font-medium text-foreground hover:underline line-clamp-2"
+            >
+              {r.title}
+            </Link>
+            <div className="text-xs text-muted-foreground">
+              {new Date(r.publicationDate).toLocaleDateString()} • {r.agency}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2">
+        {scope === "federal" ? (
+          <Link
+            href={`/explore?agency=${encodeURIComponent("HHS OIG")}`}
+            className="text-xs text-foreground underline underline-offset-4"
+          >
+            View all federal
+          </Link>
+        ) : (
+          <Link
+            href={`/explore?state=${encodeURIComponent(keyStr)}`}
+            className="text-xs text-foreground underline underline-offset-4"
+          >
+            View all in {keyStr}
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}

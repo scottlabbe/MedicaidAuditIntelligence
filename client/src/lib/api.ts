@@ -1,5 +1,5 @@
 import { queryClient } from "./queryClient";
-import type { SearchFilters, PaginationParams } from "./types";
+import type { SearchFilters, PaginationParams, StateLatestResponse } from "./types";
 
 const API_BASE = "/api";
 
@@ -54,6 +54,12 @@ export class ApiClient {
   // Dashboard
   async getDashboardStats() {
     return this.request("/dashboard/stats");
+  }
+
+  async getLatestReportsByState(opts: { limit?: number; scope?: 'state' | 'federal' } = {}) {
+    const limit = opts.limit ?? 3;
+    const scope = opts.scope ?? 'state';
+    return this.request<StateLatestResponse>(`/reports/state-latest?limit=${limit}&scope=${scope}`);
   }
 
 

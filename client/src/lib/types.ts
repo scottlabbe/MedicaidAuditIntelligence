@@ -78,3 +78,17 @@ export interface DashboardStats {
   criticalFindings: number;
   recentReports: ReportListItem[];
 }
+
+export interface ReportPreview {
+  id: number;
+  title: string;
+  state?: string;
+  agency: string;
+  publicationDate: string;
+  url: string;
+}
+
+export interface StateLatestResponse {
+  byKey: Record<string, ReportPreview[]>;
+  updatedAt: string;
+}

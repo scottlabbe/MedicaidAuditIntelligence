@@ -164,6 +164,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get latest reports by state (must come before /:id route)
+  app.get("/api/reports/state-latest", rateLimit, async (req, res) => {
+    try {
+      const limit = Math.min(Number(req.query.limit) || 3, 5);
+      const scope = req.query.scope === 'federal' ? 'federal' : 'state';
+      
+      const result = await storage.getLatestReportsByState(limit, scope);
+      
+      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching state latest reports:", error);
+      res.status(500).json({ error: "Failed to load state latest reports" });
+    }
+  });
+
   // Get single report by ID
   app.get("/api/reports/:id", rateLimit, async (req, res) => {
     try {
