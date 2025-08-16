@@ -26,6 +26,7 @@ export default function USMap({
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const [overTip, setOverTip] = useState(false);
+  const [showDelay, setShowDelay] = useState<NodeJS.Timeout | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
   const itemsFor = (k: string | null): ReportPreview[] | undefined => 
@@ -46,13 +47,26 @@ export default function USMap({
                   key={geo.rsmKey}
                   geography={geo}
                   onMouseEnter={(evt: any) => {
-                    const r = boxRef.current?.getBoundingClientRect();
-                    if (r) {
-                      setActiveKey(key || null);
-                      setAnchor({ x: evt.clientX - r.left, y: evt.clientY - r.top });
-                    }
+                    // Clear any existing delay
+                    if (showDelay) clearTimeout(showDelay);
+                    
+                    // Add 100ms delay to reduce flicker
+                    const timeout = setTimeout(() => {
+                      const r = boxRef.current?.getBoundingClientRect();
+                      if (r) {
+                        setActiveKey(key || null);
+                        setAnchor({ x: evt.clientX - r.left, y: evt.clientY - r.top });
+                      }
+                    }, 100);
+                    setShowDelay(timeout);
                   }}
                   onMouseLeave={() => {
+                    // Clear show delay if user leaves quickly
+                    if (showDelay) {
+                      clearTimeout(showDelay);
+                      setShowDelay(null);
+                    }
+                    
                     setTimeout(() => {
                       if (!overTip) {
                         setActiveKey(null);
@@ -66,6 +80,7 @@ export default function USMap({
                       fill: has ? "var(--map-has-data)" : "var(--map-no-data)",
                       stroke: "var(--map-stroke)",
                       strokeWidth: 0.6,
+                      vectorEffect: "non-scaling-stroke"
                     },
                     hover: {
                       fill: "var(--map-hover)",
@@ -103,7 +118,10 @@ export default function USMap({
               anchor.x + 16,
               (boxRef.current?.clientWidth ?? 0) - 340
             ),
-            top: Math.max(8, anchor.y - 8),
+            top: Math.min(
+              Math.max(8, anchor.y - 8),
+              (boxRef.current?.clientHeight ?? 0) - 200
+            ),
           }}
           onMouseEnter={() => setOverTip(true)}
           onMouseLeave={() => {

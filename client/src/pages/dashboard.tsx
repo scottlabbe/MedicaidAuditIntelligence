@@ -145,7 +145,7 @@ export default function Dashboard() {
 
       {/* Recent Reports */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        <Card>
+        <Card className="bg-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="w-5 h-5" />
@@ -195,7 +195,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Building className="w-5 h-5" />
