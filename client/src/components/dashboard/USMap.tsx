@@ -23,15 +23,10 @@ export default function USMap({
   data: StateLatestResponse; 
   scope: "state" | "federal" 
 }) {
-  const [hoverKey, setHoverKey] = useState<string | null>(null);
-  const [pt, setPt] = useState<{ x: number; y: number } | null>(null);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [overTip, setOverTip] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
-
-  const onMove = (e: React.MouseEvent) => {
-    const r = boxRef.current?.getBoundingClientRect();
-    if (!r) return;
-    setPt({ x: e.clientX - r.left, y: e.clientY - r.top });
-  };
 
   const itemsFor = (k: string | null): ReportPreview[] | undefined => 
     k ? data.byKey[k] : undefined;
@@ -50,27 +45,33 @@ export default function USMap({
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  onMouseEnter={(evt) => {
-                    setHoverKey(key || null);
-                    onMove(evt as any);
+                  onMouseEnter={(evt: any) => {
+                    const r = boxRef.current?.getBoundingClientRect();
+                    if (r) {
+                      setActiveKey(key || null);
+                      setAnchor({ x: evt.clientX - r.left, y: evt.clientY - r.top });
+                    }
                   }}
-                  onMouseMove={onMove}
                   onMouseLeave={() => {
-                    setHoverKey(null);
-                    setPt(null);
+                    setTimeout(() => {
+                      if (!overTip) {
+                        setActiveKey(null);
+                        setAnchor(null);
+                      }
+                    }, 50);
                   }}
                   tabIndex={0}
                   style={{
                     default: {
-                      fill: has ? "hsl(var(--card))" : "hsl(var(--muted))",
-                      stroke: "hsl(var(--border))",
+                      fill: has ? "var(--map-has-data)" : "var(--map-no-data)",
+                      stroke: "var(--map-stroke)",
                       strokeWidth: 0.5,
                     },
                     hover: {
-                      fill: "hsl(var(--primary))",
+                      fill: "var(--map-hover)",
                     },
                     pressed: {
-                      fill: "hsl(var(--primary))",
+                      fill: "var(--map-hover)",
                     },
                   }}
                 />
@@ -78,23 +79,43 @@ export default function USMap({
             })
           }
         </Geographies>
+        
+        {/* Add border outlines for better visibility */}
+        <Geographies geography={TOPO_URL}>
+          {({ geographies }: any) => geographies.map((geo: any) => (
+            <Geography 
+              key={`border-${geo.rsmKey}`} 
+              geography={geo} 
+              fill="none"
+              stroke="var(--map-stroke)" 
+              strokeWidth={0.6} 
+              style={{ pointerEvents: "none" }}
+            />
+          ))}
+        </Geographies>
       </ComposableMap>
 
-      {hoverKey && pt && (
+      {activeKey && anchor && (
         <div
-          className="pointer-events-none absolute z-10 w-80 max-w-[calc(100%-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl p-3"
+          className="absolute z-10 w-80 max-w-[calc(100%-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl p-3 pointer-events-auto"
           style={{
             left: Math.min(
-              pt.x + 16,
+              anchor.x + 16,
               (boxRef.current?.clientWidth ?? 0) - 340
             ),
-            top: Math.max(8, pt.y - 8),
+            top: Math.max(8, anchor.y - 8),
+          }}
+          onMouseEnter={() => setOverTip(true)}
+          onMouseLeave={() => {
+            setOverTip(false);
+            setActiveKey(null);
+            setAnchor(null);
           }}
         >
           <TooltipContent
-            keyStr={hoverKey}
+            keyStr={activeKey}
             scope={scope}
-            items={itemsFor(hoverKey)}
+            items={itemsFor(activeKey)}
           />
         </div>
       )}

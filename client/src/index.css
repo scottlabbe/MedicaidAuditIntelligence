@@ -68,6 +68,13 @@
   --sidebar-accent-foreground: var(--text-secondary);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--orange-primary);
+
+  /* Map-specific colors for better visibility */
+  --map-no-data: hsl(var(--muted) / 0.35);
+  --map-has-data: hsl(var(--primary) / 0.15); /* brand tint */
+  --map-hover: hsl(var(--primary) / 0.70);
+  --map-stroke: hsl(var(--border));
+
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Source Serif 4', serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
