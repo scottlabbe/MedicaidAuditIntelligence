@@ -1,0 +1,153 @@
+Got it. You already have a working search + home hero, so the cleanest move is: keep search in the Home hero only, add a minimal sticky header (no auth), and wire it once in App.tsx. I’ll also give you tiny, safe tweaks for button.tsx so your CTA uses the same warm palette without stray colors.
+
+⸻
+
+1) Minimal sticky header (no search, no auth)
+
+// client/src/components/layout/SiteHeader.tsx
+import { useLocation } from "wouter";
+
+const NAV = [
+  { href: "/explore", label: "Explore" },
+  { href: "/reports", label: "Reports" },
+  { href: "/about",   label: "About"  },
+];
+
+export default function SiteHeader() {
+  const [loc] = useLocation();
+
+  return (
+    <header className="sticky top-0 z-50 bg-background/70 backdrop-blur border-b border-border">
+      <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <a href="/" className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-xl bg-primary warm-shadow" />
+          <span className="font-semibold tracking-tight text-foreground">
+            Medicaid Audit Explorer
+          </span>
+        </a>
+
+        <nav className="hidden md:flex items-center gap-6 text-sm">
+          {NAV.map(({ href, label }) => {
+            const active = loc === href || (href !== "/" && loc.startsWith(href));
+            return (
+              <a
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`transition-colors ${
+                  active
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+	•	Uses your theme tokens (bg-background, text-foreground, border-border, bg-primary) so legacy one-offs won’t leak.
+	•	Keeps attention on the hero search on Home and the filter panel on Explore.
+
+⸻
+
+2) Wire the header in App.tsx
+
+Add the header once at the top so it appears on every route. Also give the content area enough height to avoid being tucked under the sticky bar (64px = h-16).
+
+// App.tsx (only showing the wrapper changes)
+import SiteHeader from "@/components/layout/SiteHeader";
+
+export default function App() {
+  return (
+    <div className="min-h-dvh bg-background text-foreground">
+      <SiteHeader />
+      <main className="min-h-[calc(100dvh-4rem)]">
+        {/* your existing router / routes go here */}
+      </main>
+    </div>
+  );
+}
+
+If any page looks tight at the very top, give its top container a pt-6 or pt-8; don’t move the search into the header.
+
+⸻
+
+3) Keep Home’s hero search as-is (just 2 micro-tweaks)
+
+Inside your existing HeroSearch:
+	•	Use your theme tokens for the CTA (no hexes): bg-primary text-primary-foreground hover:opacity-90.
+	•	(Optional but nice) Support ⌘K/Ctrl+K to focus the input and pre-fill from ?query= on mount. If you haven’t added that yet, here’s the tiny pattern:
+
+// inside HeroSearch input/button group
+<input
+  /* ... */
+  className="h-auto py-3 pl-11 rounded-r-none bg-card/70 border-border text-foreground placeholder:text-muted-foreground focus-ring"
+/>
+<button
+  type="submit"
+  className="px-6 py-3 bg-primary text-primary-foreground rounded-r-md rounded-l-none hover:opacity-90 focus-ring"
+>
+  Search
+</button>
+
+
+⸻
+
+4) Button polish (tiny, token-safe)
+
+In button.tsx, make sure the default variant already uses your primary tokens and add a comfortable lg size for hero CTAs. (This matches how you’re styling things elsewhere.)
+
+// button.tsx (shadcn-style cva)
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-ring disabled:opacity-50 disabled:pointer-events-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:opacity-90",
+        outline: "border border-border bg-transparent hover:bg-card/60",
+        ghost: "hover:bg-card/60",
+        link: "text-foreground underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 px-3",
+        lg: "h-11 px-6 text-base rounded-xl",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: { variant: "default", size: "default" },
+  }
+);
+
+Now your hero CTA can just be:
+<Button size="lg">Explore reports</Button> (no one-off classes).
+
+⸻
+
+5) Explore page (keep structure; 2 safe tweaks)
+	•	Use tokens instead of hard black:
+
+<h1 className="text-3xl font-bold text-foreground mb-2">Explore Reports</h1>
+
+
+	•	Import Link where you use it in the table view:
+
+import { Link } from "wouter";
+
+
+	•	If you haven’t yet: thread sortBy into the query and the URL like other filters so results and shareable links match.
+
+⸻
+
+Done criteria (quick checklist)
+	•	SiteHeader renders on all pages; Home hero owns search.
+	•	No hard-coded colors in header/hero; everything uses bg-background, text-foreground, bg-primary, etc.
+	•	Button default/lg looks right for CTAs; no custom hex in components.
+	•	Explore’s heading uses tokens; Link is imported; sortBy is part of the query+URL.
+
+If you want, I can also drop in an ultra-light mobile nav (same links, collapses under 768px) without changing the color system.
