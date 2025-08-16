@@ -13,15 +13,18 @@ import {
   keywordThemes,
   type Report,
   type InsertReport,
-  type ReportWithDetails,
-  type ReportListItem,
-  type SearchFilters,
-  type SearchResponse,
-  type DashboardStats,
   type User,
   type InsertUser,
   users,
 } from "@shared/schema";
+
+import type {
+  ReportWithDetails,
+  ReportListItem,
+  SearchFilters,
+  SearchResponse,
+  DashboardStats,
+} from "../client/src/lib/types";
 
 export interface IStorage {
   // Reports
@@ -32,9 +35,6 @@ export interface IStorage {
   
   // Dashboard
   getDashboardStats(): Promise<DashboardStats>;
-  
-  // Export
-  exportReports(filters?: SearchFilters, format?: "csv" | "json"): Promise<any>;
   
   // Legacy user methods
   getUser(id: string): Promise<User | undefined>;
@@ -150,7 +150,7 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
     
-    const report = await db.select().from(reports).where(eq(reports.id, reportId)).limit(1);
+    const report = await db.select().from(reports).where(and(eq(reports.id, reportId), eq(reports.hidden, false))).limit(1);
     
     if (!report[0]) {
       return undefined;
