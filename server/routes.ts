@@ -76,6 +76,7 @@ const searchFiltersSchema = z.object({
   hasAiInsight: z.coerce.boolean().optional(),
   featured: z.coerce.boolean().optional(),
   severity: z.enum(["info", "low", "medium", "high"]).optional(),
+  sortBy: z.enum(["date_desc", "date_asc", "title", "state"]).optional(),
 });
 
 const paginationSchema = z.object({

@@ -39,7 +39,7 @@ export class ApiClient {
     }
 
     const queryString = params.toString();
-    return this.request(`/reports${queryString ? `?${queryString}` : ""}`);
+    return this.request<any>(`/reports${queryString ? `?${queryString}` : ""}`);
   }
 
   async getReportById(id: string) {

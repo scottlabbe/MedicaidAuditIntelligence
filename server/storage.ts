@@ -1,4 +1,4 @@
-import { eq, and, desc, ilike, sql, or, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, ilike, sql, or, inArray } from "drizzle-orm";
 import { db } from "./database";
 import {
   reports,
@@ -115,9 +115,36 @@ export class DatabaseStorage implements IStorage {
       totalQuery.where(and(...conditions));
     }
 
+    // Apply sorting based on sortBy parameter
+    let sortedQuery = query;
+    const sortBy = filters.sortBy || "date_desc";
+    
+    switch (sortBy) {
+      case "date_asc":
+        sortedQuery = query.orderBy(
+          reports.publicationYear,
+          reports.publicationMonth,
+          reports.publicationDay
+        );
+        break;
+      case "title":
+        sortedQuery = query.orderBy(reports.reportTitle);
+        break;
+      case "state":
+        sortedQuery = query.orderBy(reports.state, desc(reports.publicationYear));
+        break;
+      case "date_desc":
+      default:
+        sortedQuery = query.orderBy(
+          desc(reports.publicationYear),
+          desc(reports.publicationMonth),
+          desc(reports.publicationDay)
+        );
+        break;
+    }
+
     const [items, totalResult] = await Promise.all([
-      query
-        .orderBy(desc(reports.publicationYear), desc(reports.publicationMonth), desc(reports.publicationDay))
+      sortedQuery
         .limit(pageSize)
         .offset(offset),
       totalQuery

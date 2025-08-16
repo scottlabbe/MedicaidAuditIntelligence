@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Download, Filter, Grid, List, Search } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,11 @@ export default function Explore() {
     if (urlParams.get("hasAiInsight")) newFilters.hasAiInsight = urlParams.get("hasAiInsight") === "true";
     if (urlParams.get("featured")) newFilters.featured = urlParams.get("featured") === "true";
     
+    // Parse sortBy from URL
+    if (urlParams.get("sortBy")) {
+      setSortBy(urlParams.get("sortBy")!);
+    }
+    
     setFilters(newFilters);
   }, [location]);
 
@@ -48,15 +53,23 @@ export default function Explore() {
       }
     });
     
+    // Add sortBy to URL if it's not the default
+    if (sortBy && sortBy !== "date_desc") {
+      params.set("sortBy", sortBy);
+    }
+    
     const newUrl = `/explore${params.toString() ? `?${params.toString()}` : ""}`;
     if (newUrl !== location) {
       setLocation(newUrl);
     }
-  }, [filters, setLocation]);
+  }, [filters, sortBy, setLocation]);
 
   const { data: searchResults, isLoading, error } = useQuery<SearchResponse>({
-    queryKey: ["/api/reports", filters, page],
-    queryFn: () => apiClient.getReports(filters, { page, pageSize: 24 }),
+    queryKey: ["/api/reports", { ...filters, sortBy }, page],
+    queryFn: async () => {
+      const result = await apiClient.getReports({ ...filters, sortBy }, { page, pageSize: 24 });
+      return result as SearchResponse;
+    },
   });
 
   const handleFilterChange = (newFilters: SearchFiltersType) => {
@@ -101,7 +114,7 @@ export default function Explore() {
         <div className="flex-1">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-black mb-2">Explore Reports</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Explore Reports</h1>
             <p className="text-muted-foreground">
               {searchResults ? `${searchResults.total} reports found` : "Loading reports..."}
             </p>
@@ -113,7 +126,7 @@ export default function Explore() {
               <div className="flex flex-wrap items-center gap-4">
                 {/* Active Filters */}
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-black flex items-center space-x-2">
+                  <span className="text-sm font-medium text-foreground flex items-center space-x-2">
                     <Filter className="w-4 h-4" />
                     <span>Filters:</span>
                   </span>
@@ -239,11 +252,11 @@ export default function Explore() {
                             <div className="flex items-center space-x-2 mb-2">
                               <Badge variant="secondary">{report.state}</Badge>
                               <span className="text-sm text-muted-foreground">
-                                {report.agency}
+                                {report.auditOrganization}
                               </span>
                             </div>
                             <h3 className="font-semibold text-foreground mb-2">
-                              {report.title}
+                              {report.reportTitle}
                             </h3>
                             {report.conclusionExcerpt && (
                               <p className="text-sm text-muted-foreground line-clamp-2">

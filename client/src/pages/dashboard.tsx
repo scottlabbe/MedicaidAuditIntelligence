@@ -9,7 +9,10 @@ import type { DashboardStats } from "@/lib/types";
 export default function Dashboard() {
   const { data: stats, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
-    queryFn: () => apiClient.getDashboardStats(),
+    queryFn: async () => {
+      const result = await apiClient.getDashboardStats();
+      return result as DashboardStats;
+    },
   });
 
   if (error) {

@@ -3,11 +3,11 @@ export interface SearchFilters {
   state?: string;
   agency?: string;
   year?: number;
-
   program?: string;
   hasAiInsight?: boolean;
   featured?: boolean;
   severity?: "info" | "low" | "medium" | "high";
+  sortBy?: string;
 }
 
 export interface PaginationParams {
