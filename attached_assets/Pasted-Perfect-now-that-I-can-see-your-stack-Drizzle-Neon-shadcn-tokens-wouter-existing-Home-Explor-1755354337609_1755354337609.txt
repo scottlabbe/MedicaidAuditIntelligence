@@ -1,0 +1,324 @@
+Perfect—now that I can see your stack (Drizzle + Neon, shadcn tokens, wouter, existing Home + Explore + route placeholders), here’s a tight, concrete plan that plugs straight in and respects your color system and URL patterns.
+
+I’ll keep the thinking short and focused: we’ll prefetch once (no hover fetches), show last 3 per state, and place federal on DC under a scope toggle.
+
+⸻
+
+What you already have (so we don’t fight it)
+	•	DB/ORM: Drizzle on Neon, schema in @shared/schema (your local schema.ts mirrors it).
+	•	Reports shape: reports table has id, reportTitle, state, auditOrganization, publicationYear, publicationMonth?, publicationDay?, etc. (hidden exists—let’s honor it).
+	•	Client: App.tsx already routes /dashboard; Home already links to it; tokens in index.css use shadcn-style CSS variables.
+	•	API client: api.ts exports ApiClient and query invalidators.
+
+⸻
+
+Implementation plan (surgical & end-to-end)
+
+1) Server: one endpoint that returns “latest 3 per key”
+
+Add a single handler that returns { byKey: Record<"TX"|"CA"|...|"FED", ReportPreview[]> }.
+
+1a) routes.ts — add a GET route
+
+// routes.ts
+import type { Request, Response } from "express";
+import { db } from "./database";
+import { sql } from "drizzle-orm";
+
+const FEDERAL_AGENCIES = [
+  "HHS OIG",
+  "Office of Inspector General, HHS",
+  "GAO",
+  "Government Accountability Office",
+  "Centers for Medicare & Medicaid Services",
+  "CMS",
+  "Medicaid.gov"
+];
+
+app.get("/api/reports/state-latest", async (req: Request, res: Response) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 3, 5);
+    const scope = req.query.scope === "federal" ? "federal" : "state";
+
+    // Make a comparable publication date (handles null month/day)
+    const PUBDATE = sql`
+      make_date(
+        reports.publication_year,
+        coalesce(reports.publication_month, 1),
+        coalesce(reports.publication_day, 1)
+      )
+    `;
+
+    const rows = scope === "state"
+      ? await db.execute(sql`
+          with ranked as (
+            select
+              reports.id,
+              reports.report_title as title,
+              reports.state,
+              reports.audit_organization as agency,
+              ${PUBDATE} as pub_date,
+              reports.url,
+              row_number() over (
+                partition by reports.state
+                order by ${PUBDATE} desc
+              ) as r
+            from reports
+            where coalesce(reports.hidden, false) = false
+          )
+          select id, title, state, agency, pub_date, url
+          from ranked where r <= ${limit}
+        `)
+      : await db.execute(sql`
+          with ranked as (
+            select
+              reports.id,
+              reports.report_title as title,
+              'FED' as state,
+              reports.audit_organization as agency,
+              ${PUBDATE} as pub_date,
+              reports.url,
+              row_number() over (
+                partition by 'FED'
+                order by ${PUBDATE} desc
+              ) as r
+            from reports
+            where coalesce(reports.hidden, false) = false
+              and reports.audit_organization = any(${sql.array(FEDERAL_AGENCIES, 'text')})
+          )
+          select id, title, state, agency, pub_date, url
+          from ranked where r <= ${limit}
+        `);
+
+    const byKey: Record<string, any[]> = {};
+    for (const r of rows as any[]) {
+      const key = scope === "federal" ? "FED" : r.state;
+      if (!key) continue;
+      (byKey[key] ||= []).push({
+        id: r.id,
+        title: r.title,
+        state: scope === "state" ? r.state : undefined,
+        agency: r.agency,
+        publicationDate: new Date(r.pub_date).toISOString(),
+        url: r.url,
+      });
+    }
+
+    res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+    res.json({ byKey, updatedAt: new Date().toISOString() });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load state-latest" });
+  }
+});
+
+If your schema uses different column names, just adjust the select aliases. We’re using db.execute(sql\…`)` so Postgres window functions work cleanly.
+
+⸻
+
+2) Types & API client: add one type + one method
+
+2a) types.ts
+
+// types.ts
+export interface ReportPreview {
+  id: number | string;
+  title: string;
+  state?: string;               // omit for FED
+  agency: string;
+  publicationDate: string;      // ISO
+  url: string;
+}
+
+export interface StateLatestResponse {
+  byKey: Record<string, ReportPreview[]>;
+  updatedAt: string;
+}
+
+2b) api.ts
+
+// api.ts
+import type { StateLatestResponse } from "./types";
+
+export class ApiClient {
+  // ...existing methods...
+
+  getLatestByState(opts: { limit?: number; scope?: "state"|"federal" } = {}) {
+    const limit = opts.limit ?? 3;
+    const scope = opts.scope ?? "state";
+    return this.request<StateLatestResponse>(
+      `/reports/state-latest?limit=${limit}&scope=${scope}`
+    );
+  }
+}
+
+
+⸻
+
+3) UI: dashboard page + map component
+
+3a) Install a small map lib
+
+npm i react-simple-maps d3-geo
+
+3b) pages/dashboard.tsx
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
+import type { StateLatestResponse } from "@/lib/types";
+import USMap from "@/components/dashboard/USMap";
+
+export default function Dashboard() {
+  const [scope, setScope] = useState<"state"|"federal">("state");
+  const { data, isLoading, error } = useQuery<StateLatestResponse>({
+    queryKey: ["/api/reports/state-latest", scope],
+    queryFn: () => apiClient.getLatestByState({ scope, limit: 3 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return (
+    <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8">
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">Hover a state to see its latest reports.</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            className={`px-3 py-1.5 rounded-md border ${scope==="state" ? "bg-primary text-primary-foreground" : "bg-card text-foreground border-border"}`}
+            onClick={() => setScope("state")}
+            aria-pressed={scope==="state"}
+          >State</button>
+          <button
+            className={`px-3 py-1.5 rounded-md border ${scope==="federal" ? "bg-primary text-primary-foreground" : "bg-card text-foreground border-border"}`}
+            onClick={() => setScope("federal")}
+            aria-pressed={scope==="federal"}
+          >Federal (on DC)</button>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+        {error ? <p className="text-destructive">Failed to load dashboard.</p>
+          : isLoading || !data ? <div className="h-[480px] animate-pulse bg-muted/30 rounded-xl" />
+          : <USMap data={data} scope={scope} />}
+      </div>
+
+      {data?.updatedAt && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Data updated {new Date(data.updatedAt).toLocaleString()}.
+        </p>
+      )}
+    </div>
+  );
+}
+
+3c) components/dashboard/USMap.tsx
+
+import { useRef, useState } from "react";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import type { ReportPreview, StateLatestResponse } from "@/lib/types";
+
+const TOPO_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+const USPS_BY_ID: Record<string,string> = { "01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA","15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA","26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY","37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX","49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY" };
+
+export default function USMap({ data, scope }: { data: StateLatestResponse; scope: "state"|"federal" }) {
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  const [pt, setPt] = useState<{x:number;y:number}|null>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  const onMove = (e: React.MouseEvent) => {
+    const r = boxRef.current?.getBoundingClientRect(); if (!r) return;
+    setPt({ x: e.clientX - r.left, y: e.clientY - r.top });
+  };
+
+  const itemsFor = (k: string | null): ReportPreview[]|undefined => (k ? data.byKey[k] : undefined);
+
+  return (
+    <div ref={boxRef} className="relative">
+      <ComposableMap projection="geoAlbersUsa" className="w-full h-[520px]">
+        <Geographies geography={TOPO_URL}>
+          {({ geographies }) => geographies.map(geo => {
+            const fips = String(geo.id).padStart(2, "0");
+            const key = scope === "federal" ? "FED" : USPS_BY_ID[fips];
+            const has = !!(key && data.byKey[key] && data.byKey[key].length);
+            return (
+              <Geography
+                key={geo.rsmKey}
+                geography={geo}
+                onMouseEnter={(evt) => { setHoverKey(key || null); onMove(evt as any); }}
+                onMouseMove={onMove}
+                onMouseLeave={() => { setHoverKey(null); setPt(null); }}
+                tabIndex={0}
+                style={{
+                  default: { fill: has ? "hsl(var(--card))" : "hsl(var(--muted))", stroke: "hsl(var(--border))", strokeWidth: 0.5 },
+                  hover:   { fill: "hsl(var(--primary))" },
+                  pressed: { fill: "hsl(var(--primary))" }
+                }}
+              />
+            );
+          })}
+        </Geographies>
+      </ComposableMap>
+
+      {hoverKey && pt && (
+        <div
+          className="pointer-events-none absolute z-10 w-80 max-w-[calc(100%-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl p-3"
+          style={{ left: Math.min(pt.x + 16, (boxRef.current?.clientWidth ?? 0) - 340), top: Math.max(8, pt.y - 8) }}
+        >
+          <TooltipContent keyStr={hoverKey} scope={scope} items={itemsFor(hoverKey)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TooltipContent({ keyStr, scope, items }: { keyStr: string; scope: "state"|"federal"; items?: ReportPreview[] }) {
+  const title = scope === "federal" ? "Federal (shown at Washington, DC)" : keyStr;
+  if (!items || items.length === 0) {
+    return (
+      <div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{title}</div>
+        <div className="text-sm text-muted-foreground">No recent reports.</div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{title}</div>
+      <ul className="space-y-2">
+        {items.slice(0,3).map(r => (
+          <li key={r.id} className="text-sm">
+            <a href={`/report/${r.id}`} className="font-medium text-foreground hover:underline line-clamp-2">{r.title}</a>
+            <div className="text-xs text-muted-foreground">
+              {new Date(r.publicationDate).toLocaleDateString()} • {r.agency}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2">
+        {scope === "federal"
+          ? <a href={`/explore?agency=${encodeURIComponent("HHS OIG")}`} className="text-xs text-foreground underline underline-offset-4">View all federal</a>
+          : <a href={`/explore?state=${encodeURIComponent(keyStr)}`} className="text-xs text-foreground underline underline-offset-4">View all in {keyStr}</a>}
+      </div>
+    </div>
+  );
+}
+
+The fills use your shadcn tokens (--card, --muted, --primary, --border) so this will match your warm palette automatically. If any of those CSS vars are missing, add them (once) in index.css.
+
+⸻
+
+4) Routing & nav
+	•	App.tsx already imports Dashboard and wires /dashboard. Add “Dashboard” to your header nav if it isn’t there yet.
+
+⸻
+
+5) QA checks (catch the sneaky bugs)
+	•	DC: State scope shows DC’s own audits; Federal scope uses key "FED" and displays at DC.
+	•	Title clamp: tooltip titles don’t overflow (line-clamp-2).
+	•	A11y: states are focusable (we already set tabIndex={0}); tooltip content is readable.
+	•	Caching: server Cache-Control + client staleTime = fast map.
+	•	Hidden: we exclude hidden = true reports.
+
+⸻
