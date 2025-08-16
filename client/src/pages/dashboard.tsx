@@ -71,7 +71,7 @@ export default function Dashboard() {
               subtitle="Comprehensive audit database"
               trend="+12%"
               icon={FileText}
-              color="indigo"
+              color="orange"
             />
             <StatsCard
               title="States Covered"
@@ -95,7 +95,7 @@ export default function Dashboard() {
               subtitle="This month"
               trend="New"
               icon={Calendar}
-              color="indigo"
+              color="rose"
             />
           </>
         )}
