@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Link } from "wouter";
 import type { ReportPreview, StateLatestResponse } from "@/lib/types";
 
+// Performance optimization: move constants outside component  
 const TOPO_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 
-// US State codes mapping from FIPS to USPS
+// US State codes mapping from FIPS to USPS - memoized as constant
 const USPS_BY_ID: Record<string, string> = {
   "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT", "10": "DE",
   "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA",
@@ -29,6 +30,36 @@ export default function USMap({
   const [showDelay, setShowDelay] = useState<NodeJS.Timeout | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
+  // Performance optimization: memoize set of keys that have data
+  const keysWithData = useMemo(() => 
+    new Set(Object.keys(data.byKey).filter(key => data.byKey[key]?.length > 0)), 
+    [data.byKey]
+  );
+
+  // Performance optimization: memoize style objects
+  const mapStyles = useMemo(() => ({
+    hasData: {
+      default: {
+        fill: "var(--map-has-data)",
+        stroke: "var(--map-stroke)",
+        strokeWidth: 0.6,
+        vectorEffect: "non-scaling-stroke" as const
+      },
+      hover: { fill: "var(--map-hover)" },
+      pressed: { fill: "var(--map-hover)" }
+    },
+    noData: {
+      default: {
+        fill: "var(--map-no-data)",
+        stroke: "var(--map-stroke)",
+        strokeWidth: 0.6,
+        vectorEffect: "non-scaling-stroke" as const
+      },
+      hover: { fill: "var(--map-hover)" },
+      pressed: { fill: "var(--map-hover)" }
+    }
+  }), []);
+
   const itemsFor = (k: string | null): ReportPreview[] | undefined => 
     k ? data.byKey[k] : undefined;
 
@@ -40,7 +71,7 @@ export default function USMap({
             geographies.map((geo) => {
               const fips = String(geo.id).padStart(2, "0");
               const key = scope === "federal" ? "FED" : USPS_BY_ID[fips];
-              const has = !!(key && data.byKey[key] && data.byKey[key].length);
+              const has = key ? keysWithData.has(key) : false;
               
               return (
                 <Geography
@@ -75,20 +106,7 @@ export default function USMap({
                     }, 50);
                   }}
                   tabIndex={0}
-                  style={{
-                    default: {
-                      fill: has ? "var(--map-has-data)" : "var(--map-no-data)",
-                      stroke: "var(--map-stroke)",
-                      strokeWidth: 0.6,
-                      vectorEffect: "non-scaling-stroke"
-                    },
-                    hover: {
-                      fill: "var(--map-hover)",
-                    },
-                    pressed: {
-                      fill: "var(--map-hover)",
-                    },
-                  }}
+                  style={has ? mapStyles.hasData : mapStyles.noData}
                 />
               );
             })
