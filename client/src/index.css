@@ -71,7 +71,7 @@
 
   /* Enhanced map theme tokens for better visibility and scannability */
   --map-canvas: hsl(var(--muted) / 0.35);   /* panel behind the SVG */
-  --map-no-data: hsl(var(--slate-200));  /* base fill for states w/ no data */
+  --map-no-data: #E2E8F0;  /* base fill for states w/ no data - light slate */
   --map-has-data: hsl(var(--primary) / 0.18); /* brand-tinted fill for states w/ data */
   --map-hover: hsl(var(--primary) / 0.72);
   --map-stroke: hsl(var(--border));
