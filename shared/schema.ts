@@ -143,6 +143,12 @@ export const insertObjectiveSchema = createInsertSchema(objectives).omit({
   id: true,
 });
 
+// Keyword aggregation type
+export interface KeywordWithCount {
+  keyword: string;
+  reportCount: number;
+}
+
 export const insertFindingSchema = createInsertSchema(findings).omit({
   id: true,
 });

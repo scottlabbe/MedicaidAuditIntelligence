@@ -217,6 +217,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Top keywords
+  app.get("/api/keywords/top", rateLimit, async (req, res) => {
+    try {
+      const limitParam = req.query.limit;
+      const limit = limitParam ? Math.min(Math.max(parseInt(limitParam as string), 1), 24) : 12;
+      
+      const keywords = await storage.getTopKeywords(limit);
+      
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(keywords);
+    } catch (error) {
+      console.error("Error fetching top keywords:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Export reports
 
 

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import HeroSearch from "@/components/search/hero-search";
 import StatsCard from "@/components/dashboard/stats-card";
 import ReportCard from "@/components/reports/report-card";
+import KeywordSection from "@/components/keywords/keyword-section";
 import type { DashboardStats, ReportListItem } from "@/lib/types";
 
 export default function Home() {
@@ -141,6 +142,9 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Popular Keywords Section */}
+      <KeywordSection />
 
       {/* Call to Action */}
       <section className="bg-muted/50 dark:bg-muted/20 rounded-xl p-8 text-center">

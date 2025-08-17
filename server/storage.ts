@@ -26,6 +26,7 @@ import {
   type InsertReport,
   type User,
   type InsertUser,
+  type KeywordWithCount,
   users,
 } from "@shared/schema";
 
@@ -363,6 +364,29 @@ export class DatabaseStorage implements IStorage {
       criticalFindings: findingsResult[0]?.count || 0,
       recentReports: recentReportsResult,
     };
+  }
+
+  async getTopKeywords(limit: number = 12): Promise<KeywordWithCount[]> {
+    const result = await db
+      .select({
+        keyword: keywords.keyword,
+        reportCount: sql<number>`count(distinct ${reportKeywords.reportId})`,
+      })
+      .from(keywords)
+      .leftJoin(reportKeywords, eq(keywords.id, reportKeywords.keywordId))
+      .leftJoin(reports, and(
+        eq(reportKeywords.reportId, reports.id),
+        eq(reports.hidden, false)
+      ))
+      .groupBy(keywords.id, keywords.keyword)
+      .having(sql`count(distinct ${reportKeywords.reportId}) >= 2`) // Filter out keywords with < 2 reports
+      .orderBy(sql`count(distinct ${reportKeywords.reportId}) DESC`)
+      .limit(limit);
+
+    return result.map(row => ({
+      keyword: row.keyword,
+      reportCount: row.reportCount || 0,
+    }));
   }
 
 
