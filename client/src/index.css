@@ -74,7 +74,7 @@
   --map-no-data: #f3f4f6;  /* base fill for states w/ no data - light grey */
   --map-has-data: hsl(var(--primary) / 0.18); /* brand-tinted fill for states w/ data */
   --map-hover: hsl(var(--primary) / 0.72);
-  --map-stroke: hsl(var(--border));
+  --map-stroke: #d1d5db;  /* light grey stroke for state borders */
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Source Serif 4', serif;

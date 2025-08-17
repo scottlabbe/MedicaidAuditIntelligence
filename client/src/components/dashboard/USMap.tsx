@@ -42,7 +42,7 @@ export default function USMap({
       default: {
         fill: "var(--map-has-data)",
         stroke: "var(--map-stroke)",
-        strokeWidth: 0.6,
+        strokeWidth: 1,
         vectorEffect: "non-scaling-stroke" as const
       },
       hover: { fill: "var(--map-hover)" },
@@ -52,7 +52,7 @@ export default function USMap({
       default: {
         fill: "var(--map-no-data)",
         stroke: "var(--map-stroke)",
-        strokeWidth: 0.6,
+        strokeWidth: 1,
         vectorEffect: "non-scaling-stroke" as const
       },
       hover: { fill: "var(--map-hover)" },
