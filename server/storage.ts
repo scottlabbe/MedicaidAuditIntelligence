@@ -367,6 +367,7 @@ export class DatabaseStorage implements IStorage {
       SELECT canonical_keyword as keyword, report_count as "reportCount"
       FROM keyword_mappings 
       WHERE report_count >= 2 
+        AND (hidden = false OR hidden IS NULL)
       ORDER BY report_count DESC 
       LIMIT ${limit}
     `);
