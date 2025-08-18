@@ -16,12 +16,8 @@ import {
   objectives,
   findings,
   recommendations,
-  keywords,
-  themes,
   programs,
-  reportKeywords,
   reportPrograms,
-  keywordThemes,
   type Report,
   type InsertReport,
   type User,
@@ -367,23 +363,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTopKeywords(limit: number = 12): Promise<KeywordWithCount[]> {
-    const result = await db
-      .select({
-        keyword: keywords.keyword,
-        reportCount: sql<number>`count(distinct ${reportKeywords.reportId})`,
-      })
-      .from(keywords)
-      .leftJoin(reportKeywords, eq(keywords.id, reportKeywords.keywordId))
-      .leftJoin(reports, and(
-        eq(reportKeywords.reportId, reports.id),
-        eq(reports.hidden, false)
-      ))
-      .groupBy(keywords.id, keywords.keyword)
-      .having(sql`count(distinct ${reportKeywords.reportId}) >= 2`) // Filter out keywords with < 2 reports
-      .orderBy(sql`count(distinct ${reportKeywords.reportId}) DESC`)
-      .limit(limit);
+    const result = await db.execute(sql`
+      SELECT canonical_keyword as keyword, report_count as "reportCount"
+      FROM keyword_mappings 
+      WHERE report_count >= 2 
+      ORDER BY report_count DESC 
+      LIMIT ${limit}
+    `);
 
-    return result.map(row => ({
+    return (result.rows as any[]).map(row => ({
       keyword: row.keyword,
       reportCount: row.reportCount || 0,
     }));
@@ -393,10 +381,10 @@ export class DatabaseStorage implements IStorage {
 
   private async getReportKeywords(reportId: string): Promise<string[]> {
     const result = await db
-      .select({ keyword: keywords.keyword })
-      .from(reportKeywords)
-      .innerJoin(keywords, eq(reportKeywords.keywordId, keywords.id))
-      .where(eq(reportKeywords.reportId, reportId));
+      .select({ keyword: sql<string>`keyword_text` })
+      .from(sql`report_keywords_association rka`)
+      .innerJoin(sql`keywords k`, sql`rka.keyword_id = k.id`)
+      .where(sql`rka.report_id = ${reportId}`);
     
     return result.map(r => r.keyword);
   }

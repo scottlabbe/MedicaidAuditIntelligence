@@ -57,29 +57,7 @@ export const recommendations = pgTable("recommendations", {
   relatedFindingId: integer("related_finding_id").references(() => findings.id),
 });
 
-export const keywords = pgTable("keywords", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  keyword: text("keyword").notNull().unique(),
-});
-
-export const reportKeywords = pgTable("report_keywords", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  reportId: varchar("report_id").references(() => reports.id).notNull(),
-  keywordId: varchar("keyword_id").references(() => keywords.id).notNull(),
-});
-
-export const themes = pgTable("themes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull().unique(),
-  description: text("description"),
-  color: varchar("color", { length: 7 }), // hex color
-});
-
-export const keywordThemes = pgTable("keyword_themes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  keywordId: varchar("keyword_id").references(() => keywords.id).notNull(),
-  themeId: varchar("theme_id").references(() => themes.id).notNull(),
-});
+// Note: Using existing keyword_mappings table with canonical_keyword and report_count fields
 
 export const programs = pgTable("programs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -157,14 +135,6 @@ export const insertRecommendationSchema = createInsertSchema(recommendations).om
   id: true,
 });
 
-export const insertKeywordSchema = createInsertSchema(keywords).omit({
-  id: true,
-});
-
-export const insertThemeSchema = createInsertSchema(themes).omit({
-  id: true,
-});
-
 export const insertProgramSchema = createInsertSchema(programs).omit({
   id: true,
 });
@@ -178,10 +148,6 @@ export type Finding = typeof findings.$inferSelect;
 export type InsertFinding = z.infer<typeof insertFindingSchema>;
 export type Recommendation = typeof recommendations.$inferSelect;
 export type InsertRecommendation = z.infer<typeof insertRecommendationSchema>;
-export type Keyword = typeof keywords.$inferSelect;
-export type InsertKeyword = z.infer<typeof insertKeywordSchema>;
-export type Theme = typeof themes.$inferSelect;
-export type InsertTheme = z.infer<typeof insertThemeSchema>;
 export type Program = typeof programs.$inferSelect;
 export type InsertProgram = z.infer<typeof insertProgramSchema>;
 
