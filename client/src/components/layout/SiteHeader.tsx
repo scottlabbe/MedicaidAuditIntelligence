@@ -21,7 +21,7 @@ export default function SiteHeader() {
         <Link href="/" className="flex items-center gap-2">
           <Logo />
           <span className="font-semibold tracking-tight text-foreground">
-            Medicaid Audit Explorer
+            Medicaid Audit Intelligence
           </span>
         </Link>
 

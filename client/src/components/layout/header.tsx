@@ -27,21 +27,28 @@ export default function Header() {
   // Listen for keyboard shortcuts
   useState(() => {
     document.addEventListener("keydown", handleKeyboardShortcut);
-    return () => document.removeEventListener("keydown", handleKeyboardShortcut);
+    return () =>
+      document.removeEventListener("keydown", handleKeyboardShortcut);
   });
 
   return (
     <>
-      <header className="sticky top-0 z-50 warm-shadow" style={{ backgroundColor: '#FFFDFB', borderBottom: '1px solid #FDE68A' }}>
+      <header
+        className="sticky top-0 z-50 warm-shadow"
+        style={{
+          backgroundColor: "#FFFDFB",
+          borderBottom: "1px solid #FDE68A",
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <Link href="/" className="flex items-center space-x-3">
-                <div style={{border: "2px solid blue", padding: "2px"}}>
+                <div style={{ border: "2px solid blue", padding: "2px" }}>
                   <Logo />
                 </div>
                 <span className="text-xl font-semibold text-black">
-                  Medicaid Audit Explorer
+                  Medicaid Audit Intelligence
                 </span>
               </Link>
 

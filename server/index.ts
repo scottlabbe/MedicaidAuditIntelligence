@@ -91,7 +91,7 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`🚀 Medicaid Audit Explorer serving on port ${port}`);
+    log(`🚀 Medicaid Audit Intelligence serving on port ${port}`);
     log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     if (process.env.DATABASE_URL) {
       log(`🗄️ Database connected`);

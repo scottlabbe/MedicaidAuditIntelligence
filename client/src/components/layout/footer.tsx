@@ -18,7 +18,7 @@ export default function Footer() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <span className="text-sm text-muted-foreground">
-              © 2024 Medicaid Audit Explorer
+              © 2025 Medicaid Audit Intelligence
             </span>
             <a
               href="#"
@@ -37,11 +37,7 @@ export default function Footer() {
             <span className="text-sm text-muted-foreground">
               Need access? Contact your administrator
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyInviteLink}
-            >
+            <Button variant="outline" size="sm" onClick={handleCopyInviteLink}>
               Copy Invite Link
             </Button>
           </div>
