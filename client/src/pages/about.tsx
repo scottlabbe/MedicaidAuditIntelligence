@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function About() {
@@ -25,7 +24,7 @@ export default function About() {
       <section className="mb-12">
         <Card className="card-shadow">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3">
+            <CardTitle className="flex items-center gap-3 text-lg">
               <FileText className="w-6 h-6 text-primary" />
               Purpose
             </CardTitle>
@@ -47,7 +46,7 @@ export default function About() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="card-shadow">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3">
+              <CardTitle className="flex items-center gap-3 text-lg">
                 <Zap className="w-5 h-5 text-primary" />
                 Data Transformation
               </CardTitle>
@@ -61,7 +60,7 @@ export default function About() {
 
           <Card className="card-shadow">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3">
+              <CardTitle className="flex items-center gap-3 text-lg">
                 <RefreshCw className="w-5 h-5 text-primary" />
                 AI Integration
               </CardTitle>
@@ -80,7 +79,7 @@ export default function About() {
       <section className="mb-12">
         <Card className="card-shadow border-orange-200 bg-orange-50/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3">
+            <CardTitle className="flex items-center gap-3 text-lg">
               <Zap className="w-6 h-6 text-orange-600" />
               How AI is Used
             </CardTitle>
@@ -93,11 +92,8 @@ export default function About() {
               and <strong>findings</strong>, are captured as close to the
               original wording as possible. Two fields are intentionally
               AI-generated summaries for improved readability and analysis:
+              <strong> AI Scope Summary</strong> and <strong>AI Generated Insight</strong>.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">AI Scope Summary</Badge>
-              <Badge variant="secondary">Ai Generated Insight</Badge>
-            </div>
           </CardContent>
         </Card>
       </section>
@@ -106,7 +102,7 @@ export default function About() {
       <section className="mb-12">
         <Card className="card-shadow border-emerald-200 bg-emerald-50/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-3">
+            <CardTitle className="flex items-center gap-3 text-lg">
               <CheckCircle className="w-6 h-6 text-emerald-600" />
               Data Quality & Verification
             </CardTitle>
