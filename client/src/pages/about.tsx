@@ -1,4 +1,11 @@
-import { Mail, ExternalLink, FileText, Zap, RefreshCw, CheckCircle } from "lucide-react";
+import {
+  Mail,
+  ExternalLink,
+  FileText,
+  Zap,
+  RefreshCw,
+  CheckCircle,
+} from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +19,6 @@ export default function About() {
         <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-6 tracking-tight">
           About Medicaid Audit Intelligence
         </h1>
-        <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed text-muted-foreground">
-          Centralizing Medicaid audit reports to provide program managers, auditors, and oversight professionals 
-          with comprehensive insights and data-driven decision support.
-        </p>
       </div>
 
       {/* Purpose Section */}
@@ -28,15 +31,19 @@ export default function About() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-lg leading-relaxed">
-            Medicaid Audit Intelligence centralizes recently published Medicaid-related audit reports for program managers, 
-            auditors, and others who want a wide-angle view of issues reported by oversight agencies.
+            Medicaid Audit Intelligence centralizes recently published
+            Medicaid-related audit reports for program managers, auditors, and
+            others who want a wide-angle view of issues reported by oversight
+            agencies.
           </CardContent>
         </Card>
       </section>
 
       {/* Main Features */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-foreground mb-8">What This Tool Does</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-8">
+          What This Tool Does
+        </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="card-shadow">
             <CardHeader>
@@ -46,8 +53,9 @@ export default function About() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              The platform turns unstructured audit PDFs into structured records you can search, 
-              compare, and use to power downstream processes (dashboards, a reference library, and more).
+              The platform turns unstructured audit PDFs into structured records
+              you can search, compare, and use to power downstream processes
+              (dashboards, a reference library, and more).
             </CardContent>
           </Card>
 
@@ -59,8 +67,10 @@ export default function About() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              All data elements are extracted by OpenAI models from publicly available audit reports. 
-              Most fields are captured as close to the original wording as possible, with selective AI-generated summaries.
+              All data elements are extracted by OpenAI models from publicly
+              available audit reports. Most fields are captured as close to the
+              original wording as possible, with selective AI-generated
+              summaries.
             </CardContent>
           </Card>
         </div>
@@ -77,17 +87,17 @@ export default function About() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              All data elements are extracted by OpenAI models from publicly available audit reports. 
-              Most fields—such as <strong>objective</strong>, <strong>overall conclusion</strong>, 
-              and <strong>findings</strong>—are captured as close to the original wording as possible.
+              All data elements are extracted by OpenAI models from publicly
+              available audit reports. Most fields, such as{" "}
+              <strong>objective</strong>, <strong>overall conclusion</strong>,
+              and <strong>findings</strong>, are captured as close to the
+              original wording as possible. Two fields are intentionally
+              AI-generated summaries for improved readability and analysis.
             </p>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">AI Scope Summary</Badge>
               <Badge variant="secondary">AI Overall Conclusion</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Two fields are intentionally AI-generated summaries for improved readability and analysis.
-            </p>
           </CardContent>
         </Card>
       </section>
@@ -103,15 +113,17 @@ export default function About() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              AI systems can make mistakes. Links to the original source documents are provided for verification, 
-              and corrections are welcome.
+              AI systems can make mistakes. Links to the original source
+              documents are provided for verification, and corrections are
+              welcome.
             </p>
             <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
               <Mail className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-medium">Found an error?</p>
                 <p className="text-sm text-muted-foreground">
-                  If you spot an error in the extracted data, please email us for corrections.
+                  If you spot an error in the extracted data, please email us
+                  for corrections.
                 </p>
               </div>
               <Button variant="outline" size="sm" className="ml-auto">
@@ -125,7 +137,9 @@ export default function About() {
 
       {/* Extraction Workflow */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-foreground mb-8">Extraction Workflow</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-8">
+          Extraction Workflow
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="card-shadow">
             <CardHeader>
@@ -137,7 +151,8 @@ export default function About() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              Relevant Medicaid audit reports are compiled from state and federal oversight sites.
+              Relevant Medicaid audit reports are compiled from state and
+              federal oversight sites.
             </CardContent>
           </Card>
 
@@ -151,7 +166,8 @@ export default function About() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              Each report is processed by two lightweight OpenAI models to extract fields according to a predefined schema.
+              Each report is processed by two lightweight OpenAI models to
+              extract fields according to a predefined schema.
             </CardContent>
           </Card>
 
@@ -165,7 +181,8 @@ export default function About() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              Outputs are standardized (e.g., dates, agency names) for consistent search and comparison.
+              Outputs are standardized (e.g., dates, agency names) for
+              consistent search and comparison.
             </CardContent>
           </Card>
 
@@ -179,7 +196,8 @@ export default function About() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              Records are checked and published with citations back to the source PDF.
+              Records are checked and published with citations back to the
+              source PDF.
             </CardContent>
           </Card>
         </div>
@@ -187,9 +205,12 @@ export default function About() {
 
       {/* Call to Action */}
       <section className="text-center py-12 bg-gradient-to-r from-orange-50/50 to-amber-50/50 rounded-2xl">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Ready to Explore?</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-4">
+          Ready to Explore?
+        </h2>
         <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-          Start searching through our comprehensive database of Medicaid audit reports.
+          Start searching through our comprehensive database of Medicaid audit
+          reports.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/explore">
@@ -199,7 +220,11 @@ export default function About() {
             </Button>
           </Link>
           <Link href="/dashboard">
-            <Button variant="outline" size="lg" className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex items-center gap-2"
+            >
               <ExternalLink className="w-5 h-5" />
               View Dashboard
             </Button>
