@@ -18,25 +18,10 @@ export default function Footer() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <span className="text-sm text-muted-foreground">
-              © 2025 Medicaid Audit Intelligence
+              © 2025 Medicaid Audit Explorer
             </span>
-            <a
-              href="#"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Terms of Service
-            </a>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
-              Need access? Contact your administrator
-            </span>
             <Button variant="outline" size="sm" onClick={handleCopyInviteLink}>
               Copy Invite Link
             </Button>
