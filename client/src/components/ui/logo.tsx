@@ -1,4 +1,5 @@
 export function Logo({ className = "" }: { className?: string }) {
+  console.log("Logo component rendering"); // Debug log
   return (
     <svg 
       width="32" 
@@ -9,6 +10,7 @@ export function Logo({ className = "" }: { className?: string }) {
       role="img" 
       aria-label="Report logo"
       className={className}
+      style={{ border: "2px solid red" }} // Temporary visual debug
     >
       {/* Document outline with folded corner */}
       <path 
