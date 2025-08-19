@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Explore from "@/pages/explore";
 import ReportDetail from "@/pages/report-detail";
 import Dashboard from "@/pages/dashboard";
+import About from "@/pages/about";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
           <Route path="/explore" component={Explore} />
           <Route path="/reports/:id" component={ReportDetail} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/about" component={About} />
           <Route component={NotFound} />
         </Switch>
       </main>
