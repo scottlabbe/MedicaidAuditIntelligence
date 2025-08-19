@@ -92,11 +92,11 @@ export default function About() {
               <strong>objective</strong>, <strong>overall conclusion</strong>,
               and <strong>findings</strong>, are captured as close to the
               original wording as possible. Two fields are intentionally
-              AI-generated summaries for improved readability and analysis.
+              AI-generated summaries for improved readability and analysis:
             </p>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">AI Scope Summary</Badge>
-              <Badge variant="secondary">AI Overall Conclusion</Badge>
+              <Badge variant="secondary">Ai Generated Insight</Badge>
             </div>
           </CardContent>
         </Card>
