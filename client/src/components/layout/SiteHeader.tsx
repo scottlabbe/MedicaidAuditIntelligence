@@ -3,6 +3,7 @@ import { useLocation, Link } from "wouter";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Logo } from "@/components/ui/logo";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -18,7 +19,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 bg-background/70 backdrop-blur border-b border-border">
       <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-xl bg-primary warm-shadow" />
+          <Logo />
           <span className="font-semibold tracking-tight text-foreground">
             Medicaid Audit Explorer
           </span>

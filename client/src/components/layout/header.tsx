@@ -4,7 +4,7 @@ import { Search, FileText, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import CommandPalette from "@/components/ui/command-palette";
-import { Logo } from "@/components/ui/logo";
+import { Logo } from "../ui/logo";
 
 const navigation = [
   { name: "Home", href: "/" },
