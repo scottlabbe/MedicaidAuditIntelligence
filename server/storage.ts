@@ -117,12 +117,12 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get total count
-    const totalQuery = db
+    let totalQuery = db
       .select({ count: sql<number>`count(*)` })
       .from(reports);
     
     if (conditions.length > 0) {
-      totalQuery.where(and(...conditions));
+      totalQuery = totalQuery.where(and(...conditions));
     }
 
     // Apply sorting based on sortBy parameter
@@ -165,6 +165,19 @@ export class DatabaseStorage implements IStorage {
     // Return items with basic data (no complex relationships for now)
     const enhancedItems: ReportListItem[] = items.map((item) => ({
       ...item,
+      publicationMonth: item.publicationMonth ?? undefined,
+      publicationDay: item.publicationDay ?? undefined,
+      overallConclusion: item.overallConclusion ?? undefined,
+      llmInsight: item.llmInsight ?? undefined,
+      potentialObjectiveSummary: item.potentialObjectiveSummary ?? undefined,
+      auditScope: item.auditScope ?? undefined,
+      originalReportSourceUrl: item.originalReportSourceUrl ?? undefined,
+      originalFilename: item.originalFilename ?? undefined,
+      fileHash: item.fileHash ?? undefined,
+      featured: item.featured ?? undefined,
+      status: item.status ?? undefined,
+      createdAt: item.createdAt ?? undefined,
+      updatedAt: item.updatedAt ?? undefined,
       keywords: [],
       programs: [],
       conclusionExcerpt: item.overallConclusion ? 
@@ -201,9 +214,28 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...report[0],
+      publicationMonth: report[0].publicationMonth ?? undefined,
+      publicationDay: report[0].publicationDay ?? undefined,
+      overallConclusion: report[0].overallConclusion ?? undefined,
+      llmInsight: report[0].llmInsight ?? undefined,
+      potentialObjectiveSummary: report[0].potentialObjectiveSummary ?? undefined,
+      auditScope: report[0].auditScope ?? undefined,
+      originalReportSourceUrl: report[0].originalReportSourceUrl ?? undefined,
+      originalFilename: report[0].originalFilename ?? undefined,
+      fileHash: report[0].fileHash ?? undefined,
+      featured: report[0].featured ?? undefined,
+      status: report[0].status ?? undefined,
+      createdAt: report[0].createdAt ?? undefined,
+      updatedAt: report[0].updatedAt ?? undefined,
       objectives: objectivesList,
-      findings: findingsList,
-      recommendations: recommendationsList,
+      findings: findingsList.map(f => ({
+        ...f,
+        financialImpact: f.financialImpact ?? undefined,
+      })),
+      recommendations: recommendationsList.map(r => ({
+        ...r,
+        relatedFindingId: r.relatedFindingId ?? undefined,
+      })),
       keywords: [],
       programs: [],
     };
@@ -238,6 +270,19 @@ export class DatabaseStorage implements IStorage {
 
     return items.map((item) => ({
       ...item,
+      publicationMonth: item.publicationMonth ?? undefined,
+      publicationDay: item.publicationDay ?? undefined,
+      overallConclusion: item.overallConclusion ?? undefined,
+      llmInsight: item.llmInsight ?? undefined,
+      potentialObjectiveSummary: item.potentialObjectiveSummary ?? undefined,
+      auditScope: item.auditScope ?? undefined,
+      originalReportSourceUrl: item.originalReportSourceUrl ?? undefined,
+      originalFilename: item.originalFilename ?? undefined,
+      fileHash: item.fileHash ?? undefined,
+      featured: item.featured ?? undefined,
+      status: item.status ?? undefined,
+      createdAt: item.createdAt ?? undefined,
+      updatedAt: item.updatedAt ?? undefined,
       keywords: [],
       programs: [],
       conclusionExcerpt: item.overallConclusion ? 
@@ -247,7 +292,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createReport(report: InsertReport): Promise<Report> {
-    const result = await db.insert(reports).values(report).returning();
+    const result = await db.insert(reports).values([report]).returning();
     return result[0];
   }
 
