@@ -31,8 +31,8 @@ export default function HeroSearch() {
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 h-auto pl-12 pr-4 py-3 text-base bg-transparent border-0 focus:ring-0 focus:border-0 rounded-l-2xl rounded-r-none text-foreground placeholder:text-muted-foreground"
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             size="lg"
             className="px-6 py-3 rounded-l-none rounded-r-2xl h-auto"
           >
@@ -42,7 +42,7 @@ export default function HeroSearch() {
         </div>
       </div>
       <p className="text-sm text-muted-foreground mt-3 text-center">
-        Try searching for "eligibility", "provider enrollment", or "fraud"
+        Try searching for "managed care", "provider enrollment", or "fraud"
       </p>
     </form>
   );

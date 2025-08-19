@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Download, BarChart3, ExternalLink, Shield } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, Shield } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,13 +22,7 @@ export default function ReportDetail() {
 
 
 
-  const handleAddToComparison = () => {
-    // TODO: Implement comparison functionality
-    toast({
-      title: "Added to comparison",
-      description: "Report has been added to your comparison list.",
-    });
-  };
+
 
   const formatDate = (report: ReportWithDetails) => {
     if (report.publicationDay && report.publicationMonth && report.publicationYear) {
@@ -142,16 +136,7 @@ export default function ReportDetail() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <Button
-                size="sm"
-                onClick={handleAddToComparison}
-                className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Compare</span>
-              </Button>
-            </div>
+
           </div>
 
           {/* Tabs Content */}
