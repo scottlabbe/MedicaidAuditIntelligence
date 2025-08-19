@@ -269,7 +269,7 @@ export default function Explore() {
                               {report.publicationYear}
                             </span>
                             <Button variant="outline" size="sm" asChild>
-                              <Link href={`/report/${report.id}`}>View</Link>
+                              <Link href={`/reports/${report.id}`}>View</Link>
                             </Button>
                           </div>
                         </div>

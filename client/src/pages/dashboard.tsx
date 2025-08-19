@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, MapPin, Zap, TrendingUp, Calendar, Building } from "lucide-react";
+import { Link } from "wouter";
 import { apiClient } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -168,22 +169,24 @@ export default function Dashboard() {
             ) : stats?.recentReports?.length ? (
               <div className="space-y-4">
                 {stats.recentReports.slice(0, 5).map((report) => (
-                  <div key={report.id} className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-primary" />
+                  <Link key={report.id} href={`/reports/${report.id}`}>
+                    <div className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                          {report.reportTitle}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {report.state} • {report.auditOrganization}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {report.publicationYear}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground line-clamp-1">
-                        {report.reportTitle}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {report.state} • {report.auditOrganization}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {report.publicationYear}
-                      </p>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
