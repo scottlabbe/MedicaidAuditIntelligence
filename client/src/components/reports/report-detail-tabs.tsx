@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Info } from "lucide-react";
+import { Info, ExternalLink } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -29,6 +29,11 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
     "potential_objective_summary",
   );
   const aiInsight = get<string>(report, "llmInsight", "llm_insight");
+  const originalReportSourceUrl = get<string>(
+    report,
+    "originalReportSourceUrl",
+    "original_report_source_url",
+  );
 
   const findings = (report as any).findings ?? [];
   const recommendations = (report as any).recommendations ?? [];
@@ -85,8 +90,30 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
               </div>
             )}
 
+            {/* Source Document */}
+            {originalReportSourceUrl && (
+              <div className="mt-6">
+                <h3 className="text-xl font-semibold mb-3 text-black">
+                  Source Document
+                </h3>
+                <Card className="bg-card border warm-shadow border-l-4 border-l-blue-500">
+                  <CardContent className="p-6">
+                    <a 
+                      href={originalReportSourceUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      View Full Report (PDF)
+                    </a>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {/* Separator */}
-            {overallConclusion && auditScope && (
+            {(overallConclusion || originalReportSourceUrl) && auditScope && (
               <Separator className="my-6 " />
             )}
 
