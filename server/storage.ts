@@ -207,19 +207,26 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
 
-    // Get model name from the most recent AI processing log for this report
-    const aiLog = await db
-      .select({ modelName: aiProcessingLogs.modelName })
-      .from(aiProcessingLogs)
-      .where(eq(aiProcessingLogs.reportId, reportId))
-      .orderBy(desc(aiProcessingLogs.createdAt))
-      .limit(1);
-
     const [objectivesList, findingsList, recommendationsList] = await Promise.all([
       db.select().from(objectives).where(eq(objectives.reportId, reportId)),
       db.select().from(findings).where(eq(findings.reportId, reportId)),
       db.select().from(recommendations).where(eq(recommendations.reportId, reportId)),
     ]);
+
+    // Get model name from the most recent AI processing log for this report
+    let modelName: string | undefined = undefined;
+    try {
+      const aiLog = await db
+        .select({ modelName: aiProcessingLogs.modelName })
+        .from(aiProcessingLogs)
+        .where(eq(aiProcessingLogs.reportId, reportId))
+        .orderBy(desc(aiProcessingLogs.createdAt))
+        .limit(1);
+      
+      modelName = aiLog[0]?.modelName;
+    } catch (error) {
+      console.warn("Could not fetch model name for report", reportId, ":", error);
+    }
 
     return {
       ...report[0],
@@ -236,7 +243,7 @@ export class DatabaseStorage implements IStorage {
       status: report[0].status ?? undefined,
       createdAt: report[0].createdAt ?? undefined,
       updatedAt: report[0].updatedAt ?? undefined,
-      modelName: aiLog[0]?.modelName ?? undefined,
+      modelName: modelName,
       objectives: objectivesList,
       findings: findingsList.map(f => ({
         ...f,

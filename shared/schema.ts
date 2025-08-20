@@ -73,13 +73,19 @@ export const reportPrograms = pgTable("report_programs", {
 
 // Operational tables
 export const aiProcessingLogs = pgTable("ai_processing_logs", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  reportId: varchar("report_id").references(() => reports.id),
-  processingType: text("processing_type").notNull(),
-  status: text("status").notNull(),
-  result: jsonb("result"),
-  errorMessage: text("error_message"),
-  createdAt: timestamp("created_at").defaultNow(),
+  id: integer("id").primaryKey(),
+  reportId: integer("report_id").references(() => reports.id).notNull(),
+  modelName: varchar("model_name").notNull(),
+  inputTokens: integer("input_tokens"),
+  outputTokens: integer("output_tokens"),
+  totalTokens: integer("total_tokens"),
+  inputCost: integer("input_cost"), // Using integer to match database type (double precision mapped to number)
+  outputCost: integer("output_cost"),
+  totalCost: integer("total_cost"),
+  processingTimeMs: integer("processing_time_ms"),
+  extractionStatus: varchar("extraction_status"),
+  errorDetails: text("error_details"),
+  createdAt: timestamp("created_at"),
 });
 
 export const scrapingQueue = pgTable("scraping_queue", {
