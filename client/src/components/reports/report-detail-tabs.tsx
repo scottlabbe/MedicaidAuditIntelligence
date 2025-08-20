@@ -188,7 +188,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* AI-Assisted (AI Scope Summary + AI Insight) */}
             {(aiScopeSummary || aiInsight) && (
               <div className="mt-10">
-                <h3 className="text-xl font-semibold mb-3 text-black" style={{ WebkitTextStroke: '1px black' }}>
+                <h3 className="text-xl font-semibold mb-3 text-black">
                   AI-Assisted
                 </h3>
                 <div className="bg-orange-light border border-orange-primary/20 rounded-xl p-5 space-y-4 warm-shadow">
