@@ -188,7 +188,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
             {/* AI-Assisted (AI Scope Summary + AI Insight) */}
             {(aiScopeSummary || aiInsight) && (
               <div className="mt-10">
-                <h3 className="text-xl font-semibold mb-3 text-black">
+                <h3 className="text-xl font-semibold mb-3 text-black" style={{ WebkitTextStroke: '1px black' }}>
                   AI-Assisted
                 </h3>
                 <div className="bg-orange-light border border-orange-primary/20 rounded-xl p-5 space-y-4 warm-shadow">
@@ -201,7 +201,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                   )}
                   {aiScopeSummary && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-secondary mb-1 border border-black px-2 py-1 rounded inline-block">
+                      <p className="text-xs uppercase tracking-wide text-secondary mb-1 border border-black px-2 py-1 rounded inline-block" style={{ WebkitTextStroke: '0.5px black' }}>
                         AI Scope Summary
                       </p>
                       <p className="font-serif leading-relaxed text-black">
@@ -211,7 +211,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                   )}
                   {aiInsight && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-secondary mb-1 border border-black px-2 py-1 rounded inline-block">
+                      <p className="text-xs uppercase tracking-wide text-secondary mb-1 border border-black px-2 py-1 rounded inline-block" style={{ WebkitTextStroke: '0.5px black' }}>
                         AI-Generated Insight
                       </p>
                       <p className="font-serif leading-relaxed text-black">
