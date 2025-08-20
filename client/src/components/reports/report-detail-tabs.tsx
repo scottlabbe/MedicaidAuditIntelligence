@@ -201,7 +201,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                   )}
                   {aiScopeSummary && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-secondary mb-1 font-medium">
+                      <p className="text-xs uppercase tracking-wide text-black mb-1 font-medium">
                         AI Scope Summary
                       </p>
                       <p className="font-serif leading-relaxed text-black">
@@ -211,7 +211,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
                   )}
                   {aiInsight && (
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-secondary mb-1 font-medium">
+                      <p className="text-xs uppercase tracking-wide text-black mb-1 font-medium">
                         AI-Generated Insight
                       </p>
                       <p className="font-serif leading-relaxed text-black">
