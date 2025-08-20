@@ -62,6 +62,7 @@ export interface ReportWithDetails extends ReportListItem {
     recommendationText: string;
     relatedFindingId?: number;
   }>;
+  modelName?: string;
 }
 
 export interface SearchResponse {
