@@ -106,9 +106,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(reports.publicationYear, filters.year));
     }
 
-    if (filters.featured !== undefined) {
-      conditions.push(eq(reports.featured, filters.featured));
-    }
+
 
     // Filter out hidden reports
     conditions.push(eq(reports.hidden, false));

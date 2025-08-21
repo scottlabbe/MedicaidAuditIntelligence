@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { SearchFilters } from "@/lib/types";
@@ -27,14 +27,7 @@ const YEARS = Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i);
 
 
 
-const PROGRAMS = [
-  "Medicaid",
-  "CHIP",
-  "Managed Care",
-  "Fee-for-Service",
-  "SNAP",
-  "TANF"
-];
+
 
 export default function SearchFilters({ filters, onFiltersChange }: SearchFiltersProps) {
   const [isOpen, setIsOpen] = useState(true);
@@ -151,74 +144,7 @@ export default function SearchFilters({ filters, onFiltersChange }: SearchFilter
               </Select>
             </div>
 
-            {/* Theme */}
 
-
-            {/* Program */}
-            <div className="space-y-2">
-              <Label htmlFor="program">Program</Label>
-              <Select
-                value={filters.program || ""}
-                onValueChange={(value) => updateFilter("program", value === "all" ? "" : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All programs" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All programs</SelectItem>
-                  {PROGRAMS.map((program) => (
-                    <SelectItem key={program} value={program}>
-                      {program}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Checkboxes */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="hasAiInsight"
-                  checked={filters.hasAiInsight || false}
-                  onCheckedChange={(checked) => updateFilter("hasAiInsight", checked || undefined)}
-                />
-                <Label htmlFor="hasAiInsight" className="text-sm">
-                  Has AI Insight
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="featured"
-                  checked={filters.featured || false}
-                  onCheckedChange={(checked) => updateFilter("featured", checked || undefined)}
-                />
-                <Label htmlFor="featured" className="text-sm">
-                  Featured Reports
-                </Label>
-              </div>
-            </div>
-
-            {/* Severity */}
-            <div className="space-y-2">
-              <Label htmlFor="severity">Finding Severity</Label>
-              <Select
-                value={filters.severity || ""}
-                onValueChange={(value) => updateFilter("severity", value === "all" ? undefined : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All severities" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All severities</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="info">Info</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </CardContent>
         </CollapsibleContent>
       </Collapsible>

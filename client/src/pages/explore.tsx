@@ -32,9 +32,7 @@ export default function Explore() {
     if (urlParams.get("agency")) newFilters.agency = urlParams.get("agency")!;
     if (urlParams.get("year")) newFilters.year = parseInt(urlParams.get("year")!);
 
-    if (urlParams.get("program")) newFilters.program = urlParams.get("program")!;
-    if (urlParams.get("hasAiInsight")) newFilters.hasAiInsight = urlParams.get("hasAiInsight") === "true";
-    if (urlParams.get("featured")) newFilters.featured = urlParams.get("featured") === "true";
+
     
     // Parse sortBy from URL
     if (urlParams.get("sortBy")) {

@@ -72,10 +72,6 @@ const searchFiltersSchema = z.object({
   agency: z.string().optional(),
   year: z.coerce.number().int().min(2000).max(new Date().getFullYear() + 1).optional(),
   theme: z.string().optional(),
-  program: z.string().optional(),
-  hasAiInsight: z.coerce.boolean().optional(),
-  featured: z.coerce.boolean().optional(),
-  severity: z.enum(["info", "low", "medium", "high"]).optional(),
   sortBy: z.enum(["date_desc", "date_asc", "title", "state"]).optional(),
 });
 
