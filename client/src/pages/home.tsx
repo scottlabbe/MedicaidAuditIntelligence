@@ -10,6 +10,7 @@ import HeroSearch from "@/components/search/hero-search";
 import StatsCard from "@/components/dashboard/stats-card";
 import ReportCard from "@/components/reports/report-card";
 import KeywordSection from "@/components/keywords/keyword-section";
+import PageMeta from "@/components/seo/PageMeta";
 import type { DashboardStats, ReportListItem } from "@/lib/types";
 
 export default function Home() {
@@ -25,6 +26,23 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 lg:px-8 section-spacing">
+      <PageMeta
+        title="Medicaid Audit Intelligence - Search & Analyze Audit Reports"
+        description={`Search and analyze ${stats?.totalReports || 100}+ Medicaid audit reports across ${stats?.statesWithReports || 40} states. Explore findings, recommendations, and financial impacts from state and federal oversight agencies.`}
+        canonicalPath="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Medicaid Audit Intelligence",
+          url: "https://medicaidauditintelligence.com",
+          description: "Search and analyze Medicaid audit reports across states with structured findings, recommendations, and trends.",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://medicaidauditintelligence.com/explore?query={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
       {/* Hero Section */}
       <div className="text-center content-spacing">
         <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-6 tracking-tight">

@@ -5,6 +5,7 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { getSeoMeta, injectSeoIntoHtml } from "./seo";
 
 const viteLogger = createLogger();
 
@@ -58,6 +59,15 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
+
+      // Inject SEO meta tags before Vite transforms
+      try {
+        const seoMeta = await getSeoMeta(url);
+        template = injectSeoIntoHtml(template, seoMeta);
+      } catch (e) {
+        console.warn("SEO injection failed for", url, e);
+      }
+
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -69,6 +79,7 @@ export async function setupVite(app: Express, server: Server) {
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "public");
+  const assetsPath = path.join(distPath, "assets");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -76,10 +87,35 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Cache the index.html template in memory for fast SEO injection
+  const indexHtmlPath = path.resolve(distPath, "index.html");
+  const indexHtmlTemplate = fs.readFileSync(indexHtmlPath, "utf-8");
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  if (fs.existsSync(assetsPath)) {
+    app.use(
+      "/assets",
+      express.static(assetsPath, {
+        maxAge: "1y",
+        immutable: true,
+      }),
+    );
+  }
+
+  app.use(
+    express.static(distPath, {
+      maxAge: "1h",
+    }),
+  );
+
+  // fall through to index.html with injected SEO meta
+  app.use("*", async (req, res) => {
+    try {
+      const seoMeta = await getSeoMeta(req.originalUrl);
+      const html = injectSeoIntoHtml(indexHtmlTemplate, seoMeta);
+      res.status(200).set({ "Content-Type": "text/html" }).send(html);
+    } catch (e) {
+      console.warn("SEO injection failed, serving base HTML:", e);
+      res.status(200).set({ "Content-Type": "text/html" }).send(indexHtmlTemplate);
+    }
   });
 }

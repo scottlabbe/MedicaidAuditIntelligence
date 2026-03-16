@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { ArrowLeft, Download, ExternalLink, Shield } from "lucide-react";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import ReportDetailTabs from "@/components/reports/report-detail-tabs";
+import PageMeta from "@/components/seo/PageMeta";
 import type { ReportWithDetails } from "@/lib/types";
 
 export default function ReportDetail() {
@@ -99,8 +101,43 @@ export default function ReportDetail() {
     );
   }
 
+  const reportJsonLd = useMemo(() => {
+    if (!report) return undefined;
+    const dateStr = [
+      report.publicationYear,
+      report.publicationMonth ? String(report.publicationMonth).padStart(2, "0") : null,
+      report.publicationDay ? String(report.publicationDay).padStart(2, "0") : null,
+    ].filter(Boolean).join("-");
+    return {
+      "@context": "https://schema.org",
+      "@type": "Report",
+      name: report.reportTitle,
+      author: { "@type": "Organization", name: report.auditOrganization },
+      datePublished: dateStr,
+      description: report.overallConclusion?.substring(0, 155) || "",
+      about: { "@type": "GovernmentService", name: "Medicaid" },
+      spatialCoverage: { "@type": "Place", name: report.state },
+      publisher: {
+        "@type": "Organization",
+        name: "Medicaid Audit Intelligence",
+        url: "https://medicaidauditintelligence.com",
+      },
+    };
+  }, [report]);
+
   return (
     <div className="bg-background min-h-screen">
+      {report && (
+        <PageMeta
+          title={report.reportTitle}
+          description={
+            (report.overallConclusion || report.llmInsight || "View detailed Medicaid audit report with findings, recommendations, and analysis.").substring(0, 155)
+          }
+          canonicalPath={`/reports/${reportId}`}
+          ogType="article"
+          jsonLd={reportJsonLd}
+        />
+      )}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="mb-6">

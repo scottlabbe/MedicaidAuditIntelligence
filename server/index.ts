@@ -7,8 +7,8 @@ const app = express();
 // Trust proxy for rate limiting behind reverse proxy
 app.set('trust proxy', 1);
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 // Security headers middleware
 app.use((req, res, next) => {
@@ -89,7 +89,6 @@ app.use((req, res, next) => {
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
   }, () => {
     log(`🚀 Medicaid Audit Intelligence serving on port ${port}`);
     log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);

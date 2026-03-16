@@ -6,7 +6,6 @@ const API_BASE = "/api";
 export class ApiClient {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${API_BASE}${endpoint}`, {
-      credentials: "include",
       ...options,
     });
 

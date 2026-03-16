@@ -1,10 +1,10 @@
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 export class HMACAuth {
   private secret: string;
 
   constructor(secret?: string) {
-    this.secret = secret || process.env.INTERNAL_API_SECRET || "default-dev-secret-key-change-in-production";
+    this.secret = secret || process.env.INTERNAL_API_SECRET || "";
     if (!this.secret) {
       throw new Error("INTERNAL_API_SECRET environment variable is required");
     }
@@ -22,12 +22,7 @@ export class HMACAuth {
 
   private compareHmac(a: string, b: string): boolean {
     if (a.length !== b.length) return false;
-    
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-    return result === 0;
+    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
   }
 
   createAuthHeader(path: string): string {

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { hmacAuth } from "./auth";
 import { z } from "zod";
+import { generateSitemap } from "./seo";
 
 // Rate limiting storage
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -81,7 +82,7 @@ const paginationSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CORS and security headers
+  // CORS headers
   app.use((req, res, next) => {
     const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean);
     const origin = req.headers.origin;
@@ -93,17 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Authorization, Content-Type");
     res.header("Access-Control-Allow-Credentials", "false");
-    
-    // Security headers
-    res.header("X-Content-Type-Options", "nosniff");
-    res.header("X-Frame-Options", "DENY");
-    res.header("Referrer-Policy", "no-referrer-when-downgrade");
-    res.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    
-    if (process.env.NODE_ENV === "production") {
-      res.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    }
-    
+
     if (req.method === "OPTIONS") {
       return res.sendStatus(200);
     }
@@ -111,8 +102,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // SEO endpoints (before API routes)
+
+  app.get("/robots.txt", (_req, res) => {
+    const siteUrl = process.env.SITE_URL || "https://medicaidauditintelligence.com";
+    res.type("text/plain").send(
+`User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: ${siteUrl}/sitemap.xml`
+    );
+  });
+
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const sitemap = await generateSitemap();
+      res.set("Content-Type", "application/xml");
+      res.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+      res.send(sitemap);
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
   // Public endpoints (with rate limiting)
-  
+
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

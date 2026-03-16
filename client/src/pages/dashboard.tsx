@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/stats-card";
 import USMap from "@/components/dashboard/USMap";
+import PageMeta from "@/components/seo/PageMeta";
 import type { DashboardStats, StateLatestResponse } from "@/lib/types";
 
 export default function Dashboard() {
@@ -41,6 +42,11 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <PageMeta
+        title="Medicaid Audit Dashboard - Statistics & Coverage Map"
+        description={`Interactive dashboard with Medicaid audit statistics, state coverage map, and trend analysis. Explore ${stats?.totalReports || ""}+ audit findings across ${stats?.statesWithReports || ""} states.`}
+        canonicalPath="/dashboard"
+      />
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>

@@ -9,10 +9,16 @@ import {
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import PageMeta from "@/components/seo/PageMeta";
 
 export default function About() {
   return (
     <div className="max-w-7xl mx-auto px-6 lg:px-8 section-spacing">
+      <PageMeta
+        title="About Medicaid Audit Intelligence"
+        description="Learn how Medicaid Audit Intelligence transforms government audit reports into searchable, structured data using AI-powered extraction and analysis."
+        canonicalPath="/about"
+      />
       {/* Hero Section */}
       <div className="text-center content-spacing">
         <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-6 tracking-tight">
