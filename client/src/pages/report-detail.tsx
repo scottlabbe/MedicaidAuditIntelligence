@@ -1,30 +1,49 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Download, ExternalLink, Shield } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import ReportDetailTabs from "@/components/reports/report-detail-tabs";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ReportWithDetails } from "@/lib/types";
 
 export default function ReportDetail() {
   const [, params] = useRoute("/reports/:id");
-  const { toast } = useToast();
   const reportId = params?.id;
 
   const { data: report, isLoading, error } = useQuery({
     queryKey: ["/api/reports", reportId],
     enabled: !!reportId,
+    queryFn: () => apiClient.getReportById(reportId!),
   }) as { data: ReportWithDetails | undefined; isLoading: boolean; error: Error | null };
 
-
-
-
+  const reportJsonLd = useMemo(() => {
+    if (!report) return undefined;
+    const dateStr = [
+      report.publicationYear,
+      report.publicationMonth ? String(report.publicationMonth).padStart(2, "0") : null,
+      report.publicationDay ? String(report.publicationDay).padStart(2, "0") : null,
+    ].filter(Boolean).join("-");
+    return {
+      "@context": "https://schema.org",
+      "@type": "Report",
+      name: report.reportTitle,
+      author: { "@type": "Organization", name: report.auditOrganization },
+      datePublished: dateStr,
+      description: report.overallConclusion?.substring(0, 155) || "",
+      about: { "@type": "GovernmentService", name: "Medicaid" },
+      spatialCoverage: { "@type": "Place", name: report.state },
+      publisher: {
+        "@type": "Organization",
+        name: "Medicaid Audit Intelligence",
+        url: "https://medicaidauditintelligence.com",
+      },
+    };
+  }, [report]);
 
   const formatDate = (report: ReportWithDetails) => {
     if (report.publicationDay && report.publicationMonth && report.publicationYear) {
@@ -100,30 +119,6 @@ export default function ReportDetail() {
       </div>
     );
   }
-
-  const reportJsonLd = useMemo(() => {
-    if (!report) return undefined;
-    const dateStr = [
-      report.publicationYear,
-      report.publicationMonth ? String(report.publicationMonth).padStart(2, "0") : null,
-      report.publicationDay ? String(report.publicationDay).padStart(2, "0") : null,
-    ].filter(Boolean).join("-");
-    return {
-      "@context": "https://schema.org",
-      "@type": "Report",
-      name: report.reportTitle,
-      author: { "@type": "Organization", name: report.auditOrganization },
-      datePublished: dateStr,
-      description: report.overallConclusion?.substring(0, 155) || "",
-      about: { "@type": "GovernmentService", name: "Medicaid" },
-      spatialCoverage: { "@type": "Place", name: report.state },
-      publisher: {
-        "@type": "Organization",
-        name: "Medicaid Audit Intelligence",
-        url: "https://medicaidauditintelligence.com",
-      },
-    };
-  }, [report]);
 
   return (
     <div className="bg-background min-h-screen">
