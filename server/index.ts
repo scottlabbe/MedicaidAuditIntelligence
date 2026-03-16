@@ -3,6 +3,29 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+const siteUrl = process.env.SITE_URL || "https://medicaidauditintelligence.com";
+const canonicalSiteUrl = new URL(siteUrl);
+const canonicalProtocol = canonicalSiteUrl.protocol.replace(":", "");
+const canonicalHost = canonicalSiteUrl.host;
+const canonicalHostname = canonicalSiteUrl.hostname.toLowerCase();
+
+function getRequestProtocol(req: Request): string {
+  const forwardedProto = req.header("x-forwarded-proto");
+  return forwardedProto?.split(",")[0].trim() || req.protocol;
+}
+
+function getRequestHost(req: Request): string | null {
+  const forwardedHost = req.header("x-forwarded-host");
+  return forwardedHost?.split(",")[0].trim() || req.header("host") || null;
+}
+
+function shouldRedirectHost(requestHostname: string): boolean {
+  if (canonicalHostname.startsWith("www.")) {
+    return requestHostname === canonicalHostname.slice(4);
+  }
+
+  return requestHostname === `www.${canonicalHostname}`;
+}
 
 // Trust proxy for rate limiting behind reverse proxy
 app.set('trust proxy', 1);
@@ -12,10 +35,18 @@ app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 // Security headers middleware
 app.use((req, res, next) => {
-  // HTTPS redirect in production
-  if (process.env.NODE_ENV === 'production' && req.header('x-forwarded-proto') !== 'https') {
-    res.redirect(`https://${req.header('host')}${req.url}`);
-    return;
+  if (process.env.NODE_ENV === "production") {
+    const requestProtocol = getRequestProtocol(req);
+    const requestHost = getRequestHost(req);
+    const requestHostname = requestHost?.split(":")[0].toLowerCase();
+    const needsProtocolRedirect = requestProtocol !== canonicalProtocol;
+    const needsHostRedirect = requestHostname ? shouldRedirectHost(requestHostname) : false;
+
+    if (needsProtocolRedirect || needsHostRedirect) {
+      const redirectHost = needsHostRedirect ? canonicalHost : (requestHost || canonicalHost);
+      res.redirect(301, `${canonicalProtocol}://${redirectHost}${req.originalUrl}`);
+      return;
+    }
   }
   
   // Security headers
