@@ -40,7 +40,7 @@ export default function ReportDetail() {
       publisher: {
         "@type": "Organization",
         name: "Medicaid Audit Intelligence",
-        url: "https://medicaidauditintelligence.com",
+        url: "https://medicaidintelligence.com",
       },
     };
   }, [report]);

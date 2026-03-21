@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // SEO endpoints (before API routes)
 
   app.get("/robots.txt", (_req, res) => {
-    const siteUrl = process.env.SITE_URL || "https://medicaidauditintelligence.com";
+    const siteUrl = process.env.SITE_URL || "https://medicaidintelligence.com";
     res.type("text/plain").send(
 `User-agent: *
 Allow: /
