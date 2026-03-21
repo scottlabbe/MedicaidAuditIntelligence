@@ -68,9 +68,10 @@ export default function ReportDetail() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PageMeta
-          title="Report unavailable"
-          description="This audit report could not be loaded."
-          robots="noindex, follow"
+          title={reportId ? `Audit Report ${reportId}` : "Audit Report"}
+          description="View detailed Medicaid audit report with findings, recommendations, and analysis."
+          canonicalPath={reportId ? `/reports/${reportId}` : undefined}
+          ogType="article"
         />
         <Card className="p-8 text-center">
           <CardContent>
