@@ -34,11 +34,11 @@ export default function Home() {
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "Medicaid Audit Intelligence",
-          url: "https://medicaidintelligence.com",
+          url: "https://www.medicaidintelligence.com",
           description: "Search and analyze Medicaid audit reports across states with structured findings, recommendations, and trends.",
           potentialAction: {
             "@type": "SearchAction",
-            target: "https://medicaidintelligence.com/explore?query={search_term_string}",
+            target: "https://www.medicaidintelligence.com/explore?query={search_term_string}",
             "query-input": "required name=search_term_string",
           },
         }}

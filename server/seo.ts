@@ -1,7 +1,7 @@
 import { storage } from "./storage";
 
 const SITE_URL =
-  process.env.SITE_URL || "https://medicaidintelligence.com";
+  process.env.SITE_URL || "https://www.medicaidintelligence.com";
 const SITE_NAME = "Medicaid Audit Intelligence";
 
 // US state code to full name mapping

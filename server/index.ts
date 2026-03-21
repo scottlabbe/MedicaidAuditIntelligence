@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-const siteUrl = process.env.SITE_URL || "https://medicaidintelligence.com";
+const siteUrl = process.env.SITE_URL || "https://www.medicaidintelligence.com";
 const canonicalSiteUrl = new URL(siteUrl);
 const canonicalProtocol = canonicalSiteUrl.protocol.replace(":", "");
 const canonicalHost = canonicalSiteUrl.host;

@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "Medicaid Audit Intelligence";
-const SITE_URL = "https://medicaidintelligence.com";
+const SITE_URL = "https://www.medicaidintelligence.com";
 
 interface PageMetaProps {
   title: string;
