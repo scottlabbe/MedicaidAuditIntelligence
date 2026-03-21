@@ -31,6 +31,7 @@ export interface ResolvedHtmlRoute {
   redirectTo?: string;
   seoMeta?: SeoMeta;
   snapshotHtml: string;
+  initialRouteData?: Record<string, unknown>;
 }
 
 function escapeHtml(str: string): string {
@@ -40,6 +41,15 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#39;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function escapeScriptJson(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }
 
 function truncate(text: string, maxLen: number): string {
@@ -522,6 +532,10 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
         <p><a href="/explore">Browse more reports</a>${stateEntry ? ` or <a href="/states/${stateEntry.slug}">see all ${escapeHtml(stateEntry.name)} reports</a>` : ""}.</p>
       </article>
     `),
+    initialRouteData: {
+      routeType: "report",
+      report,
+    },
   };
 }
 
@@ -684,6 +698,12 @@ export function injectSeoIntoHtml(html: string, route: ResolvedHtmlRoute): strin
     /<div id="root">\s*<\/div>/,
     `<div id="root">${route.snapshotHtml}</div>`,
   );
+  if (route.initialRouteData) {
+    html = html.replace(
+      "</body>",
+      `<script>window.__INITIAL_ROUTE_DATA__ = ${escapeScriptJson(route.initialRouteData)};</script>\n</body>`,
+    );
+  }
   html = html.replace("</head>", `${tags.join("\n")}\n</head>`);
 
   return html;
