@@ -34,7 +34,10 @@ import type {
   SearchResponse,
   DashboardStats,
   StateLatestResponse,
+  IndexableStateSummary,
+  StateLandingPageData,
 } from "../client/src/lib/types";
+import { getStateEntryByCode } from "@shared/states";
 
 export interface IStorage {
   // Reports
@@ -43,6 +46,8 @@ export interface IStorage {
   getFeaturedReports(limit?: number): Promise<ReportListItem[]>;
   createReport(report: InsertReport): Promise<Report>;
   getLatestReportsByState(limit: number, scope: 'state' | 'federal'): Promise<StateLatestResponse>;
+  getIndexableStates(limit?: number): Promise<IndexableStateSummary[]>;
+  getStateLandingPage(stateCode: string, limit?: number): Promise<StateLandingPageData | undefined>;
   
   // Dashboard
   getDashboardStats(): Promise<DashboardStats>;
@@ -58,7 +63,7 @@ export class DatabaseStorage implements IStorage {
     const offset = (page - 1) * pageSize;
     
     // Base query
-    let query = db
+    let query: any = db
       .select({
         id: reports.id,
         reportTitle: reports.reportTitle,
@@ -116,7 +121,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get total count
-    let totalQuery = db
+    let totalQuery: any = db
       .select({ count: sql<number>`count(*)` })
       .from(reports);
     
@@ -125,7 +130,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Apply sorting based on sortBy parameter
-    let sortedQuery = query;
+    let sortedQuery: any = query;
     const sortBy = filters.sortBy || "date_desc";
     
     switch (sortBy) {
@@ -162,7 +167,7 @@ export class DatabaseStorage implements IStorage {
     const total = totalResult[0]?.count || 0;
 
     // Return items with basic data (no complex relationships for now)
-    const enhancedItems: ReportListItem[] = items.map((item) => ({
+    const enhancedItems: ReportListItem[] = items.map((item: any) => ({
       ...item,
       publicationMonth: item.publicationMonth ?? undefined,
       publicationDay: item.publicationDay ?? undefined,
@@ -283,7 +288,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(reports.publicationYear), desc(reports.publicationMonth))
       .limit(limit);
 
-    return items.map((item) => ({
+    return items.map((item: any) => ({
       ...item,
       publicationMonth: item.publicationMonth ?? undefined,
       publicationDay: item.publicationDay ?? undefined,
@@ -307,7 +312,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createReport(report: InsertReport): Promise<Report> {
-    const result = await db.insert(reports).values([report]).returning();
+    const result = await db.insert(reports).values(report as any).returning();
     return result[0];
   }
 
@@ -404,6 +409,118 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { byKey, updatedAt: new Date().toISOString() };
+  }
+
+  async getIndexableStates(limit = 50): Promise<IndexableStateSummary[]> {
+    const result = await db.execute(sql`
+      WITH ranked AS (
+        SELECT
+          id,
+          report_title,
+          state,
+          audit_organization,
+          publication_year,
+          publication_month,
+          publication_day,
+          overall_conclusion,
+          llm_insight,
+          potential_objective_summary,
+          audit_scope,
+          original_report_source_url,
+          original_filename,
+          file_hash,
+          featured,
+          status,
+          created_at,
+          updated_at,
+          COUNT(*) OVER (PARTITION BY state) AS report_count,
+          ROW_NUMBER() OVER (
+            PARTITION BY state
+            ORDER BY publication_year DESC,
+                     COALESCE(publication_month, 1) DESC,
+                     COALESCE(publication_day, 1) DESC,
+                     id DESC
+          ) AS rn
+        FROM reports
+        WHERE COALESCE(hidden, false) = false
+          AND state IS NOT NULL
+          AND state != ''
+      )
+      SELECT *
+      FROM ranked
+      WHERE rn = 1
+      ORDER BY report_count DESC, state ASC
+      LIMIT ${limit}
+    `);
+
+    return (result.rows as any[]).reduce<IndexableStateSummary[]>((items, row) => {
+      const stateEntry = getStateEntryByCode(row.state);
+      if (!stateEntry) {
+        return items;
+      }
+
+      const latestReport: ReportListItem = {
+        id: row.id,
+        reportTitle: row.report_title,
+        state: row.state,
+        auditOrganization: row.audit_organization,
+        publicationYear: row.publication_year,
+        publicationMonth: row.publication_month ?? undefined,
+        publicationDay: row.publication_day ?? undefined,
+        overallConclusion: row.overall_conclusion ?? undefined,
+        llmInsight: row.llm_insight ?? undefined,
+        potentialObjectiveSummary: row.potential_objective_summary ?? undefined,
+        auditScope: row.audit_scope ?? undefined,
+        originalReportSourceUrl: row.original_report_source_url ?? undefined,
+        originalFilename: row.original_filename ?? undefined,
+        fileHash: row.file_hash ?? undefined,
+        featured: row.featured ?? undefined,
+        status: row.status ?? undefined,
+        createdAt: row.created_at ?? undefined,
+        updatedAt: row.updated_at ?? undefined,
+        keywords: [],
+        programs: [],
+        conclusionExcerpt: row.overall_conclusion
+          ? row.overall_conclusion.substring(0, 200) + (row.overall_conclusion.length > 200 ? "..." : "")
+          : undefined,
+      };
+
+      items.push({
+        code: stateEntry.code,
+        name: stateEntry.name,
+        slug: stateEntry.slug,
+        reportCount: Number(row.report_count) || 0,
+        latestReport,
+      });
+
+      return items;
+    }, []);
+  }
+
+  async getStateLandingPage(stateCode: string, limit = 12): Promise<StateLandingPageData | undefined> {
+    const stateEntry = getStateEntryByCode(stateCode);
+    if (!stateEntry) {
+      return undefined;
+    }
+
+    const results = await this.getReports(
+      { state: stateEntry.code, sortBy: "date_desc" },
+      1,
+      limit,
+    );
+
+    if (results.total === 0) {
+      return undefined;
+    }
+
+    return {
+      code: stateEntry.code,
+      name: stateEntry.name,
+      slug: stateEntry.slug,
+      reportCount: results.total,
+      latestReport: results.items[0],
+      reports: results.items,
+    };
   }
 
   async getDashboardStats(): Promise<DashboardStats> {

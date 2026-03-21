@@ -5,7 +5,7 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
-import { getSeoMeta, injectSeoIntoHtml } from "./seo";
+import { injectSeoIntoHtml, resolveHtmlRoute } from "./seo";
 
 const viteLogger = createLogger();
 
@@ -60,16 +60,22 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
 
-      // Inject SEO meta tags before Vite transforms
+      // Resolve route behavior before Vite transforms the document.
       try {
-        const seoMeta = await getSeoMeta(url);
-        template = injectSeoIntoHtml(template, seoMeta);
+        const resolvedRoute = await resolveHtmlRoute(url);
+        if (resolvedRoute.redirectTo) {
+          res.redirect(resolvedRoute.status, resolvedRoute.redirectTo);
+          return;
+        }
+
+        template = injectSeoIntoHtml(template, resolvedRoute);
+        res.status(resolvedRoute.status);
       } catch (e) {
         console.warn("SEO injection failed for", url, e);
       }
 
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      res.set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -103,16 +109,22 @@ export function serveStatic(app: Express) {
 
   app.use(
     express.static(distPath, {
+      index: false,
       maxAge: "1h",
     }),
   );
 
-  // fall through to index.html with injected SEO meta
+  // Fall through to index.html with route-aware SEO and status handling.
   app.use("*", async (req, res) => {
     try {
-      const seoMeta = await getSeoMeta(req.originalUrl);
-      const html = injectSeoIntoHtml(indexHtmlTemplate, seoMeta);
-      res.status(200).set({ "Content-Type": "text/html" }).send(html);
+      const resolvedRoute = await resolveHtmlRoute(req.originalUrl);
+      if (resolvedRoute.redirectTo) {
+        res.redirect(resolvedRoute.status, resolvedRoute.redirectTo);
+        return;
+      }
+
+      const html = injectSeoIntoHtml(indexHtmlTemplate, resolvedRoute);
+      res.status(resolvedRoute.status).set({ "Content-Type": "text/html" }).send(html);
     } catch (e) {
       console.warn("SEO injection failed, serving base HTML:", e);
       res.status(200).set({ "Content-Type": "text/html" }).send(indexHtmlTemplate);

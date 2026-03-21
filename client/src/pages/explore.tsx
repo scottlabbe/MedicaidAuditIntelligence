@@ -14,6 +14,7 @@ import SearchFilters from "@/components/search/search-filters";
 import ReportCard from "@/components/reports/report-card";
 import PageMeta from "@/components/seo/PageMeta";
 import type { SearchResponse, SearchFilters as SearchFiltersType } from "@/lib/types";
+import { getStateEntryByCode } from "@shared/states";
 
 export default function Explore() {
   const [location, setLocation] = useLocation();
@@ -22,6 +23,14 @@ export default function Explore() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<SearchFiltersType>({});
   const [sortBy, setSortBy] = useState("date_desc");
+  const activeFilterCount = Object.values(filters).filter(v => v !== undefined && v !== null && v !== "").length;
+  const stateEntry = getStateEntryByCode(filters.state);
+  const stateOnlyFilter =
+    Boolean(stateEntry) &&
+    !filters.query &&
+    !filters.agency &&
+    !filters.year &&
+    sortBy === "date_desc";
 
   // Parse URL parameters on mount
   useEffect(() => {
@@ -45,6 +54,10 @@ export default function Explore() {
 
   // Update URL when filters change
   useEffect(() => {
+    if (stateOnlyFilter && stateEntry) {
+      return;
+    }
+
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
@@ -61,7 +74,7 @@ export default function Explore() {
     if (newUrl !== location) {
       setLocation(newUrl);
     }
-  }, [filters, sortBy, setLocation]);
+  }, [filters, location, setLocation, sortBy, stateEntry, stateOnlyFilter]);
 
   const { data: searchResults, isLoading, error } = useQuery<SearchResponse>({
     queryKey: ["/api/reports", { ...filters, sortBy }, page],
@@ -81,30 +94,22 @@ export default function Explore() {
     delete newFilters[filterKey];
     setFilters(newFilters);
   };
+  useEffect(() => {
+    if (!stateOnlyFilter || !stateEntry) {
+      return;
+    }
 
-
-
-  const activeFilterCount = Object.values(filters).filter(v => v !== undefined && v !== null && v !== "").length;
+    const stateUrl = `/states/${stateEntry.slug}`;
+    if (location !== stateUrl) {
+      setLocation(stateUrl);
+    }
+  }, [location, setLocation, stateEntry, stateOnlyFilter]);
 
   const pageMeta = useMemo(() => {
-    const STATE_NAMES: Record<string, string> = {
-      AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
-      CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
-      HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
-      KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
-      MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
-      MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
-      NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina",
-      ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania",
-      RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee",
-      TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
-      WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", DC: "District of Columbia",
-    };
-
-    if (filters.state && STATE_NAMES[filters.state]) {
+    if (stateEntry) {
       return {
-        title: `Medicaid Audit Reports in ${STATE_NAMES[filters.state]}`,
-        description: `Browse Medicaid audit reports for ${STATE_NAMES[filters.state]}. Find audit findings, recommendations, and oversight insights.`,
+        title: `Medicaid Audit Reports in ${stateEntry.name}`,
+        description: `Browse Medicaid audit reports for ${stateEntry.name}. Find audit findings, recommendations, and oversight insights.`,
       };
     }
     if (filters.query) {
@@ -117,7 +122,7 @@ export default function Explore() {
       title: "Explore Medicaid Audit Reports",
       description: "Search and filter Medicaid audit reports by state, agency, year, and topic. Browse findings, recommendations, and financial impacts.",
     };
-  }, [filters.state, filters.query]);
+  }, [filters.query, stateEntry]);
 
   if (error) {
     return (
@@ -137,6 +142,7 @@ export default function Explore() {
         title={pageMeta.title}
         description={pageMeta.description}
         canonicalPath="/explore"
+        robots={activeFilterCount > 0 ? "noindex, follow" : "index, follow"}
       />
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters Sidebar */}

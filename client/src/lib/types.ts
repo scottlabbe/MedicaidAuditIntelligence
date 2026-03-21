@@ -89,3 +89,20 @@ export interface StateLatestResponse {
   byKey: Record<string, ReportPreview[]>;
   updatedAt: string;
 }
+
+export interface IndexableStateSummary {
+  code: string;
+  name: string;
+  slug: string;
+  reportCount: number;
+  latestReport?: ReportListItem;
+}
+
+export interface StateLandingPageData {
+  code: string;
+  name: string;
+  slug: string;
+  reportCount: number;
+  latestReport?: ReportListItem;
+  reports: ReportListItem[];
+}

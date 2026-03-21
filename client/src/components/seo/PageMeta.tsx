@@ -8,7 +8,8 @@ interface PageMetaProps {
   description: string;
   canonicalPath?: string;
   ogType?: string;
-  jsonLd?: object;
+  jsonLd?: object | object[];
+  robots?: string;
 }
 
 export default function PageMeta({
@@ -17,12 +18,15 @@ export default function PageMeta({
   canonicalPath,
   ogType = "website",
   jsonLd,
+  robots = "index, follow",
 }: PageMetaProps) {
   const fullTitle = title.includes(SITE_NAME)
     ? title
     : `${title} | ${SITE_NAME}`;
   const canonicalUrl = canonicalPath
-    ? `${SITE_URL}${canonicalPath}`
+    ? canonicalPath === "/"
+      ? SITE_URL
+      : `${SITE_URL}${canonicalPath}`
     : undefined;
 
   return (
@@ -38,8 +42,11 @@ export default function PageMeta({
       <meta name="twitter:card" content="summary" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
+      <meta name="robots" content={robots} />
       {jsonLd && (
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">
+          {JSON.stringify(Array.isArray(jsonLd) ? jsonLd : [jsonLd])}
+        </script>
       )}
     </Helmet>
   );

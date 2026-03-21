@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ReportDetailTabs from "@/components/reports/report-detail-tabs";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ReportWithDetails } from "@/lib/types";
+import { getStateEntryByCode } from "@shared/states";
 
 export default function ReportDetail() {
   const [, params] = useRoute("/reports/:id");
@@ -61,9 +62,16 @@ export default function ReportDetail() {
     return report.publicationYear?.toString() || 'Unknown';
   };
 
+  const stateEntry = report ? getStateEntryByCode(report.state) : undefined;
+
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageMeta
+          title="Report unavailable"
+          description="This audit report could not be loaded."
+          robots="noindex, follow"
+        />
         <Card className="p-8 text-center">
           <CardContent>
             <p className="text-destructive">Error loading report: {error.message}</p>
@@ -105,6 +113,11 @@ export default function ReportDetail() {
   if (!report) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageMeta
+          title="Report not found"
+          description="The requested audit report could not be found."
+          robots="noindex, follow"
+        />
         <Card className="p-8 text-center">
           <CardContent>
             <p className="text-muted-foreground">Report not found</p>
@@ -151,9 +164,17 @@ export default function ReportDetail() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-3">
-                  <Badge variant="secondary" className="text-xs">
-                    {report.state}
-                  </Badge>
+                  {stateEntry ? (
+                    <Link href={`/states/${stateEntry.slug}`}>
+                      <Badge variant="secondary" className="text-xs cursor-pointer hover:bg-secondary/80">
+                        {stateEntry.name}
+                      </Badge>
+                    </Link>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">
+                      {report.state}
+                    </Badge>
+                  )}
                   <Badge variant="outline" className="text-xs">
                     {report.auditOrganization}
                   </Badge>

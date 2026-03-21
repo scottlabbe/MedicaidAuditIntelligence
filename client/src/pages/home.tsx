@@ -27,21 +27,30 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-6 lg:px-8 section-spacing">
       <PageMeta
-        title="Medicaid Audit Intelligence - Search & Analyze Audit Reports"
+        title="Medicaid Audit Intelligence - Search & Analyze Medicaid Audit Reports"
         description={`Search and analyze ${stats?.totalReports || 100}+ Medicaid audit reports across ${stats?.statesWithReports || 40} states. Explore findings, recommendations, and financial impacts from state and federal oversight agencies.`}
         canonicalPath="/"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "Medicaid Audit Intelligence",
-          url: "https://www.medicaidintelligence.com",
-          description: "Search and analyze Medicaid audit reports across states with structured findings, recommendations, and trends.",
-          potentialAction: {
-            "@type": "SearchAction",
-            target: "https://www.medicaidintelligence.com/explore?query={search_term_string}",
-            "query-input": "required name=search_term_string",
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Medicaid Audit Intelligence",
+            url: "https://www.medicaidintelligence.com",
+            description: "Search and analyze Medicaid audit reports across states with structured findings, recommendations, and trends.",
           },
-        }}
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Medicaid Audit Intelligence",
+            url: "https://www.medicaidintelligence.com",
+            description: "Search and analyze Medicaid audit reports across states with structured findings, recommendations, and trends.",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://www.medicaidintelligence.com/explore?query={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          },
+        ]}
       />
       {/* Hero Section */}
       <div className="text-center content-spacing">
