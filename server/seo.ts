@@ -360,11 +360,13 @@ async function getExploreRoute(url: URL): Promise<ResolvedHtmlRoute> {
 async function getDashboardRoute(): Promise<ResolvedHtmlRoute> {
   let stats: { totalReports: number; statesWithReports: number } | undefined;
   let states: any[] = [];
+  let mapData: any;
 
   try {
-    [stats, states] = await Promise.all([
+    [stats, states, mapData] = await Promise.all([
       storage.getDashboardStats(),
       storage.getIndexableStates(10),
+      storage.getLatestReportsByState(3, "state"),
     ]);
   } catch {
     stats = undefined;
@@ -403,6 +405,14 @@ async function getDashboardRoute(): Promise<ResolvedHtmlRoute> {
       </section>
       <p><a href="/explore">Explore reports</a> or return to the <a href="/">homepage</a>.</p>
     `),
+    initialRouteData:
+      stats && mapData
+        ? {
+            routeType: "dashboard",
+            dashboardStats: stats,
+            dashboardMapData: mapData,
+          }
+        : undefined,
   };
 }
 
@@ -622,6 +632,20 @@ async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
         <p><a href="/explore">Explore all reports</a> or <a href="/dashboard">view the dashboard</a>.</p>
       </section>
     `),
+    initialRouteData: {
+      routeType: "state",
+      stateCode: statePage.code,
+      stateSearchResults: {
+        items: statePage.reports,
+        total: statePage.reportCount,
+        page: 1,
+        pageSize: statePage.reports.length,
+        filters: {
+          state: statePage.code,
+          sortBy: "date_desc",
+        },
+      },
+    },
   };
 }
 
