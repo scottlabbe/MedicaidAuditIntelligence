@@ -18,13 +18,13 @@ import { getStateEntryByCode } from "@shared/states";
 
 export default function Explore() {
   const [location, setLocation] = useLocation();
-  const { toast } = useToast();
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<SearchFiltersType>({});
   const [sortBy, setSortBy] = useState("date_desc");
   const activeFilterCount = Object.values(filters).filter(v => v !== undefined && v !== null && v !== "").length;
   const stateEntry = getStateEntryByCode(filters.state);
+  const shouldFetchResults = activeFilterCount > 0 || page > 1;
   const stateOnlyFilter =
     Boolean(stateEntry) &&
     !filters.query &&
@@ -78,6 +78,7 @@ export default function Explore() {
 
   const { data: searchResults, isLoading, error } = useQuery<SearchResponse>({
     queryKey: ["/api/reports", { ...filters, sortBy }, page],
+    enabled: shouldFetchResults,
     queryFn: async () => {
       const result = await apiClient.getReports({ ...filters, sortBy }, { page, pageSize: 24 });
       return result as SearchResponse;
@@ -159,7 +160,11 @@ export default function Explore() {
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-foreground mb-2">Explore Reports</h1>
             <p className="text-muted-foreground">
-              {searchResults ? `${searchResults.total} reports found` : "Loading reports..."}
+              {shouldFetchResults
+                ? searchResults
+                  ? `${searchResults.total} reports found`
+                  : "Loading reports..."
+                : "Start with a state page or apply filters to load the interactive report explorer."}
             </p>
           </div>
 
@@ -252,7 +257,23 @@ export default function Explore() {
 
             {/* Results */}
             <div className="p-6">
-              {isLoading ? (
+              {!shouldFetchResults ? (
+                <div className="text-center py-12">
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Explore the indexed report library</h3>
+                  <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                    Use the filters to load interactive search results, or start with the curated state landing pages linked above in the page content and footer.
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <Link href="/dashboard">
+                      <Button variant="outline">View Dashboard</Button>
+                    </Link>
+                    <Button onClick={() => setFilters({ year: new Date().getFullYear() })}>
+                      Load Recent Reports
+                    </Button>
+                  </div>
+                </div>
+              ) : isLoading ? (
                 <div className="space-y-6">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="flex space-x-4 p-4">
