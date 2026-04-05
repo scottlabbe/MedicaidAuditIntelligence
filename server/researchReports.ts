@@ -458,21 +458,76 @@ function renderInlineMarkdown(text: string): string {
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
 
-  html = html.replace(/\bReports\s+(\d+(?:\s*,\s*\d+)+)\b/g, (_match, ids) => {
-    const parts = String(ids)
-      .split(/\s*,\s*/)
-      .map(
-        (id) =>
-          `<a href="/reports/${id}" class="text-orange-700 underline-offset-2 hover:underline">${id}</a>`,
-      );
-    return `Reports ${parts.join(", ")}`;
+  html = renderStandardLinks(html);
+  html = renderReportReferencesOutsideAnchors(html);
+
+  return html;
+}
+
+function renderStandardLinks(html: string): string {
+  // CommonMark-style Markdown links: [label](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, href) => {
+    const normalizedHref = String(href).trim();
+    if (!isSafeHref(normalizedHref)) {
+      return match;
+    }
+    return buildAnchorTag(normalizedHref, label);
   });
 
-  html = html.replace(/\bReport\s+(\d+)\b/g, (_match, id) => {
-    return `<a href="/reports/${id}" class="text-orange-700 underline-offset-2 hover:underline">Report ${id}</a>`;
+  // CommonMark autolinks: <https://example.com> (already escaped as &lt;...&gt;)
+  html = html.replace(/&lt;(https?:\/\/[^<>\s]+)&gt;/g, (_match, href) => {
+    const normalizedHref = String(href).trim();
+    return buildAnchorTag(normalizedHref, normalizedHref);
   });
 
   return html;
+}
+
+function renderReportReferencesOutsideAnchors(html: string): string {
+  const anchorPattern = /(<a\b[^>]*>[\s\S]*?<\/a>)/g;
+  const segments = html.split(anchorPattern);
+
+  return segments
+    .map((segment) => {
+      if (segment.startsWith("<a")) {
+        return segment;
+      }
+
+      let transformed = segment;
+      transformed = transformed.replace(
+        /\bReports\s+(\d+(?:\s*,\s*\d+)+)\b/g,
+        (_match, ids) => {
+          const parts = String(ids)
+            .split(/\s*,\s*/)
+            .map((id) =>
+              buildAnchorTag(`/reports/${id}`, id, { external: false }),
+            );
+          return `Reports ${parts.join(", ")}`;
+        },
+      );
+
+      transformed = transformed.replace(/\bReport\s+(\d+)\b/g, (_match, id) =>
+        buildAnchorTag(`/reports/${id}`, `Report ${id}`, { external: false }),
+      );
+
+      return transformed;
+    })
+    .join("");
+}
+
+function buildAnchorTag(
+  href: string,
+  label: string,
+  options?: { external?: boolean },
+): string {
+  const external =
+    options?.external ?? /^(?:https?:)?\/\//.test(href);
+  const relAttrs = external ? ' target="_blank" rel="noopener noreferrer"' : "";
+  return `<a href="${href}" class="text-orange-700 underline-offset-2 hover:underline"${relAttrs}>${label}</a>`;
+}
+
+function isSafeHref(href: string): boolean {
+  return /^(https?:\/\/|\/|#)/.test(href);
 }
 
 function extractReportIds(text: string): number[] {

@@ -1,4 +1,4 @@
-Report Prepared by an AI Medicaid Researcher agent: [LINK](https://github.com/scottlabbe/researchagent-public)
+Report Prepared by an AI Medicaid Researcher agent: [GitHub Repo](https://github.com/scottlabbe/researchagent-public)
 
 Report prepared with data from the database published as of January 31, 2026.
 
