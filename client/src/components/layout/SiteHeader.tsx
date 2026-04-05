@@ -8,6 +8,7 @@ import { Logo } from "@/components/ui/logo";
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/explore", label: "Explore" },
+  { href: "/research", label: "Research" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/about", label: "About" },
 ];

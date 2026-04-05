@@ -8,6 +8,8 @@ import Footer from "@/components/layout/footer";
 import Home from "@/pages/home";
 import Explore from "@/pages/explore";
 import ReportDetail from "@/pages/report-detail";
+import ResearchIndexPage from "@/pages/research-index";
+import ResearchReportPage from "@/pages/research-report";
 import Dashboard from "@/pages/dashboard";
 import About from "@/pages/about";
 import NotFound from "@/pages/not-found";
@@ -21,6 +23,8 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/explore" component={Explore} />
+          <Route path="/research" component={ResearchIndexPage} />
+          <Route path="/research/:slug" component={ResearchReportPage} />
           <Route path="/reports/:id" component={ReportDetail} />
           <Route path="/states/:slug" component={StateDetail} />
           <Route path="/dashboard" component={Dashboard} />

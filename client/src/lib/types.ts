@@ -106,3 +106,43 @@ export interface StateLandingPageData {
   latestReport?: ReportListItem;
   reports: ReportListItem[];
 }
+
+export interface ResearchReportSource {
+  reportId: number;
+  label: string;
+  resolvedHref: string;
+}
+
+export interface ResearchReportListItem {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  featured?: boolean;
+  publishedDate?: string;
+  updatedDate?: string;
+}
+
+export interface ResearchReportSection {
+  id: string;
+  title: string;
+  level: number;
+  defaultExpanded: boolean;
+  contentHtml: string;
+  children?: ResearchReportSection[];
+}
+
+export interface ResearchReportPageData {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  featured?: boolean;
+  publishedDate?: string;
+  updatedDate?: string;
+  introHtml?: string;
+  sections: ResearchReportSection[];
+  citedReportIds: number[];
+  sources: ResearchReportSource[];
+  updatedAt?: string;
+}

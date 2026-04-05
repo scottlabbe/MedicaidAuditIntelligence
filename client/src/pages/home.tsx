@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, FileText, MapPin, Zap } from "lucide-react";
+import { ArrowRight, FileText, LibraryBig, MapPin, Zap } from "lucide-react";
 import { Link } from "wouter";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -111,6 +111,31 @@ export default function Home() {
             )}
           </div>
         )}
+      </section>
+
+      <section className="mb-12">
+        <div className="rounded-3xl border border-border bg-gradient-to-r from-orange-50 via-background to-amber-50 p-8 warm-shadow-lg">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1 text-sm text-muted-foreground">
+                <LibraryBig className="h-4 w-4 text-orange-700" />
+                Research library
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-3">
+                Research report library
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Browse long-form research reports with expandable sections and direct links into the underlying audit report detail pages.
+              </p>
+            </div>
+            <Link href="/research">
+              <Button className="flex items-center space-x-2">
+                <span>Browse research reports</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* Dashboard Preview Section */}

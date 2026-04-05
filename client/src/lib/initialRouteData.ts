@@ -2,6 +2,8 @@ import { queryClient } from "./queryClient";
 import type {
   DashboardStats,
   ReportWithDetails,
+  ResearchReportListItem,
+  ResearchReportPageData,
   SearchResponse,
   StateLatestResponse,
 } from "./types";
@@ -11,6 +13,8 @@ declare global {
     __INITIAL_ROUTE_DATA__?: {
       routeType?: string;
       report?: ReportWithDetails;
+      researchReports?: ResearchReportListItem[];
+      researchReport?: ResearchReportPageData;
       dashboardStats?: DashboardStats;
       dashboardMapData?: StateLatestResponse;
       stateCode?: string;
@@ -29,6 +33,26 @@ export function primeInitialRouteData() {
     queryClient.setQueryData(
       ["/api/reports", String(initialRouteData.report.id)],
       initialRouteData.report,
+    );
+  }
+
+  if (
+    initialRouteData.routeType === "research_index" &&
+    initialRouteData.researchReports
+  ) {
+    queryClient.setQueryData(
+      ["/api/research-reports"],
+      initialRouteData.researchReports,
+    );
+  }
+
+  if (
+    initialRouteData.routeType === "research" &&
+    initialRouteData.researchReport
+  ) {
+    queryClient.setQueryData(
+      ["/api/research-reports", initialRouteData.researchReport.slug],
+      initialRouteData.researchReport,
     );
   }
 

@@ -3,6 +3,13 @@ import {
   getStateEntryByCode,
   getStateEntryBySlug,
 } from "@shared/states";
+import {
+  getResearchReportBySlug,
+  listResearchReports,
+  listResearchReportSlugs,
+  ResearchReportNotFoundError,
+  ResearchReportValidationError,
+} from "./researchReports";
 
 const SITE_URL =
   process.env.SITE_URL || "https://www.medicaidintelligence.com";
@@ -24,6 +31,8 @@ export interface ResolvedHtmlRoute {
     | "dashboard"
     | "about"
     | "report"
+    | "research_index"
+    | "research"
     | "state"
     | "not_found"
     | "redirect";
@@ -96,6 +105,19 @@ function formatHumanDate(
   }
 
   return String(year);
+}
+
+function formatIsoDate(value?: string): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function getOrganizationJsonLd() {
@@ -549,6 +571,147 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
   };
 }
 
+async function getResearchRoute(slug: string): Promise<ResolvedHtmlRoute> {
+  try {
+    const report = await getResearchReportBySlug(slug);
+
+    return {
+      routeType: "research",
+      status: 200,
+      seoMeta: {
+        title: `${report.title} | ${SITE_NAME}`,
+        description: report.description,
+        canonicalUrl: `${SITE_URL}/research/${report.slug}`,
+        ogType: "article",
+        robots: "index, follow",
+        jsonLd: [
+          {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: report.title,
+            description: report.description,
+            dateModified: report.updatedAt,
+            publisher: {
+              "@type": "Organization",
+              name: SITE_NAME,
+              url: SITE_URL,
+            },
+          },
+          getBreadcrumbJsonLd([
+            { name: "Home", url: SITE_URL },
+            { name: "Research", url: `${SITE_URL}/research` },
+            { name: report.title, url: `${SITE_URL}/research/${report.slug}` },
+          ]),
+        ],
+      },
+      snapshotHtml: renderPageShell(`
+        <article>
+          <header>
+            <p>${escapeHtml(report.category)}</p>
+            <h1>${escapeHtml(report.title)}</h1>
+            <p>${escapeHtml(report.description)}</p>
+          </header>
+          ${report.introHtml ? `<section>${report.introHtml}</section>` : ""}
+          ${renderResearchSections(report.sections)}
+          <p><a href="/research">Browse all research reports</a> or <a href="/explore">explore the audit report library</a>.</p>
+        </article>
+      `),
+      initialRouteData: {
+        routeType: "research",
+        researchReport: report,
+      },
+    };
+  } catch (error) {
+    if (error instanceof ResearchReportNotFoundError) {
+      return getNotFoundRoute();
+    }
+
+    if (error instanceof ResearchReportValidationError) {
+      if (process.env.NODE_ENV === "development") {
+        return {
+          routeType: "research",
+          status: 500,
+          seoMeta: {
+            title: "Research report validation error",
+            description: error.message,
+            canonicalUrl: `${SITE_URL}/research/${slug}`,
+            ogType: "article",
+            robots: "noindex, nofollow",
+            jsonLd: [],
+          },
+          snapshotHtml: renderPageShell(`
+            <article>
+              <h1>Research report validation error</h1>
+              <p>${escapeHtml(error.message)}</p>
+            </article>
+          `),
+        };
+      }
+
+      return getNotFoundRoute();
+    }
+
+    throw error;
+  }
+}
+
+async function getResearchIndexRoute(): Promise<ResolvedHtmlRoute> {
+  const reports = await listResearchReports();
+  const description =
+    reports.length > 0
+      ? `Browse ${reports.length} research reports with linked Medicaid audit citations and topic-level analysis.`
+      : "Browse research reports with linked Medicaid audit citations and topic-level analysis.";
+
+  return {
+    routeType: "research_index",
+    status: 200,
+    seoMeta: {
+      title: `Research Reports | ${SITE_NAME}`,
+      description,
+      canonicalUrl: `${SITE_URL}/research`,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Research Reports",
+          url: `${SITE_URL}/research`,
+          description,
+          isPartOf: {
+            "@type": "WebSite",
+            name: SITE_NAME,
+            url: SITE_URL,
+          },
+        },
+        getBreadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Research", url: `${SITE_URL}/research` },
+        ]),
+      ],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <header>
+          <h1>Research reports</h1>
+          <p>${escapeHtml(description)}</p>
+        </header>
+        ${reports.length ? renderLinkList(
+          reports.map((report) => ({
+            href: `/research/${report.slug}`,
+            label: report.title,
+            meta: `${report.category}${report.updatedDate ? ` • Updated ${escapeHtml(formatIsoDate(report.updatedDate) || "")}` : ""}`,
+          })),
+        ) : "<p>No research reports are available yet.</p>"}
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "research_index",
+      researchReports: reports,
+    },
+  };
+}
+
 async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
   const stateEntry = getStateEntryBySlug(slug);
   if (!stateEntry) {
@@ -669,6 +832,19 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
     return getAboutRoute();
   }
 
+  if (pathname === "/research") {
+    return getResearchIndexRoute();
+  }
+
+  const researchMatch = pathname.match(/^\/research\/([a-z0-9-]+)$/);
+  if (researchMatch) {
+    return getResearchRoute(researchMatch[1]);
+  }
+
+  if (pathname.startsWith("/research/")) {
+    return getNotFoundRoute();
+  }
+
   const reportMatch = pathname.match(/^\/reports\/(\d+)$/);
   if (reportMatch) {
     return getReportRoute(reportMatch[1]);
@@ -744,14 +920,16 @@ export async function generateSitemap(): Promise<string> {
   urls.push(
     { loc: SITE_URL, changefreq: "weekly", priority: "1.0" },
     { loc: `${SITE_URL}/explore`, changefreq: "daily", priority: "0.9" },
+    { loc: `${SITE_URL}/research`, changefreq: "weekly", priority: "0.7" },
     { loc: `${SITE_URL}/dashboard`, changefreq: "weekly", priority: "0.6" },
     { loc: `${SITE_URL}/about`, changefreq: "monthly", priority: "0.4" },
   );
 
   try {
-    const [statePages, reportResults] = await Promise.all([
+    const [statePages, reportResults, researchSlugs] = await Promise.all([
       storage.getIndexableStates(60),
       storage.getReports({}, 1, 5000),
+      listResearchReportSlugs(),
     ]);
 
     for (const state of statePages) {
@@ -776,6 +954,26 @@ export async function generateSitemap(): Promise<string> {
         priority: "0.8",
       });
     }
+
+    for (const slug of researchSlugs) {
+      try {
+        const report = await getResearchReportBySlug(slug);
+        urls.push({
+          loc: `${SITE_URL}/research/${slug}`,
+          lastmod: report.updatedAt?.split("T")[0],
+          changefreq: "weekly",
+          priority: "0.6",
+        });
+      } catch (error) {
+        if (
+          error instanceof ResearchReportNotFoundError ||
+          error instanceof ResearchReportValidationError
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
   } catch (err) {
     console.error("Error generating sitemap entries:", err);
   }
@@ -795,4 +993,25 @@ export async function generateSitemap(): Promise<string> {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urlEntries}
 </urlset>`;
+}
+
+function renderResearchSections(
+  sections: Array<{
+    id: string;
+    title: string;
+    contentHtml: string;
+    children?: Array<any>;
+  }>,
+): string {
+  return sections
+    .map((section) => {
+      return `
+        <section id="${escapeHtml(section.id)}">
+          <h2>${escapeHtml(section.title)}</h2>
+          ${section.contentHtml || ""}
+          ${section.children?.length ? renderResearchSections(section.children) : ""}
+        </section>
+      `;
+    })
+    .join("");
 }

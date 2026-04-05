@@ -4,6 +4,12 @@ import { storage } from "./storage";
 import { hmacAuth } from "./auth";
 import { z } from "zod";
 import { generateSitemap } from "./seo";
+import {
+  getResearchReportBySlug,
+  listResearchReports,
+  ResearchReportNotFoundError,
+  ResearchReportValidationError,
+} from "./researchReports";
 
 // Rate limiting storage
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -107,7 +113,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/robots.txt", (_req, res) => {
     const siteUrl = process.env.SITE_URL || "https://www.medicaidintelligence.com";
     res.type("text/plain").send(
-`User-agent: *
+`# Medicaid Intelligence robots.txt
+# Managed manually in application code (Cloudflare managed robots.txt remains OFF)
+
+############################################
+# Section 1: Standard Search Engines (allow)
+############################################
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /api/
+
+User-agent: Applebot
+Allow: /
+Disallow: /api/
+
+User-agent: Slurp
+Allow: /
+Disallow: /api/
+
+############################################
+# Section 2: AI Crawlers (explicitly allow)
+############################################
+# OpenAI
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /api/
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /api/
+
+# Google AI controls (Gemini/Vertex control token)
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+
+# Amazon
+User-agent: Amazonbot
+Allow: /
+Disallow: /api/
+
+User-agent: Amzn-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: Amzn-User
+Allow: /
+Disallow: /api/
+
+# Meta AI
+User-agent: meta-externalagent
+Allow: /
+Disallow: /api/
+
+# Apple Intelligence control token
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+
+############################################
+# Section 3: Blocked Bad Bots (disallow all)
+############################################
+# Aggressive SEO/link index scrapers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: AhrefsSiteAudit
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: SemrushBot-BA
+Disallow: /
+
+User-agent: SemrushBot-SI
+Disallow: /
+
+User-agent: SemrushBot-SWA
+Disallow: /
+
+User-agent: SemrushBot-OCOB
+Disallow: /
+
+User-agent: SplitSignalBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# Self-identifying scanner / harvester / copier agents
+User-agent: sqlmap
+Disallow: /
+
+User-agent: Nikto
+Disallow: /
+
+User-agent: Nmap Scripting Engine
+Disallow: /
+
+User-agent: WPScan
+Disallow: /
+
+User-agent: EmailCollector
+Disallow: /
+
+User-agent: EmailSiphon
+Disallow: /
+
+User-agent: EmailWolf
+Disallow: /
+
+User-agent: HTTrack
+Disallow: /
+
+User-agent: WebCopier
+Disallow: /
+
+############################################
+# Section 4: Default rules for unknown bots
+############################################
+User-agent: *
 Allow: /
 Disallow: /api/
 
@@ -189,6 +352,42 @@ Sitemap: ${siteUrl}/sitemap.xml`
     } catch (error) {
       console.error("Error fetching state latest reports:", error);
       res.status(500).json({ error: "Failed to load state latest reports" });
+    }
+  });
+
+  app.get("/api/research-reports", rateLimit, async (_req, res) => {
+    try {
+      const reports = await listResearchReports();
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(reports);
+    } catch (error) {
+      console.error("Error fetching research reports:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/research-reports/:slug", rateLimit, async (req, res) => {
+    try {
+      const report = await getResearchReportBySlug(req.params.slug);
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(report);
+    } catch (error) {
+      if (error instanceof ResearchReportNotFoundError) {
+        return res.status(404).json({ error: "Research report not found" });
+      }
+
+      if (error instanceof ResearchReportValidationError) {
+        const status = process.env.NODE_ENV === "development" ? 500 : 404;
+        return res.status(status).json({
+          error:
+            process.env.NODE_ENV === "development"
+              ? error.message
+              : "Research report not found",
+        });
+      }
+
+      console.error("Error fetching research report:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 

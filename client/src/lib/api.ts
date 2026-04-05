@@ -1,5 +1,11 @@
 import { queryClient } from "./queryClient";
-import type { SearchFilters, PaginationParams, StateLatestResponse } from "./types";
+import type {
+  SearchFilters,
+  PaginationParams,
+  ResearchReportListItem,
+  ResearchReportPageData,
+  StateLatestResponse,
+} from "./types";
 
 const API_BASE = "/api";
 
@@ -43,6 +49,14 @@ export class ApiClient {
 
   async getReportById(id: string) {
     return this.request(`/reports/${id}`);
+  }
+
+  async getResearchReportBySlug(slug: string) {
+    return this.request<ResearchReportPageData>(`/research-reports/${slug}`);
+  }
+
+  async getResearchReports() {
+    return this.request<ResearchReportListItem[]>("/research-reports");
   }
 
   async getFeaturedReports(limit?: number) {
