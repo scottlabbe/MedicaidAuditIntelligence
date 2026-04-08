@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, MapPin, Zap, TrendingUp, Calendar, Building } from "lucide-react";
 import { Link } from "wouter";
@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/stats-card";
-import USMap from "@/components/dashboard/USMap";
 import PageMeta from "@/components/seo/PageMeta";
 import type { DashboardStats, StateLatestResponse } from "@/lib/types";
+
+const USMap = lazy(() => import("@/components/dashboard/USMap"));
 
 export default function Dashboard() {
   const [scope, setScope] = useState<"state" | "federal">("state");
@@ -139,7 +140,9 @@ export default function Dashboard() {
           ) : mapLoading || !mapData ? (
             <div className="h-[520px] animate-pulse bg-muted/30 rounded-xl" />
           ) : (
-            <USMap data={mapData} scope={scope} />
+            <Suspense fallback={<div className="h-[520px] animate-pulse bg-muted/30 rounded-xl" />}>
+              <USMap data={mapData} scope={scope} />
+            </Suspense>
           )}
         </div>
 

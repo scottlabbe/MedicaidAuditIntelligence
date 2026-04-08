@@ -12,8 +12,15 @@ import ReportCard from "@/components/reports/report-card";
 import KeywordSection from "@/components/keywords/keyword-section";
 import PageMeta from "@/components/seo/PageMeta";
 import type { DashboardStats, ReportListItem } from "@/lib/types";
+import { preloadRouteHref } from "@/lib/routeLoaders";
 
 export default function Home() {
+  const prefetchHandlers = (href: string) => ({
+    onMouseEnter: () => preloadRouteHref(href),
+    onFocus: () => preloadRouteHref(href),
+    onTouchStart: () => preloadRouteHref(href),
+  });
+
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
     queryFn: () => apiClient.getDashboardStats(),
@@ -69,7 +76,7 @@ export default function Home() {
       <section className="mb-12">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-foreground">Featured Reports</h2>
-          <Link href="/explore">
+          <Link href="/explore" {...prefetchHandlers("/explore")}>
             <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
               <span>View all reports</span>
               <ArrowRight className="w-4 h-4" />
@@ -128,7 +135,7 @@ export default function Home() {
                 Browse long-form research reports with expandable sections and direct links into the underlying audit report detail pages.
               </p>
             </div>
-            <Link href="/research">
+            <Link href="/research" {...prefetchHandlers("/research")}>
               <Button className="flex items-center space-x-2">
                 <span>Browse research reports</span>
                 <ArrowRight className="w-4 h-4" />
@@ -142,7 +149,7 @@ export default function Home() {
       <section className="mb-12">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-foreground">Quick Insights</h2>
-          <Link href="/dashboard">
+          <Link href="/dashboard" {...prefetchHandlers("/dashboard")}>
             <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
               <span>View full dashboard</span>
               <ArrowRight className="w-4 h-4" />
@@ -208,13 +215,13 @@ export default function Home() {
           the information you need for better program management.
         </p>
         <div className="flex justify-center space-x-4">
-          <Link href="/explore">
+          <Link href="/explore" {...prefetchHandlers("/explore")}>
             <Button size="lg" className="flex items-center space-x-2">
               <span>Start Exploring</span>
               <ArrowRight className="w-5 h-5" />
             </Button>
           </Link>
-          <Link href="/dashboard">
+          <Link href="/dashboard" {...prefetchHandlers("/dashboard")}>
             <Button variant="outline" size="lg">
               View Dashboard
             </Button>

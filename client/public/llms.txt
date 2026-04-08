@@ -1,0 +1,288 @@
+# Medicaid Audit Intelligence
+
+> Structured, evidence-focused information about Medicaid audit issues, including audit summaries and long-form research reports.
+
+This file is a lightweight guide for AI tools and retrieval systems.
+For full report-level context, use:
+- /llms-full.txt
+- https://medicaidintelligence.com/llms-full.txt
+
+## Scope
+- Informational content only (not legal advice).
+- Summaries are derived from source audit reports and research artifacts available on this site.
+
+## Canonical Navigation
+- Home: https://medicaidintelligence.com/
+- Explore audits: https://medicaidintelligence.com/explore
+- Research index: https://medicaidintelligence.com/research
+- About methodology: https://medicaidintelligence.com/about
+
+last_generated: 2026-04-08T01:37:05.891Z
+
+## Latest Research Reports
+
+### 1. Managed Care Research Report
+- slug: managed-care
+- category: Managed Care
+- canonical_url: https://medicaidintelligence.com/research/managed-care
+- published_date: 2026-01-31
+- updated_date: 2026-01-31
+
+#### description
+Long-form analysis of recurring Medicaid managed care oversight failures, with direct links to the underlying audit reports cited throughout the report.
+
+#### executive_summary
+### Medicaid Managed Care Keeps Paying for People Who Should Not Still Be Enrolled.
+The single most important finding across the 23 reports and 113 findings in the evidence bundle is this: persistent eligibility and enrollment control failures (concurrent enrollments, manual bypasses, incomplete redeterminations, weak incarceration/out‑of‑state matching) repeatedly generated material improper premium and capitation payments and remain a top program integrity risk for Medicaid managed care. Audits documenting these failures include state-level reviews that identified multi‑million dollar improper premium payments and federal/state analyses that flagged inadequate cross‑state detection and processing backlogs (see Report 53; Report 54; Report 32; Report 95). 
+
+Across findings that included explicit dollar extractions, the summed exposure was approximately $160.04 billion — but that aggregate is dominated by two very large federal improper‑payment estimates and program‑level cost figures that are context items rather than directly auditable questioned costs (see Report 27; Report 21). Excluding those national/program‑context outliers, the audits identify hundreds of millions in discrete improper premium/capitation and claim overpayments (for example, roughly $220.6 million of identified improper premiums and capitation adjustments in state audits cited below).
+
+### 2. Pharmacy Benefit Managers Research Report
+- slug: pharmacy-benefit-managers
+- category: Pharmacy Benefit Managers
+- canonical_url: https://medicaidintelligence.com/research/pharmacy-benefit-managers
+- published_date: 2026-01-31
+- updated_date: 2026-01-31
+
+#### description
+Long-form analysis of Medicaid pharmacy benefit manager oversight, pricing opacity, encounter reporting, and claims integrity risks, with direct links to the cited audit reports.
+
+#### executive_summary
+### Medicaid Pharmacy Oversight Breaks Down When PBM Pricing Stays Opaque
+
+Audits across six state and MCO-level reviews show a recurring, program‑level weakness: PBM pricing and reporting practices lack the transparency needed for states and MCOs to know the true net cost of pharmacy services. That opacity—undisclosed transmission fees, effective‑rate aggregations that omit returned funds, and incomplete encounter reporting—directly undermines encounter data, capitation inputs, rebate reconciliation, and the ability to detect improper pharmacy payments. [Report 65], [Report 7], and [Report 100] contain the clearest examples.
+
+This briefing synthesizes evidence from 6 audit reports and 31 findings (publication window 2019–2024). The corpus contains multiple quantified exposures and material outliers: for example, the Texas audit identified an “effective‑rate” aggregation that omitted funds returned to PBMs [Report 7]; the New York claims review documented roughly $11.8 million in improper managed‑care premium payments tied to enrollment/disenrollment timing and additional questioned pharmacy claims and coding errors totaling hundreds of thousands of dollars [Report 53]; Maryland’s pharmacy audit found roughly $397,000 in overpayments in a small manual sample [Report 83]. Aggregated monetary figures in the source analysis are partial (many findings lack dollar extractions); all financial totals below are presented with that caveat.
+
+Top takeaway for auditors and agency leaders: strengthen contract reporting obligations and encounter/reconciliation controls first. Contracts and data feeds are the chokepoints: if PBMs are required to deliver encounter‑level gross and net payment detail, including rebates, transmission/processing fees, and year‑end returns allocated by program, auditors can both quantify leakage and test corrective actions. Multiple reports point to that single lever as the root control failure. [Report 65], [Report 7], [Report 100], [Report 83], [Report 53], [Report 6].
+
+## Latest Audit Reports
+
+### 1. Illinois Medicaid Managed Care Capitation Payments for Incarcerated Enrollees
+- id: 119
+- canonical_url: https://medicaidintelligence.com/reports/119
+- original_report_source_url: https://oig.hhs.gov/documents/audit/11429/A-05-24-00019.pdf
+- audit_organization: U.S. Department of Health and Human Services Office of Inspector General
+- state: US
+- publication_year: 2025
+- publication_month: 12
+- publication_day: null
+
+#### objective (potential_objective_summary)
+This audit assessed whether Illinois suspended or terminated Medicaid managed care enrollment for incarcerated enrollees and whether capitation payments were limited to eligible inpatient services. It found unallowable payments totaling $263,186 for 48 enrollees and estimated total unallowable payments of at least $9.5 million during the audit period, with recommendations to refund Federal shares and expand data matching to non-IDOC facilities.
+
+#### executive_summary (overall_conclusion)
+The audit determined that Illinois made unallowable managed care capitation payments for incarcerated enrollees during the audit period, totaling at least $9.5 million with $8.3 million Federal share, and identified failures to terminate enrollment as required. Recovered findings were not fully realized during the audit period, and recommendations were issued to refund unallowable payments and broaden data matching to prevent future occurrences.
+
+#### llm_insight
+The Illinois audit highlights gaps in inmate data integration and enrollment suspension controls that allow capitation payments for incarcerated enrollees to continue. Strengthening automated penalties and cross-agency data sharing can significantly reduce improper payments in Medicaid managed care.
+
+### 2. Medicaid Agencies Made Millions in Unallowable Capitation Payments to Managed Care Organizations on Behalf of Deceased Enrollees
+- id: 118
+- canonical_url: https://medicaidintelligence.com/reports/118
+- original_report_source_url: https://oig.hhs.gov/documents/audit/11433/A-04-23-09010.pdf
+- audit_organization: Office of Inspector General, U.S. Department of Health and Human Services
+- state: US
+- publication_year: 2025
+- publication_month: 12
+- publication_day: null
+
+#### objective (potential_objective_summary)
+This audit quantified the nationwide scope of unallowable capitation payments to Medicaid managed care organizations for deceased enrollees during July 2021 through June 2022, using a stratified sample of 100 payments across 27 Medicaid agencies, extrapolating to a total of 409,862 payments and $408.5 million in net capitation payments, resulting in an estimated $207.5 million in unallowable payments.
+
+#### executive_summary (overall_conclusion)
+We estimate that Medicaid agencies made $207,501,380 ($138,645,710 Federal share) in unallowable capitation payments to MCOs for deceased enrollees during the audit period (July 1, 2021 – June 30, 2022).
+
+#### llm_insight
+This audit highlights persistent vulnerability in Medicaid capitation payments to MCOs for deceased enrollees, emphasizing the need for robust DMF/T-MSIS data matching and quarterly death records checks under the OBBB Act; findings support CMS and state-level actions to recover overpayments and strengthen controls.
+
+### 3. Review of Durable Medical Equipment Providers
+- id: 122
+- canonical_url: https://medicaidintelligence.com/reports/122
+- original_report_source_url: https://www.mass.gov/doc/audit-report-office-of-medicaid-masshealth-review-of-durable-medical-equipment-providers/download
+- audit_organization: Office of the State Auditor, Commonwealth of Massachusetts
+- state: MA
+- publication_year: 2025
+- publication_month: 10
+- publication_day: 30
+
+#### objective (potential_objective_summary)
+This performance audit evaluated MassHealth’s durable medical equipment (DME) controls for the period 2021–2023, focusing on ensuring DME is ordered by eligible providers and not paid for deceased or excluded providers, and found three overpayment issues with recommendations to tighten pre-pay edits and death-data verification.
+
+#### executive_summary (overall_conclusion)
+MassHealth did not fully ensure that DME was not ordered by excluded providers or for deceased members, as evidenced by three identified findings and associated overpayments; ongoing post-payment and data-lag issues necessitate strengthened controls and more comprehensive death data sources.
+
+#### llm_insight
+This audit identifies gaps in DME ordering verification, provider exclusions, and death-verification processes, highlighting ongoing need for strengthened pre-pay checks and expanded death-data sources to prevent improper payments.
+
+### 4. Medicaid Program: Oversight of Managed Care Provider Networks
+- id: 123
+- canonical_url: https://medicaidintelligence.com/reports/123
+- original_report_source_url: https://www.osc.ny.gov/files/state-agencies/audits/pdf/sga-2026-23s20.pdf
+- audit_organization: Office of the New York State Comptroller, Division of State Government Accountability
+- state: NY
+- publication_year: 2025
+- publication_month: 10
+- publication_day: 22
+
+#### objective (potential_objective_summary)
+The audit objectives focused on evaluating DOH's oversight of Medicaid managed care provider networks to ensure cost efficiency and adequate in-network access, with a 2023 time frame; future audits should build on this by emphasizing improved data accuracy, timely deficiency resolution, clearer guidance to MCOs, and tighter monitoring of network adequacy across counties and provider types.
+
+#### executive_summary (overall_conclusion)
+DOH did not maintain sufficient oversight of Medicaid managed care provider networks during 2023, with data reliability and process control issues affecting the accuracy of deficiency reporting and SOAs, incomplete communication with MCOs, and potential cost exposure due to inconsistent out-of-network payment guidance.
+
+#### llm_insight
+The audit highlights systemic gaps in DOH's network adequacy oversight, primarily around data reliability, process consistency, and timely communication with MCOs, suggesting that strengthening PNDS governance and cross-agency collaboration with OMH could yield significant cost containment and access improvements in future audits.
+
+### 5. A Performance Audit of the Office of Inspector General of Medicaid Services: Policy Options for Improved Governance and Medicaid Oversight
+- id: 125
+- canonical_url: https://medicaidintelligence.com/reports/125
+- original_report_source_url: https://le.utah.gov/interim/2025/pdf/00003918.pdf
+- audit_organization: Office of the Legislative Auditor General
+- state: UT
+- publication_year: 2025
+- publication_month: 9
+- publication_day: 25
+
+#### objective (potential_objective_summary)
+Build on this audit by emphasizing future inquiries into formalizing risk-based annual planning, expanding performance audits of cost drivers and program outcomes, strengthening ongoing oversight of Accountable Care Organizations, improving governance and transparency, and evaluating alternative oversight structures used by other states.
+
+#### executive_summary (overall_conclusion)
+The report concludes that Utah’s OIG has not adequately fulfilled its Medicaid oversight mandate and suffers from governance, reporting, and performance weaknesses, with risk-based planning and proactive oversight largely missing; it recommends policy options including structural changes to improve accountability and oversight.
+
+#### llm_insight
+This systemic performance audit identifies chronic governance, planning, and transparency gaps in Utah's OIG for Medicaid, revealing a reactive, under-resourced oversight model with uneven performance metrics. The findings suggest meaningful reforms—potentially restructuring oversight or increasing external accountability—to strengthen Medicaid governance and protect public funds.
+
+### 6. How Kentucky Failed to Prevent Over $800 Million of Medicaid Waste
+- id: 120
+- canonical_url: https://medicaidintelligence.com/reports/120
+- original_report_source_url: https://oig.hhs.gov/documents/audit/11262/A-09-23-02005.pdf
+- audit_organization: Kentucky Auditor of Public Accounts
+- state: KY
+- publication_year: 2025
+- publication_month: 9
+- publication_day: 17
+
+#### objective (potential_objective_summary)
+Objective: Assess whether Kentucky Medicaid paid capitation payments for beneficiaries concurrently enrolled in other states during 2019–2022, using a stratified random sample of enrollees and subgroups, and assess data controls and contracting adequacy that would prevent future concurrent payments across state lines.
+
+#### executive_summary (overall_conclusion)
+Concurrent capitation payments across state lines resulted in substantial waste (over $800 million) during 2019–2022 due to gaps in residency determination, PARIS/T-MSIS data usage, and contract obligations with MCOs; remedies include stronger leadership, proactive data sharing, expanded federal data access, updated policies and procedures, and enhanced training to prevent future waste.
+
+#### llm_insight
+The report identifies a systemic issue in cross-state Medicaid capitation payments driven by incomplete data access and fragmented processes; resolving it requires coordinated action across state agencies, MCO contracts, and federal data systems to prevent avoidable waste.
+
+### 7. Medicaid Program: Improper Premium Payments Made on Behalf of Managed Care Members Residing Outside the State
+- id: 124
+- canonical_url: https://medicaidintelligence.com/reports/124
+- original_report_source_url: https://www.osc.ny.gov/files/state-agencies/audits/pdf/sga-2025-22s42.pdf
+- audit_organization: Office of the New York State Comptroller, Division of State Government Accountability
+- state: NY
+- publication_year: 2025
+- publication_month: 9
+- publication_day: 9
+
+#### objective (potential_objective_summary)
+This audit examined whether DOH properly restricted Medicaid managed care premium payments to New York residents by evaluating PARIS matches, NYSOH data, Local District PARIS processing, and additional residency indicators (NCOA, Florida voter registry, Medicare service areas). It found significant deficiencies in timing, data quality, and recoveries that resulted in billions of dollars in potentially improper premiums, and it recommends standardized processes, broader data-source usage, and enhanced recoveries to strengthen controls for future Medicaid audits.
+
+#### executive_summary (overall_conclusion)
+None
+
+#### llm_insight
+DOH relied on PARIS to identify out-of-state residency but faced data gaps and processing flaws, leading to potentially billions in improper managed-care premium payments. The audit highlights multiple corrective actions, including expanding data sources (NCOA, Florida voter registry), standardizing Local District PARIS processing, and strengthening recoveries through OMIG and OMIG oversight. Implementing these changes should reduce improper payments and improve residency verification going forward.
+
+### 8. Washington Medicaid Managed Care Medical Loss Ratio Audit
+- id: 121
+- canonical_url: https://medicaidintelligence.com/reports/121
+- original_report_source_url: https://www.cms.gov/files/document/washington-medicaid-managed-care-medical-loss-ratio-audit-report.pdf
+- audit_organization: Centers for Medicare & Medicaid Services
+- state: US
+- publication_year: 2025
+- publication_month: 8
+- publication_day: null
+
+#### objective (potential_objective_summary)
+This audit evaluated whether Washington’s five Medicaid MCPs properly submitted CY 2021 MLR reports and performed remittance calculations consistent with federal rules, examining the completeness and reasonableness of underlying data and supporting documentation, and identifying opportunities to improve state oversight and MLR reporting practices for future audits.
+
+#### executive_summary (overall_conclusion)
+CMS identified eight findings requiring correction, but none resulted in an MLR recalculation below the 85% remittance threshold; the audit identified operational improvements and oversight enhancements to ensure compliance with federal MLR requirements.
+
+#### llm_insight
+The CY 2021 Washington MLR audit shows recurring misclassification and documentation gaps in MLR reporting across five MCPs, with focus areas including SDPs, pass-through vs wrap-around payments, incentive exclusions, non-claims costs, QIA, and runout/I BN R. The findings underscore the need for clearer MLR template guidance, stricter state oversight, and standardized runout and accrual practices to strengthen accuracy in future audits.
+
+### 9. Medicaid Payments to MCOs for Deceased Individuals
+- id: 126
+- canonical_url: https://medicaidintelligence.com/reports/126
+- original_report_source_url: https://auditors.nebraska.gov/APA_Reports/2025/SA25-08212025-August_21_2025_Payments_to_Managed_Care_Organizations_for_Deceased_Individuals_Letter.pdf
+- audit_organization: Nebraska Auditor of Public Accounts
+- state: NE
+- publication_year: 2025
+- publication_month: 8
+- publication_day: 21
+
+#### objective (potential_objective_summary)
+This audit examined DHHS's controls over Medicaid capitation payments to managed care organizations (MCOs) to identify payments to deceased individuals and related overpayments. It evaluated the reliability of death notification processes and MMIS/NFOCUS data interfaces, quantified identified overpayments, and recommended improvements to prevent recurrence. The scope covered March 2025 capitation payments and related verifications through August 4, 2025, and concluded that while processes exist to identify and recoup some overpayments, significant control weaknesses remain that require strengthening for future audits.
+
+#### executive_summary (overall_conclusion)
+The DHHS procedures for identifying deaths, updating records, and recouping post-death Medicaid payments were found to be insufficient to prevent improper disbursements to MCOs. While some adjustments and recoupments have begun, there are notable opportunities to strengthen internal controls and data interfaces to reduce the risk of fraud or misuse of state funds.
+
+#### llm_insight
+Auditors found systemic gaps in death notification, data interface reliability between NFOCUS, Vital Statistics, and MMIS, and timing of death verifications that allowed overpayments to MCOs for deceased Medicaid recipients. Strengthening automated notices, end-date updates, and recoupment processes is essential to protect Medicaid funds and prevent recurrence in future audits.
+
+### 10. Performance Audit Report July 2025 Medicaid Provider Enrollment Follow-Up Audit
+- id: 66
+- canonical_url: https://medicaidintelligence.com/reports/66
+- original_report_source_url: https://www.auditor.nc.gov/documents/reports/performance/per-2024-4445/open
+- audit_organization: North Carolina Office of the State Auditor
+- state: NC
+- publication_year: 2025
+- publication_month: 7
+- publication_day: null
+
+#### objective (potential_objective_summary)
+To determine whether the Division of Health Benefits implemented corrective actions from the 2021 Medicaid Provider Enrollment audit, specifically for 2023: removing providers with suspended/terminated licenses, removing providers with license limitations posing safety risks, verifying provider credentials (including DEA), and corroborating ownership information during initial enrollment and reverification.
+
+#### executive_summary (overall_conclusion)
+The Division of Health Benefits did not fully implement prior audit recommendations during 2023, leaving ongoing risks to patient safety and Medicaid integrity from providers with suspended licenses, license limitations, unverified credentials (including DEA), and uncorroborated ownership information. The Division also faced governance concerns regarding the monitoring of the GDIT contract and did not consistently enforce measures intended to remove ineligible providers from the Medicaid program.
+
+#### llm_insight
+This follow-up audit reveals persistent gaps in Medicaid provider integrity controls in North Carolina. Despite prior recommendations, the Division of Health Benefits continues to enroll or retain providers with license limitations or suspensions, and fails to verify DEA certifications and ownership disclosures. The findings underscore the importance of robust, timely contract and risk-management practices with the contract administrator (GDIT) and strong, auditable credential verification to protect patient safety and public funds.
+
+### 11. Pennsylvania Capitation Payments for Enrollees With Multiple Medicaid Identification Numbers
+- id: 50
+- canonical_url: https://medicaidintelligence.com/reports/50
+- original_report_source_url: https://oig.hhs.gov/documents/audit/10820/A-04-24-07110.pdf
+- audit_organization: Office of Inspector General, Department of Health and Human Services
+- state: US
+- publication_year: 2025
+- publication_month: 7
+- publication_day: null
+
+#### objective (potential_objective_summary)
+The audit aimed to determine whether Pennsylvania’s DHS made unallowable capitation payments to MCOs due to enrollees having multiple Medicaid IDs, estimate the monetary impact, assess existing controls, and propose corrective actions.
+
+#### executive_summary (overall_conclusion)
+The OIG concluded that Pennsylvania made unallowable capitation payments totaling at least $8,784,549 ($4,596,390 Federal share) for enrollees with multiple Medicaid ID numbers during the audit period (January 1, 2019 – December 31, 2022). The unallowable payments were caused by insufficient controls to detect or prevent duplicate Medicaid IDs, and the state agency’s match-scoring algorithm and related processes did not reliably prevent multiple IDs from being assigned. Five recommendations were issued to refund the Federal share and to improve monitoring, data quality, and safeguards.
+
+#### llm_insight
+This audit highlights vulnerabilities in Medicaid ID management and data integrity that can lead to significant Federal overpayments. Strengthening the file clearance process, refining the match-scoring algorithm, consistently using the Zero SSN report, and implementing ongoing testing and training are critical to prevent duplicate IDs, ensure accurate capitation payments, and protect Federal funds.
+
+### 12. Wisconsin’s Fee-for-Service Medicaid Payments for Applied Behavior Analysis
+- id: 46
+- canonical_url: https://medicaidintelligence.com/reports/46
+- original_report_source_url: https://oig.hhs.gov/documents/audit/10497/A-06-23-01002.pdf
+- audit_organization: Office of Inspector General, Department of Health and Human Services
+- state: US
+- publication_year: 2025
+- publication_month: 7
+- publication_day: null
+
+#### objective (potential_objective_summary)
+Assess whether Wisconsin’s FFS Medicaid payments for ABA to children with autism, during 2021–2022, complied with Federal and State requirements, focusing on documentation quality, CPT-code billing accuracy, rendering-provider accountability, and the sufficiency of statewide postpayment review.
+
+#### executive_summary (overall_conclusion)
+The Wisconsin Department of Health Services’ ForwardHealth program did not provide adequate oversight of FFS Medicaid ABA payments, resulting in improper and potentially improper payments for autism-related ABA services. The program had not conducted a statewide postpayment review since 2016, and supporting documentation deficiencies were prevalent across sampled enrollee-months, with estimated improper payments of at least $18.5 million and potentially improper payments totaling about $94.3 million. The findings indicate significant gaps in documentation, coding, and provider guidance, which could affect the quality of care for children with autism and the program’s financial integrity.
+
+#### llm_insight
+This audit reveals systemic gaps in Wisconsin’s oversight of ABA billing and documentation, highlighting a substantial financial risk ($112.8M across improper and potentially improper payments) and potential implications for patient care. It underscores the need for robust postpayment reviews, precise CPT-code guidance, and clear documentation standards to ensure both fiscal accountability and effective treatment for autistic children.
+

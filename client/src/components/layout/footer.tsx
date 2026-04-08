@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { getStateEntryByCode } from "@shared/states";
+import { preloadRouteHref } from "@/lib/routeLoaders";
 
 const PRIMARY_LINKS = [
   { href: "/", label: "Home" },
@@ -14,6 +15,12 @@ const FEATURED_STATES = ["IL", "TX", "CA", "NY"].flatMap((code) => {
 });
 
 export default function Footer() {
+  const prefetchHandlers = (href: string) => ({
+    onMouseEnter: () => preloadRouteHref(href),
+    onFocus: () => preloadRouteHref(href),
+    onTouchStart: () => preloadRouteHref(href),
+  });
+
   return (
     <footer className="bg-card border-t border-border mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -31,7 +38,12 @@ export default function Footer() {
             <p className="text-sm font-semibold text-foreground mb-3">Site Links</p>
             <nav className="space-y-2 text-sm">
               {PRIMARY_LINKS.map((link) => (
-                <Link key={link.href} href={link.href} className="block text-muted-foreground hover:text-foreground">
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-muted-foreground hover:text-foreground"
+                  {...prefetchHandlers(link.href)}
+                >
                   {link.label}
                 </Link>
               ))}
@@ -46,6 +58,7 @@ export default function Footer() {
                   key={state.code}
                   href={`/states/${state.slug}`}
                   className="block text-muted-foreground hover:text-foreground"
+                  {...prefetchHandlers(`/states/${state.slug}`)}
                 >
                   {state.name}
                 </Link>

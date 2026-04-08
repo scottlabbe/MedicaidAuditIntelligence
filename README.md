@@ -129,7 +129,27 @@ The application uses a star schema design centered around audit reports:
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Build for production
 - `npm run db:push` - Push schema changes to database
+- `npm run llms:generate` - Generate `/llms.txt` and `/llms-full.txt` from live report data
 - `npm run db:studio` - Open Drizzle Studio for database management
+
+### LLM Context Files
+
+Run this manually before deploy/release to refresh the public LLM context files:
+
+```bash
+npm run llms:generate
+```
+
+The command writes:
+
+- `client/public/llms.txt` (lightweight index)
+- `client/public/llms-full.txt` (full latest report context)
+
+Optional environment variables:
+
+- `LLMS_AUDIT_LIMIT` (default: `20`)
+- `LLMS_RESEARCH_LIMIT` (default: `5`)
+- `SITE_URL` (default: `https://www.medicaidintelligence.com`)
 
 ### Code Style
 
