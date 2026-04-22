@@ -67,8 +67,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-border pt-4 text-sm text-muted-foreground">
-          © 2026 Medicaid Audit Intelligence
+        <div className="mt-10 border-t border-border pt-4 flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>© 2026 Medicaid Audit Intelligence</span>
+          <a
+            href="mailto:contact@medicaidintelligence.com"
+            className="w-fit text-foreground hover:text-primary"
+          >
+            Contact: contact@medicaidintelligence.com
+          </a>
         </div>
       </div>
     </footer>

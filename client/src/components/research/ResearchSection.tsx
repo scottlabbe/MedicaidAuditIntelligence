@@ -83,7 +83,7 @@ export default function ResearchSection({
             {section.contentHtml ? (
               <div
                 className={cn(
-                  "prose max-w-none prose-p:my-3 prose-ul:my-4 prose-li:my-2 prose-a:text-orange-700 prose-a:no-underline hover:prose-a:underline",
+                  "prose max-w-none prose-p:my-3 prose-ul:my-4 prose-li:my-2 prose-a:text-orange-700 prose-a:no-underline hover:prose-a:underline prose-figure:my-6 prose-img:my-0 prose-img:w-full prose-img:max-w-full prose-img:rounded-xl prose-img:border prose-img:border-orange-200/80 prose-img:bg-white prose-img:shadow-sm",
                   depth > 0 && "text-sm",
                 )}
                 dangerouslySetInnerHTML={{ __html: section.contentHtml }}

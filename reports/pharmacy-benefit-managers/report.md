@@ -12,6 +12,8 @@ This briefing synthesizes evidence from 6 audit reports and 31 findings (publica
 
 Top takeaway for auditors and agency leaders: strengthen contract reporting obligations and encounter/reconciliation controls first. Contracts and data feeds are the chokepoints: if PBMs are required to deliver encounter‑level gross and net payment detail, including rebates, transmission/processing fees, and year‑end returns allocated by program, auditors can both quantify leakage and test corrective actions. Multiple reports point to that single lever as the root control failure. [Report 65], [Report 7], [Report 100], [Report 83], [Report 53], [Report 6].
 
+![State and PBM Money Flow](./images/image1pbm.png)
+
 ## Background
 
 ### What the problem is and why it matters operationally
@@ -37,6 +39,8 @@ Each subsection opens with the analytical claim, then cites the reports that anc
 - Evidence: Pennsylvania’s Performance Audit concluded DHS lacked effective monitoring of pharmacy drug claims and flagged undisclosed spread pricing and overstated pharmacy data (Finding 1) and noted a PBM (PerformRx, LLC) that disclosed transmission fees to pharmacies but not to MCOs or DHS, producing undisclosed spread pricing [Report 65]. Texas’ MCO audit found an “effective‑rate” year‑end aggregation that excluded funds returned to the PBM from the pharmacy expense reported in the FSR—a treatment the auditor judged unallowable and that produced a material discrepancy. [Report 7, finding 23]. Oregon’s review emphasized the system’s complexity and fragmented regulation that limit a state’s ability to measure PBM value and enforce transparency [Report 100].
 - Operational failure: contracts and reporting do not require PBMs to report gross ingredient costs, per‑claim transmission/processing fees, and program‑level allocations of year‑end returns or pass‑throughs.  
 - Synthesis: Across states, undisclosed PBM fee/return flows emerged as a consistent root cause of pricing opacity and impaired reconciliation.
+
+![States with Pharmacy Benefit Manager Issues](./images/image3pbm.png)
 
 ### Coding, claims‑edit gaps, and documentation failures produced quantifiable overpayments and missed encounters
 - Claim: Weak edits, coding validation, and prescriber or medical‑necessity controls led to recoverable overpayments and omitted encounters.
@@ -69,6 +73,8 @@ Each subsection opens with the analytical claim, then cites the reports that anc
 - The problem is as much governance as it is technical. Multiple reports show that improved contract language was sometimes adopted but not fully operationalized (EQRO monitoring, encounter validation). Implementation gaps—staffing, tooling, or enforcement—are the friction points between policy changes and measurable improvement. [Report 6], [Report 100]
 
 - Transparency has equity implications. Where states cannot see reimbursed amounts by pharmacy type, smaller pharmacies may be receiving systematically lower payments—an issue that ties financial oversight to network adequacy and access policy. [Report 100]
+
+![PBM Oversight Failure Cycles](./images/image2pbm.png)
 
 ## Financial Impact - The Dollars Identified So Far Point to Much Larger Risk
 

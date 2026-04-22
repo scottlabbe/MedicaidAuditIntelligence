@@ -44,6 +44,50 @@ export default function About() {
         </Card>
       </section>
 
+      {/* Creator Section */}
+      <section className="mb-12">
+        <Card className="card-shadow border-blue-200 bg-blue-50/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <ExternalLink className="w-6 h-6 text-blue-600" />
+              Built by Scott Labbe
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>
+              Medicaid Audit Intelligence was built by Scott Labbe.
+            </p>
+            <p>
+              Want to see how this site was created? Read the full case study:
+              {" "}
+              <a
+                href="https://scottlabbe.me/articles/medicaid-intelligence-case-study/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                How Medicaid Audit Intelligence Was Built
+              </a>
+              .
+            </p>
+            <p>
+              Want to learn how the AI-generated research projects were
+              created? Read:
+              {" "}
+              <a
+                href="https://scottlabbe.me/articles/building-an-ai-research-agent/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                Building an AI Research Agent
+              </a>
+              .
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Main Features */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-foreground mb-8">
@@ -128,9 +172,11 @@ export default function About() {
                   for corrections.
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="ml-auto">
-                <Mail className="w-4 h-4 mr-2" />
-                Contact Us
+              <Button variant="outline" size="sm" className="ml-auto" asChild>
+                <a href="mailto:contact@medicaidintelligence.com">
+                  <Mail className="w-4 h-4 mr-2" />
+                  Contact Us
+                </a>
               </Button>
             </div>
           </CardContent>

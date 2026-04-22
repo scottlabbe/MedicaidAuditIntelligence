@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, FileStack, LibraryBig } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileStack, LibraryBig } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageMeta from "@/components/seo/PageMeta";
 import ResearchSection from "@/components/research/ResearchSection";
 import type { ResearchReportPageData } from "@/lib/types";
+
+const AI_RESEARCH_AGENT_ARTICLE_URL =
+  "https://scottlabbe.me/articles/building-an-ai-research-agent/";
 
 export default function ResearchReportPage() {
   const [, params] = useRoute("/research/:slug");
@@ -167,11 +170,20 @@ export default function ResearchReportPage() {
                 <p className="max-w-4xl text-lg leading-relaxed text-slate-700">
                   {pageDescription}
                 </p>
+                <a
+                  href={AI_RESEARCH_AGENT_ARTICLE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-orange-900 underline-offset-4 hover:underline"
+                >
+                  Learn how the AI-generated research projects were created
+                  <ExternalLink className="h-4 w-4" />
+                </a>
               </div>
 
               {report.introHtml ? (
                 <div
-                  className="prose mt-6 max-w-4xl text-sm text-slate-700 prose-p:my-2 prose-a:text-orange-700 prose-a:no-underline hover:prose-a:underline"
+                  className="prose mt-6 max-w-4xl text-sm text-slate-700 prose-p:my-2 prose-a:text-orange-700 prose-a:no-underline hover:prose-a:underline prose-figure:my-6 prose-img:my-0 prose-img:w-full prose-img:max-w-full prose-img:rounded-xl prose-img:border prose-img:border-orange-200/80 prose-img:bg-white prose-img:shadow-sm"
                   dangerouslySetInnerHTML={{ __html: report.introHtml }}
                 />
               ) : null}

@@ -1,6 +1,10 @@
 # Medicaid Audit Intelligence
 
-A professional web application for searching, analyzing, and extracting insights from Medicaid audit reports. The platform provides powerful search capabilities, faceted filtering, dashboard analytics, and export functionality to help program managers and auditors efficiently access and analyze 111+ audit reports spanning the last five years.
+A professional web application for searching, analyzing, and extracting insights from Medicaid audit reports. The platform provides AI generated research reports, faceted filtering, dashboard analytics, and export functionality to help program managers and auditors efficiently access and analyze 111+ audit reports spanning the last five years.
+
+
+
+medicaidintelligence.com
 
 ## Features
 

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, FileStack, LibraryBig, Star } from "lucide-react";
+import { ArrowRight, ExternalLink, FileStack, LibraryBig, Star } from "lucide-react";
 import { Link } from "wouter";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ResearchReportListItem } from "@/lib/types";
+
+const AI_RESEARCH_AGENT_ARTICLE_URL =
+  "https://scottlabbe.me/articles/building-an-ai-research-agent/";
 
 export default function ResearchIndexPage() {
   const { data: reports, isLoading, error } = useQuery({
@@ -61,6 +64,15 @@ export default function ResearchIndexPage() {
         <p className="mt-4 max-w-3xl text-lg leading-relaxed text-slate-700">
           Browse topic-level research reports built from the Medicaid audit library. Each report links directly to the underlying audit report detail pages for source review.
         </p>
+        <a
+          href={AI_RESEARCH_AGENT_ARTICLE_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-orange-900 underline-offset-4 hover:underline"
+        >
+          Learn how the AI-generated research projects were created
+          <ExternalLink className="h-4 w-4" />
+        </a>
       </section>
 
       {isLoading ? (

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,9 @@ import ReportDetailTabs from "@/components/reports/report-detail-tabs";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ReportWithDetails } from "@/lib/types";
 import { getStateEntryByCode } from "@shared/states";
+
+const AI_RESEARCH_AGENT_ARTICLE_URL =
+  "https://scottlabbe.me/articles/building-an-ai-research-agent/";
 
 export default function ReportDetail() {
   const [, params] = useRoute("/reports/:id");
@@ -187,6 +190,15 @@ export default function ReportDetail() {
                 <h1 className="text-3xl font-bold text-black mb-3 leading-tight">
                   {report.reportTitle}
                 </h1>
+                <a
+                  href={AI_RESEARCH_AGENT_ARTICLE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-orange-700 underline-offset-4 hover:underline"
+                >
+                  Learn how the AI-generated research projects were created
+                  <ExternalLink className="h-4 w-4" />
+                </a>
               </div>
             </div>
             

@@ -5,6 +5,7 @@ import { hmacAuth } from "./auth";
 import { z } from "zod";
 import { generateSitemap } from "./seo";
 import {
+  getResearchReportAsset,
   getResearchReportBySlug,
   listResearchReports,
   ResearchReportNotFoundError,
@@ -388,6 +389,30 @@ Sitemap: ${siteUrl}/sitemap.xml`
 
       console.error("Error fetching research report:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/research-reports/:slug/assets/:assetPath(*)", rateLimit, async (req, res) => {
+    try {
+      const { slug, assetPath } = req.params;
+      if (!slug || !assetPath) {
+        return res.status(404).json({ error: "Research report asset not found" });
+      }
+
+      const asset = await getResearchReportAsset(slug, assetPath);
+      res.set("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
+      res.type(asset.contentType);
+      return res.sendFile(asset.absolutePath);
+    } catch (error) {
+      if (
+        error instanceof ResearchReportNotFoundError ||
+        error instanceof ResearchReportValidationError
+      ) {
+        return res.status(404).json({ error: "Research report asset not found" });
+      }
+
+      console.error("Error fetching research report asset:", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
   });
 

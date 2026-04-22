@@ -49,6 +49,27 @@ type ResearchReportPaths = {
   metadataPath: string;
 };
 
+type ResearchReportAsset = {
+  absolutePath: string;
+  contentType: string;
+};
+
+type MarkdownImage = {
+  alt: string;
+  src: string;
+  title?: string;
+};
+
+const IMAGE_CONTENT_TYPES: Record<string, string> = {
+  ".avif": "image/avif",
+  ".gif": "image/gif",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+};
+
 export class ResearchReportNotFoundError extends Error {
   constructor(slug: string) {
     super(`Research report "${slug}" was not found`);
@@ -234,8 +255,8 @@ function parseResearchReportMarkdown(
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   const headings = collectHeadings(lines);
   const introLines = headings.length ? lines.slice(0, headings[0].lineIndex) : lines;
-  const introHtml = renderMarkdownLines(introLines);
-  const sections = buildSections(lines, headings);
+  const introHtml = renderMarkdownLines(introLines, metadata.slug);
+  const sections = buildSections(lines, headings, metadata.slug);
   const sourcesSection = sections.find(
     (section) => section.title.toLowerCase() === "sources referenced",
   );
@@ -317,7 +338,11 @@ function collectHeadings(lines: string[]): HeadingMatch[] {
   });
 }
 
-function buildSections(lines: string[], headings: HeadingMatch[]): RawSectionNode[] {
+function buildSections(
+  lines: string[],
+  headings: HeadingMatch[],
+  slug: string,
+): RawSectionNode[] {
   const roots: RawSectionNode[] = [];
   const stack: RawSectionNode[] = [];
 
@@ -337,7 +362,7 @@ function buildSections(lines: string[], headings: HeadingMatch[]): RawSectionNod
         heading.level === 1
           ? heading.title.trim().toLowerCase() === "key findings"
           : false,
-      contentHtml: renderMarkdownLines(rawContentLines),
+      contentHtml: renderMarkdownLines(rawContentLines, slug),
       children: [],
       rawContentLines,
     };
@@ -389,7 +414,7 @@ function extractSources(
   return sources;
 }
 
-function renderMarkdownLines(lines: string[]): string {
+function renderMarkdownLines(lines: string[], slug: string): string {
   const html: string[] = [];
   let paragraphBuffer: string[] = [];
   let listBuffer: string[] = [];
@@ -428,6 +453,17 @@ function renderMarkdownLines(lines: string[]): string {
       continue;
     }
 
+    const image = parseMarkdownImage(trimmed, slug);
+    if (image) {
+      flushParagraph();
+      flushList();
+      const titleAttr = image.title ? ` title="${image.title}"` : "";
+      html.push(
+        `<figure class="research-report-image"><img src="${image.src}" alt="${image.alt}" loading="lazy" decoding="async"${titleAttr} /></figure>`,
+      );
+      continue;
+    }
+
     if (trimmed.startsWith("- ")) {
       flushParagraph();
       listBuffer.push(trimmed.slice(2).trim());
@@ -450,6 +486,71 @@ function renderMarkdownLines(lines: string[]): string {
   flushParagraph();
   flushList();
   return html.join("");
+}
+
+function parseMarkdownImage(line: string, slug: string): MarkdownImage | null {
+  const match = line.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]+)")?\)$/);
+  if (!match) {
+    return null;
+  }
+
+  const resolvedSrc = resolveMarkdownImageSrc(match[2], slug);
+  if (!resolvedSrc) {
+    return null;
+  }
+
+  const alt = escapeHtml(match[1].trim());
+  const title = match[3] ? escapeHtml(match[3].trim()) : undefined;
+
+  return {
+    alt,
+    src: resolvedSrc,
+    title,
+  };
+}
+
+function resolveMarkdownImageSrc(rawSrc: string, slug: string): string | null {
+  const trimmedSrc = rawSrc.trim();
+  if (!trimmedSrc) {
+    return null;
+  }
+
+  if (/^https?:\/\//.test(trimmedSrc) || trimmedSrc.startsWith("/")) {
+    return trimmedSrc;
+  }
+
+  const normalizedAssetPath = normalizeResearchAssetPath(trimmedSrc);
+  if (!normalizedAssetPath) {
+    return null;
+  }
+
+  const encodedAssetPath = normalizedAssetPath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  return `/api/research-reports/${encodeURIComponent(slug)}/assets/${encodedAssetPath}`;
+}
+
+function normalizeResearchAssetPath(assetPath: string): string | null {
+  const normalized = path.posix.normalize(assetPath.trim().replace(/^\.\//, ""));
+  if (!normalized || normalized === "." || normalized.startsWith("/")) {
+    return null;
+  }
+
+  if (
+    normalized === ".." ||
+    normalized.startsWith("../") ||
+    normalized.includes("/../")
+  ) {
+    return null;
+  }
+
+  if (!normalized.startsWith("images/")) {
+    return null;
+  }
+
+  return normalized;
 }
 
 function renderInlineMarkdown(text: string): string {
@@ -547,6 +648,44 @@ function extractReportIds(text: string): number[] {
   }
 
   return Array.from(ids).sort((a, b) => a - b);
+}
+
+export async function getResearchReportAsset(
+  slug: string,
+  assetPath: string,
+): Promise<ResearchReportAsset> {
+  const safeSlug = normalizeSlug(slug);
+  const normalizedAssetPath = normalizeResearchAssetPath(assetPath);
+  if (!normalizedAssetPath) {
+    throw new ResearchReportNotFoundError(safeSlug);
+  }
+
+  const reportRoot = path.resolve(REPORTS_ROOT, safeSlug);
+  const absolutePath = path.resolve(reportRoot, normalizedAssetPath);
+
+  if (!absolutePath.startsWith(`${reportRoot}${path.sep}`)) {
+    throw new ResearchReportNotFoundError(safeSlug);
+  }
+
+  let stats;
+  try {
+    stats = await fs.stat(absolutePath);
+  } catch {
+    throw new ResearchReportNotFoundError(safeSlug);
+  }
+
+  if (!stats.isFile()) {
+    throw new ResearchReportNotFoundError(safeSlug);
+  }
+
+  const contentType =
+    IMAGE_CONTENT_TYPES[path.extname(absolutePath).toLowerCase()] ||
+    "application/octet-stream";
+
+  return {
+    absolutePath,
+    contentType,
+  };
 }
 
 function toSection(section: RawSectionNode): ResearchReportSection {
