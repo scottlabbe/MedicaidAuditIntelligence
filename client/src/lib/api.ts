@@ -1,10 +1,15 @@
 import { queryClient } from "./queryClient";
 import type {
+  IndexableStateSummary,
+  AgencyLandingPageData,
+  AgencySummary,
   SearchFilters,
   PaginationParams,
   ResearchReportListItem,
   ResearchReportPageData,
   StateLatestResponse,
+  TopicLandingPageData,
+  TopicSummary,
 } from "./types";
 
 const API_BASE = "/api";
@@ -57,6 +62,26 @@ export class ApiClient {
 
   async getResearchReports() {
     return this.request<ResearchReportListItem[]>("/research-reports");
+  }
+
+  async getStates() {
+    return this.request<IndexableStateSummary[]>("/states");
+  }
+
+  async getAgencies() {
+    return this.request<AgencySummary[]>("/agencies");
+  }
+
+  async getAgencyBySlug(slug: string) {
+    return this.request<AgencyLandingPageData>(`/agencies/${slug}`);
+  }
+
+  async getTopics() {
+    return this.request<TopicSummary[]>("/topics");
+  }
+
+  async getTopicBySlug(slug: string) {
+    return this.request<TopicLandingPageData>(`/topics/${slug}`);
   }
 
   async getFeaturedReports(limit?: number) {

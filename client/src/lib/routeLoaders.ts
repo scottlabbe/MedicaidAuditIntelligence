@@ -6,6 +6,12 @@ type RouteLoader = () => Promise<RouteModule>;
 
 const loaders = {
   explore: () => import("@/pages/explore"),
+  reportsIndex: () => import("@/pages/reports-index"),
+  statesIndex: () => import("@/pages/states-index"),
+  agenciesIndex: () => import("@/pages/agencies-index"),
+  agencyDetail: () => import("@/pages/agency-detail"),
+  topicsIndex: () => import("@/pages/topics-index"),
+  topicDetail: () => import("@/pages/topic-detail"),
   researchIndex: () => import("@/pages/research-index"),
   researchReport: () => import("@/pages/research-report"),
   reportDetail: () => import("@/pages/report-detail"),
@@ -16,6 +22,12 @@ const loaders = {
 
 export const lazyRoutes = {
   Explore: lazy(loaders.explore),
+  ReportsIndex: lazy(loaders.reportsIndex),
+  StatesIndex: lazy(loaders.statesIndex),
+  AgenciesIndex: lazy(loaders.agenciesIndex),
+  AgencyDetail: lazy(loaders.agencyDetail),
+  TopicsIndex: lazy(loaders.topicsIndex),
+  TopicDetail: lazy(loaders.topicDetail),
   ResearchIndexPage: lazy(loaders.researchIndex),
   ResearchReportPage: lazy(loaders.researchReport),
   ReportDetail: lazy(loaders.reportDetail),
@@ -32,6 +44,12 @@ function getLoaderForPath(pathname: string): RouteLoader | null {
   const path = stripQueryAndHash(pathname);
 
   if (path === "/explore") return loaders.explore;
+  if (path === "/reports" || /^\/reports\/page\/\d+$/.test(path)) return loaders.reportsIndex;
+  if (path === "/states") return loaders.statesIndex;
+  if (path === "/agencies") return loaders.agenciesIndex;
+  if (/^\/agencies\/[a-z0-9-]+$/.test(path)) return loaders.agencyDetail;
+  if (path === "/topics") return loaders.topicsIndex;
+  if (/^\/topics\/[a-z0-9-]+$/.test(path)) return loaders.topicDetail;
   if (path === "/research") return loaders.researchIndex;
   if (/^\/research\/[a-z0-9-]+$/.test(path)) return loaders.researchReport;
   if (/^\/reports\/\d+$/.test(path)) return loaders.reportDetail;

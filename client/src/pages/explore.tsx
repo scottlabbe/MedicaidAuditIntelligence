@@ -15,8 +15,11 @@ import ReportCard from "@/components/reports/report-card";
 import PageMeta from "@/components/seo/PageMeta";
 import type { SearchResponse, SearchFilters as SearchFiltersType } from "@/lib/types";
 import { getStateEntryByCode } from "@shared/states";
+import { useSsrData } from "@/lib/ssrData";
 
 export default function Explore() {
+  const ssrData = useSsrData();
+  const exploreData = ssrData?.routeType === "explore" ? ssrData.explore : undefined;
   const [location, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [page, setPage] = useState(1);
@@ -167,6 +170,50 @@ export default function Explore() {
                 : "Start with a state page or apply filters to load the interactive report explorer."}
             </p>
           </div>
+
+          {!shouldFetchResults && exploreData && (
+            <div className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <section className="rounded-lg border border-border bg-card p-5">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">State landing pages</h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {exploreData.states.map((state) => (
+                    <Link
+                      key={state.code}
+                      href={`/states/${state.slug}`}
+                      className="rounded-md border border-border p-3 text-sm hover:border-primary/50"
+                    >
+                      <span className="block font-medium text-foreground">
+                        {state.name} Medicaid audits
+                      </span>
+                      <span className="text-muted-foreground">
+                        {state.reportCount} reports
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-border bg-card p-5">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">Recent featured reports</h2>
+                <div className="space-y-3">
+                  {exploreData.featuredReports.map((report) => (
+                    <Link
+                      key={report.id}
+                      href={`/reports/${report.id}`}
+                      className="block rounded-md border border-border p-3 text-sm hover:border-primary/50"
+                    >
+                      <span className="block font-medium text-foreground">
+                        {report.reportTitle}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {report.state} • {report.publicationYear}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
 
           {/* Active Filters & Controls */}
           <div className="bg-card rounded-2xl border border-border overflow-hidden mb-6">

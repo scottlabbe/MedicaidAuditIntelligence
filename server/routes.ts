@@ -367,6 +367,67 @@ Sitemap: ${siteUrl}/sitemap.xml`
     }
   });
 
+  app.get("/api/states", rateLimit, async (_req, res) => {
+    try {
+      const states = await storage.getIndexableStates(60);
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(states);
+    } catch (error) {
+      console.error("Error fetching state index:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/agencies", rateLimit, async (_req, res) => {
+    try {
+      const agencies = await storage.getAgenciesWithCounts(200);
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(agencies);
+    } catch (error) {
+      console.error("Error fetching agencies:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/agencies/:slug", rateLimit, async (req, res) => {
+    try {
+      const agency = await storage.getAgencyLandingPage(req.params.slug, 24);
+      if (!agency) {
+        return res.status(404).json({ error: "Agency not found" });
+      }
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(agency);
+    } catch (error) {
+      console.error("Error fetching agency:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/topics", rateLimit, async (_req, res) => {
+    try {
+      const topics = await storage.getTopicsWithCounts();
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(topics);
+    } catch (error) {
+      console.error("Error fetching topics:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/topics/:slug", rateLimit, async (req, res) => {
+    try {
+      const topic = await storage.getTopicLandingPage(req.params.slug, 24);
+      if (!topic) {
+        return res.status(404).json({ error: "Topic not found" });
+      }
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(topic);
+    } catch (error) {
+      console.error("Error fetching topic:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/research-reports/:slug", rateLimit, async (req, res) => {
     try {
       const report = await getResearchReportBySlug(req.params.slug);

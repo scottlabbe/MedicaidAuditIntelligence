@@ -8,6 +8,7 @@ import { preloadRouteHref } from "@/lib/routeLoaders";
 
 const NAV = [
   { href: "/", label: "Home" },
+  { href: "/reports", label: "Reports" },
   { href: "/explore", label: "Explore" },
   { href: "/research", label: "Research" },
   { href: "/dashboard", label: "Dashboard" },

@@ -36,8 +36,21 @@ import type {
   StateLatestResponse,
   IndexableStateSummary,
   StateLandingPageData,
+  AgencySummary,
+  AgencyLandingPageData,
+  TopicSummary,
+  TopicLandingPageData,
 } from "../client/src/lib/types";
 import { getStateEntryByCode } from "@shared/states";
+import { TOPICS, getTopicEntryBySlug } from "@shared/topics";
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export interface IStorage {
   // Reports
@@ -48,6 +61,10 @@ export interface IStorage {
   getLatestReportsByState(limit: number, scope: 'state' | 'federal'): Promise<StateLatestResponse>;
   getIndexableStates(limit?: number): Promise<IndexableStateSummary[]>;
   getStateLandingPage(stateCode: string, limit?: number): Promise<StateLandingPageData | undefined>;
+  getAgenciesWithCounts(limit?: number): Promise<AgencySummary[]>;
+  getAgencyLandingPage(slug: string, limit?: number): Promise<AgencyLandingPageData | undefined>;
+  getTopicsWithCounts(): Promise<TopicSummary[]>;
+  getTopicLandingPage(slug: string, limit?: number): Promise<TopicLandingPageData | undefined>;
   
   // Dashboard
   getDashboardStats(): Promise<DashboardStats>;
@@ -519,6 +536,125 @@ export class DatabaseStorage implements IStorage {
       slug: stateEntry.slug,
       reportCount: results.total,
       latestReport: results.items[0],
+      reports: results.items,
+    };
+  }
+
+  async getAgenciesWithCounts(limit = 200): Promise<AgencySummary[]> {
+    const result = await db.execute(sql`
+      WITH ranked AS (
+        SELECT
+          id,
+          report_title,
+          state,
+          audit_organization,
+          publication_year,
+          publication_month,
+          publication_day,
+          overall_conclusion,
+          llm_insight,
+          potential_objective_summary,
+          audit_scope,
+          original_report_source_url,
+          original_filename,
+          file_hash,
+          featured,
+          status,
+          created_at,
+          updated_at,
+          COUNT(*) OVER (PARTITION BY audit_organization) AS report_count,
+          ROW_NUMBER() OVER (
+            PARTITION BY audit_organization
+            ORDER BY publication_year DESC,
+                     COALESCE(publication_month, 1) DESC,
+                     COALESCE(publication_day, 1) DESC,
+                     id DESC
+          ) AS rn
+        FROM reports
+        WHERE COALESCE(hidden, false) = false
+          AND audit_organization IS NOT NULL
+          AND audit_organization != ''
+      )
+      SELECT *
+      FROM ranked
+      WHERE rn = 1
+      ORDER BY report_count DESC, audit_organization ASC
+      LIMIT ${limit}
+    `);
+
+    return (result.rows as any[]).map((row) => ({
+      slug: slugify(row.audit_organization),
+      name: row.audit_organization,
+      reportCount: Number(row.report_count) || 0,
+      latestReport: {
+        id: row.id,
+        reportTitle: row.report_title,
+        state: row.state,
+        auditOrganization: row.audit_organization,
+        publicationYear: row.publication_year,
+        publicationMonth: row.publication_month ?? undefined,
+        publicationDay: row.publication_day ?? undefined,
+        overallConclusion: row.overall_conclusion ?? undefined,
+        llmInsight: row.llm_insight ?? undefined,
+        potentialObjectiveSummary: row.potential_objective_summary ?? undefined,
+        auditScope: row.audit_scope ?? undefined,
+        originalReportSourceUrl: row.original_report_source_url ?? undefined,
+        originalFilename: row.original_filename ?? undefined,
+        fileHash: row.file_hash ?? undefined,
+        featured: row.featured ?? undefined,
+        status: row.status ?? undefined,
+        createdAt: row.created_at ?? undefined,
+        updatedAt: row.updated_at ?? undefined,
+        keywords: [],
+        programs: [],
+        conclusionExcerpt: row.overall_conclusion
+          ? row.overall_conclusion.substring(0, 200) + (row.overall_conclusion.length > 200 ? "..." : "")
+          : undefined,
+      },
+    }));
+  }
+
+  async getAgencyLandingPage(slug: string, limit = 24): Promise<AgencyLandingPageData | undefined> {
+    const agencies = await this.getAgenciesWithCounts(500);
+    const agency = agencies.find((item) => item.slug === slug);
+    if (!agency) return undefined;
+
+    const results = await this.getReports(
+      { agency: agency.name, sortBy: "date_desc" },
+      1,
+      limit,
+    );
+
+    return {
+      ...agency,
+      reportCount: results.total,
+      latestReport: results.items[0],
+      reports: results.items,
+    };
+  }
+
+  async getTopicsWithCounts(): Promise<TopicSummary[]> {
+    const topics = await Promise.all(
+      TOPICS.map(async (topic) => {
+        const results = await this.getReports({ query: topic.query }, 1, 1);
+        return {
+          ...topic,
+          reportCount: results.total,
+        };
+      }),
+    );
+
+    return topics;
+  }
+
+  async getTopicLandingPage(slug: string, limit = 24): Promise<TopicLandingPageData | undefined> {
+    const topic = getTopicEntryBySlug(slug);
+    if (!topic) return undefined;
+
+    const results = await this.getReports({ query: topic.query, sortBy: "date_desc" }, 1, limit);
+    return {
+      ...topic,
+      reportCount: results.total,
       reports: results.items,
     };
   }

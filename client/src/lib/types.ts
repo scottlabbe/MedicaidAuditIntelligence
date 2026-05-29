@@ -98,6 +98,29 @@ export interface IndexableStateSummary {
   latestReport?: ReportListItem;
 }
 
+export interface AgencySummary {
+  slug: string;
+  name: string;
+  reportCount: number;
+  latestReport?: ReportListItem;
+}
+
+export interface AgencyLandingPageData extends AgencySummary {
+  reports: ReportListItem[];
+}
+
+export interface TopicSummary {
+  slug: string;
+  name: string;
+  query: string;
+  description: string;
+  reportCount: number;
+}
+
+export interface TopicLandingPageData extends TopicSummary {
+  reports: ReportListItem[];
+}
+
 export interface StateLandingPageData {
   code: string;
   name: string;
@@ -145,4 +168,34 @@ export interface ResearchReportPageData {
   citedReportIds: number[];
   sources: ResearchReportSource[];
   updatedAt?: string;
+}
+
+export interface HomeRouteData {
+  stats: DashboardStats;
+  featuredReports: ReportListItem[];
+  states: IndexableStateSummary[];
+}
+
+export interface ExploreRouteData {
+  states: IndexableStateSummary[];
+  featuredReports: ReportListItem[];
+}
+
+export interface InitialRouteData {
+  routeType?: string;
+  home?: HomeRouteData;
+  explore?: ExploreRouteData;
+  reportsIndex?: SearchResponse;
+  statesIndex?: IndexableStateSummary[];
+  agenciesIndex?: AgencySummary[];
+  agencyPage?: AgencyLandingPageData;
+  topicsIndex?: TopicSummary[];
+  topicPage?: TopicLandingPageData;
+  report?: ReportWithDetails;
+  researchReports?: ResearchReportListItem[];
+  researchReport?: ResearchReportPageData;
+  dashboardStats?: DashboardStats;
+  dashboardMapData?: StateLatestResponse;
+  stateCode?: string;
+  stateSearchResults?: SearchResponse;
 }

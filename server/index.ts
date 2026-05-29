@@ -27,6 +27,24 @@ function shouldRedirectHost(requestHostname: string): boolean {
   return requestHostname === `www.${canonicalHostname}`;
 }
 
+function getRequestSearch(req: Request): string {
+  const queryIndex = req.originalUrl.indexOf("?");
+  return queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : "";
+}
+
+function normalizePathname(pathname: string): string {
+  if (pathname !== "/" && pathname.endsWith("/")) {
+    return pathname.replace(/\/+$/, "");
+  }
+
+  const legacyReportMatch = pathname.match(/^\/report\/(\d+)$/);
+  if (legacyReportMatch) {
+    return `/reports/${legacyReportMatch[1]}`;
+  }
+
+  return pathname;
+}
+
 // Trust proxy for rate limiting behind reverse proxy
 app.set('trust proxy', 1);
 
@@ -35,6 +53,9 @@ app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 // Security headers middleware
 app.use((req, res, next) => {
+  const normalizedPathname = normalizePathname(req.path);
+  const needsPathRedirect = normalizedPathname !== req.path;
+
   if (process.env.NODE_ENV === "production") {
     const requestProtocol = getRequestProtocol(req);
     const requestHost = getRequestHost(req);
@@ -43,10 +64,17 @@ app.use((req, res, next) => {
     const needsHostRedirect = requestHostname ? shouldRedirectHost(requestHostname) : false;
 
     if (needsProtocolRedirect || needsHostRedirect) {
-      const redirectHost = needsHostRedirect ? canonicalHost : (requestHost || canonicalHost);
-      res.redirect(301, `${canonicalProtocol}://${redirectHost}${req.originalUrl}`);
+      res.redirect(
+        301,
+        `${canonicalProtocol}://${canonicalHost}${normalizedPathname}${getRequestSearch(req)}`,
+      );
       return;
     }
+  }
+
+  if (needsPathRedirect) {
+    res.redirect(301, `${normalizedPathname}${getRequestSearch(req)}`);
+    return;
   }
   
   // Security headers

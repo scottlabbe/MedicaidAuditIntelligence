@@ -1,36 +1,90 @@
 import { queryClient } from "./queryClient";
-import type {
-  DashboardStats,
-  ReportWithDetails,
-  ResearchReportListItem,
-  ResearchReportPageData,
-  SearchResponse,
-  StateLatestResponse,
-} from "./types";
+import type { InitialRouteData } from "./types";
+import type { QueryClient } from "@tanstack/react-query";
 
 declare global {
   interface Window {
-    __INITIAL_ROUTE_DATA__?: {
-      routeType?: string;
-      report?: ReportWithDetails;
-      researchReports?: ResearchReportListItem[];
-      researchReport?: ResearchReportPageData;
-      dashboardStats?: DashboardStats;
-      dashboardMapData?: StateLatestResponse;
-      stateCode?: string;
-      stateSearchResults?: SearchResponse;
-    };
+    __INITIAL_ROUTE_DATA__?: InitialRouteData;
   }
 }
 
-export function primeInitialRouteData() {
-  const initialRouteData = window.__INITIAL_ROUTE_DATA__;
+export function primeInitialRouteData(
+  client: QueryClient = queryClient,
+  initialRouteData: InitialRouteData | undefined =
+    typeof window !== "undefined" ? window.__INITIAL_ROUTE_DATA__ : undefined,
+) {
   if (!initialRouteData) {
     return;
   }
 
+  if (initialRouteData.routeType === "home" && initialRouteData.home) {
+    client.setQueryData(
+      ["/api/dashboard/stats"],
+      initialRouteData.home.stats,
+    );
+    client.setQueryData(
+      ["/api/reports/featured"],
+      initialRouteData.home.featuredReports,
+    );
+  }
+
+  if (
+    initialRouteData.routeType === "reports_index" &&
+    initialRouteData.reportsIndex
+  ) {
+    client.setQueryData(
+      [
+        "/api/reports",
+        { sortBy: initialRouteData.reportsIndex.filters.sortBy || "date_desc" },
+        initialRouteData.reportsIndex.page,
+      ],
+      initialRouteData.reportsIndex,
+    );
+  }
+
+  if (
+    initialRouteData.routeType === "states_index" &&
+    initialRouteData.statesIndex
+  ) {
+    client.setQueryData(["/api/states"], initialRouteData.statesIndex);
+  }
+
+  if (
+    initialRouteData.routeType === "agencies_index" &&
+    initialRouteData.agenciesIndex
+  ) {
+    client.setQueryData(["/api/agencies"], initialRouteData.agenciesIndex);
+  }
+
+  if (
+    initialRouteData.routeType === "agency" &&
+    initialRouteData.agencyPage
+  ) {
+    client.setQueryData(
+      ["/api/agencies", initialRouteData.agencyPage.slug],
+      initialRouteData.agencyPage,
+    );
+  }
+
+  if (
+    initialRouteData.routeType === "topics_index" &&
+    initialRouteData.topicsIndex
+  ) {
+    client.setQueryData(["/api/topics"], initialRouteData.topicsIndex);
+  }
+
+  if (
+    initialRouteData.routeType === "topic" &&
+    initialRouteData.topicPage
+  ) {
+    client.setQueryData(
+      ["/api/topics", initialRouteData.topicPage.slug],
+      initialRouteData.topicPage,
+    );
+  }
+
   if (initialRouteData.routeType === "report" && initialRouteData.report) {
-    queryClient.setQueryData(
+    client.setQueryData(
       ["/api/reports", String(initialRouteData.report.id)],
       initialRouteData.report,
     );
@@ -40,7 +94,7 @@ export function primeInitialRouteData() {
     initialRouteData.routeType === "research_index" &&
     initialRouteData.researchReports
   ) {
-    queryClient.setQueryData(
+    client.setQueryData(
       ["/api/research-reports"],
       initialRouteData.researchReports,
     );
@@ -50,7 +104,7 @@ export function primeInitialRouteData() {
     initialRouteData.routeType === "research" &&
     initialRouteData.researchReport
   ) {
-    queryClient.setQueryData(
+    client.setQueryData(
       ["/api/research-reports", initialRouteData.researchReport.slug],
       initialRouteData.researchReport,
     );
@@ -58,14 +112,14 @@ export function primeInitialRouteData() {
 
   if (initialRouteData.routeType === "dashboard") {
     if (initialRouteData.dashboardStats) {
-      queryClient.setQueryData(
+      client.setQueryData(
         ["/api/dashboard/stats"],
         initialRouteData.dashboardStats,
       );
     }
 
     if (initialRouteData.dashboardMapData) {
-      queryClient.setQueryData(
+      client.setQueryData(
         ["/api/reports/state-latest", "state"],
         initialRouteData.dashboardMapData,
       );
@@ -77,11 +131,13 @@ export function primeInitialRouteData() {
     initialRouteData.stateCode &&
     initialRouteData.stateSearchResults
   ) {
-    queryClient.setQueryData(
+    client.setQueryData(
       ["/api/reports", "state-page", initialRouteData.stateCode],
       initialRouteData.stateSearchResults,
     );
   }
 
-  delete window.__INITIAL_ROUTE_DATA__;
+  if (typeof window !== "undefined") {
+    delete window.__INITIAL_ROUTE_DATA__;
+  }
 }

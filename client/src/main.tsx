@@ -1,9 +1,10 @@
-import { createRoot } from "react-dom/client";
+import { hydrateRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./index.css";
 import { primeInitialRouteData } from "./lib/initialRouteData";
 import { preloadRouteForPath } from "./lib/routeLoaders";
+import { queryClient } from "./lib/queryClient";
 
 function registerChunkRecoveryHandler() {
   if (typeof window === "undefined") {
@@ -24,7 +25,8 @@ function registerChunkRecoveryHandler() {
 }
 
 async function bootstrap() {
-  primeInitialRouteData();
+  const initialRouteData = window.__INITIAL_ROUTE_DATA__;
+  primeInitialRouteData(queryClient, initialRouteData);
   registerChunkRecoveryHandler();
 
   if (typeof window !== "undefined") {
@@ -35,9 +37,10 @@ async function bootstrap() {
     }
   }
 
-  createRoot(document.getElementById("root")!).render(
+  hydrateRoot(
+    document.getElementById("root")!,
     <HelmetProvider>
-      <App />
+      <App queryClient={queryClient} initialRouteData={initialRouteData} />
     </HelmetProvider>
   );
 }

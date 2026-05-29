@@ -36,11 +36,21 @@ export default function ReportDetail() {
       "@context": "https://schema.org",
       "@type": "Report",
       name: report.reportTitle,
+      url: `https://www.medicaidintelligence.com/reports/${report.id}`,
+      mainEntityOfPage: `https://www.medicaidintelligence.com/reports/${report.id}`,
+      identifier: `report-${report.id}`,
       author: { "@type": "Organization", name: report.auditOrganization },
       datePublished: dateStr,
+      dateModified: report.updatedAt,
       description: report.overallConclusion?.substring(0, 155) || "",
       about: { "@type": "GovernmentService", name: "Medicaid" },
-      spatialCoverage: { "@type": "Place", name: report.state },
+      spatialCoverage: {
+        "@type": "Place",
+        name: getStateEntryByCode(report.state)?.name || report.state,
+      },
+      ...(report.originalReportSourceUrl
+        ? { isBasedOn: report.originalReportSourceUrl }
+        : {}),
       publisher: {
         "@type": "Organization",
         name: "Medicaid Audit Intelligence",

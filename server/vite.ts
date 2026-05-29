@@ -1,11 +1,40 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { pathToFileURL } from "url";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
-import { injectSeoIntoHtml, resolveHtmlRoute } from "./seo";
+import { escapeScriptJson, resolveHtmlRoute } from "./seo";
+
+type ServerRenderer = typeof import("../client/src/entry-server");
+
+function injectSsrHtml(
+  template: string,
+  appHtml: string,
+  headHtml: string,
+  initialRouteData?: Record<string, unknown>,
+) {
+  let html = template;
+
+  html = html.replace(/<title>.*?<\/title>/, "");
+  html = html.replace(/<meta name="description"[^>]*\/?>/, "");
+  html = html.replace(
+    /<div id="root">\s*<\/div>/,
+    `<div id="root">${appHtml}</div>`,
+  );
+
+  if (initialRouteData) {
+    html = html.replace(
+      "</body>",
+      `<script>window.__INITIAL_ROUTE_DATA__ = ${escapeScriptJson(initialRouteData)};</script>\n</body>`,
+    );
+  }
+
+  html = html.replace("</head>", `${headHtml}\n</head>`);
+  return html;
+}
 
 const viteLogger = createLogger();
 
@@ -68,10 +97,22 @@ export async function setupVite(app: Express, server: Server) {
           return;
         }
 
-        template = injectSeoIntoHtml(template, resolvedRoute);
+        const renderer = await vite.ssrLoadModule(
+          "/src/entry-server.tsx",
+        ) as ServerRenderer;
+        const { appHtml, headHtml } = renderer.render(
+          url,
+          resolvedRoute.initialRouteData as any,
+        );
+        template = injectSsrHtml(
+          template,
+          appHtml,
+          headHtml,
+          resolvedRoute.initialRouteData,
+        );
         res.status(resolvedRoute.status);
       } catch (e) {
-        console.warn("SEO injection failed for", url, e);
+        console.warn("SSR failed for", url, e);
       }
 
       const page = await vite.transformIndexHtml(url, template);
@@ -123,10 +164,25 @@ export function serveStatic(app: Express) {
         return;
       }
 
-      const html = injectSeoIntoHtml(indexHtmlTemplate, resolvedRoute);
+      const rendererPath = path.resolve(
+        import.meta.dirname,
+        "server",
+        "entry-server.js",
+      );
+      const renderer = await import(pathToFileURL(rendererPath).href) as ServerRenderer;
+      const { appHtml, headHtml } = renderer.render(
+        req.originalUrl,
+        resolvedRoute.initialRouteData as any,
+      );
+      const html = injectSsrHtml(
+        indexHtmlTemplate,
+        appHtml,
+        headHtml,
+        resolvedRoute.initialRouteData,
+      );
       res.status(resolvedRoute.status).set({ "Content-Type": "text/html" }).send(html);
     } catch (e) {
-      console.warn("SEO injection failed, serving base HTML:", e);
+      console.warn("SSR failed, serving base HTML:", e);
       res.status(200).set({ "Content-Type": "text/html" }).send(indexHtmlTemplate);
     }
   });

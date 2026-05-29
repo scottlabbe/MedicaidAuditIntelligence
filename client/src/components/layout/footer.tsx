@@ -4,7 +4,12 @@ import { preloadRouteHref } from "@/lib/routeLoaders";
 
 const PRIMARY_LINKS = [
   { href: "/", label: "Home" },
+  { href: "/reports", label: "All Reports" },
   { href: "/explore", label: "Explore Reports" },
+  { href: "/states", label: "States" },
+  { href: "/agencies", label: "Agencies" },
+  { href: "/topics", label: "Topics" },
+  { href: "/research", label: "Research" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/about", label: "About" },
 ];

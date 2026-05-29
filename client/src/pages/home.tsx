@@ -13,8 +13,11 @@ import KeywordSection from "@/components/keywords/keyword-section";
 import PageMeta from "@/components/seo/PageMeta";
 import type { DashboardStats, ReportListItem } from "@/lib/types";
 import { preloadRouteHref } from "@/lib/routeLoaders";
+import { useSsrData } from "@/lib/ssrData";
 
 export default function Home() {
+  const ssrData = useSsrData();
+  const stateLinks = ssrData?.routeType === "home" ? ssrData.home?.states ?? [] : [];
   const prefetchHandlers = (href: string) => ({
     onMouseEnter: () => preloadRouteHref(href),
     onFocus: () => preloadRouteHref(href),
@@ -56,6 +59,25 @@ export default function Home() {
               target: "https://www.medicaidintelligence.com/explore?query={search_term_string}",
               "query-input": "required name=search_term_string",
             },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            name: "Medicaid Audit Intelligence Report Database",
+            description: "Searchable corpus of Medicaid audit reports with structured findings, recommendations, state coverage, audit agencies, and source document links.",
+            url: "https://www.medicaidintelligence.com/reports",
+            creator: {
+              "@type": "Organization",
+              name: "Medicaid Audit Intelligence",
+            },
+            keywords: [
+              "Medicaid audits",
+              "program integrity",
+              "managed care",
+              "pharmacy benefit managers",
+              "eligibility",
+            ],
+            isAccessibleForFree: true,
           },
         ]}
       />
@@ -119,6 +141,37 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {stateLinks.length > 0 && (
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold text-foreground">Browse state audit coverage</h2>
+            <Link href="/states" {...prefetchHandlers("/states")}>
+              <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
+                <span>View all states</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {stateLinks.map((state) => (
+              <Link
+                key={state.code}
+                href={`/states/${state.slug}`}
+                className="rounded-lg border border-border bg-card p-4 text-sm transition-colors hover:border-primary/50"
+                {...prefetchHandlers(`/states/${state.slug}`)}
+              >
+                <span className="block font-semibold text-foreground">
+                  {state.name} Medicaid audit reports
+                </span>
+                <span className="mt-1 block text-muted-foreground">
+                  {state.reportCount} reports
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mb-12">
         <div className="rounded-3xl border border-border bg-gradient-to-r from-orange-50 via-background to-amber-50 p-8 warm-shadow-lg">

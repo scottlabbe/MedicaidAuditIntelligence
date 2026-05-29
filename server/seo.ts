@@ -10,6 +10,7 @@ import {
   ResearchReportNotFoundError,
   ResearchReportValidationError,
 } from "./researchReports";
+import { TOPICS } from "@shared/topics";
 
 const SITE_URL =
   process.env.SITE_URL || "https://www.medicaidintelligence.com";
@@ -28,6 +29,12 @@ export interface ResolvedHtmlRoute {
   routeType:
     | "home"
     | "explore"
+    | "reports_index"
+    | "states_index"
+    | "agencies_index"
+    | "agency"
+    | "topics_index"
+    | "topic"
     | "dashboard"
     | "about"
     | "report"
@@ -52,7 +59,7 @@ function escapeHtml(str: string): string {
     .replace(/>/g, "&gt;");
 }
 
-function escapeScriptJson(value: unknown): string {
+export function escapeScriptJson(value: unknown): string {
   return JSON.stringify(value)
     .replace(/</g, "\\u003c")
     .replace(/>/g, "\\u003e")
@@ -269,6 +276,19 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
       </section>
       <p><a href="/explore">Explore all reports</a> or <a href="/dashboard">view the dashboard</a>.</p>
     `),
+    initialRouteData: {
+      routeType: "home",
+      home: {
+        stats: {
+          totalReports,
+          statesWithReports,
+          criticalFindings: 0,
+          recentReports: featuredReports,
+        },
+        featuredReports,
+        states,
+      },
+    },
   };
 }
 
@@ -376,6 +396,274 @@ async function getExploreRoute(url: URL): Promise<ResolvedHtmlRoute> {
         )}
       </section>
     `),
+    initialRouteData: {
+      routeType: "explore",
+      explore: {
+        states,
+        featuredReports,
+      },
+    },
+  };
+}
+
+async function getReportsIndexRoute(page: number): Promise<ResolvedHtmlRoute> {
+  const safePage = Math.max(1, page);
+  const reportResults = await storage.getReports(
+    { sortBy: "date_desc" },
+    safePage,
+    24,
+  );
+  const canonicalUrl =
+    safePage === 1 ? `${SITE_URL}/reports` : `${SITE_URL}/reports/page/${safePage}`;
+  const title =
+    safePage === 1
+      ? `Medicaid Audit Reports | ${SITE_NAME}`
+      : `Medicaid Audit Reports - Page ${safePage} | ${SITE_NAME}`;
+  const description =
+    "Browse the full Medicaid Audit Intelligence report library with links to report summaries, findings, recommendations, and original source documents.";
+
+  return {
+    routeType: "reports_index",
+    status: 200,
+    seoMeta: {
+      title,
+      description,
+      canonicalUrl,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Medicaid Audit Reports",
+          url: canonicalUrl,
+          description,
+          isPartOf: {
+            "@type": "WebSite",
+            name: SITE_NAME,
+            url: SITE_URL,
+          },
+        },
+      ],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <header>
+          <h1>Medicaid audit reports</h1>
+          <p>${escapeHtml(description)}</p>
+        </header>
+        ${renderLinkList(
+          reportResults.items.map((report) => ({
+            href: `/reports/${report.id}`,
+            label: report.reportTitle,
+            meta: `${report.state} • ${report.auditOrganization} • ${report.publicationYear}`,
+          })),
+        )}
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "reports_index",
+      reportsIndex: reportResults,
+    },
+  };
+}
+
+async function getStatesIndexRoute(): Promise<ResolvedHtmlRoute> {
+  const states = await storage.getIndexableStates(60);
+  const description =
+    "Browse Medicaid audit report coverage by state, including state-level findings, recommendations, and original source documents.";
+
+  return {
+    routeType: "states_index",
+    status: 200,
+    seoMeta: {
+      title: `State Medicaid Audit Report Pages | ${SITE_NAME}`,
+      description,
+      canonicalUrl: `${SITE_URL}/states`,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "State Medicaid Audit Report Pages",
+          url: `${SITE_URL}/states`,
+          description,
+          isPartOf: {
+            "@type": "WebSite",
+            name: SITE_NAME,
+            url: SITE_URL,
+          },
+        },
+      ],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <header>
+          <h1>State Medicaid audit report pages</h1>
+          <p>${escapeHtml(description)}</p>
+        </header>
+        ${renderLinkList(
+          states.map((state) => ({
+            href: `/states/${state.slug}`,
+            label: `${state.name} Medicaid audit reports`,
+            meta: `${state.reportCount} reports`,
+          })),
+        )}
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "states_index",
+      statesIndex: states,
+    },
+  };
+}
+
+async function getAgenciesIndexRoute(): Promise<ResolvedHtmlRoute> {
+  const agencies = await storage.getAgenciesWithCounts(200);
+  const description =
+    "Browse Medicaid audit reports by publishing oversight agency, auditor, inspector general, or legislative audit office.";
+
+  return {
+    routeType: "agencies_index",
+    status: 200,
+    seoMeta: {
+      title: `Medicaid Audit Agencies | ${SITE_NAME}`,
+      description,
+      canonicalUrl: `${SITE_URL}/agencies`,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [getOrganizationJsonLd()],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <h1>Medicaid audit agencies</h1>
+        <p>${escapeHtml(description)}</p>
+        ${renderLinkList(
+          agencies.map((agency) => ({
+            href: `/agencies/${agency.slug}`,
+            label: agency.name,
+            meta: `${agency.reportCount} reports`,
+          })),
+        )}
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "agencies_index",
+      agenciesIndex: agencies,
+    },
+  };
+}
+
+async function getAgencyRoute(slug: string): Promise<ResolvedHtmlRoute> {
+  const agency = await storage.getAgencyLandingPage(slug, 24);
+  if (!agency) {
+    return getNotFoundRoute();
+  }
+
+  const description = `Browse ${agency.reportCount} Medicaid audit reports from ${agency.name}.`;
+
+  return {
+    routeType: "agency",
+    status: 200,
+    seoMeta: {
+      title: `${agency.name} Medicaid Audit Reports | ${SITE_NAME}`,
+      description,
+      canonicalUrl: `${SITE_URL}/agencies/${agency.slug}`,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [getOrganizationJsonLd()],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <h1>${escapeHtml(agency.name)} Medicaid audit reports</h1>
+        <p>${escapeHtml(description)}</p>
+        ${renderLinkList(
+          agency.reports.map((report) => ({
+            href: `/reports/${report.id}`,
+            label: report.reportTitle,
+            meta: `${report.state} • ${report.publicationYear}`,
+          })),
+        )}
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "agency",
+      agencyPage: agency,
+    },
+  };
+}
+
+async function getTopicsIndexRoute(): Promise<ResolvedHtmlRoute> {
+  const topics = await storage.getTopicsWithCounts();
+  const description =
+    "Browse Medicaid audit reports by topic, including managed care, pharmacy benefit managers, eligibility, enrollment, and program integrity.";
+
+  return {
+    routeType: "topics_index",
+    status: 200,
+    seoMeta: {
+      title: `Medicaid Audit Topics | ${SITE_NAME}`,
+      description,
+      canonicalUrl: `${SITE_URL}/topics`,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [getOrganizationJsonLd()],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <h1>Medicaid audit topics</h1>
+        <p>${escapeHtml(description)}</p>
+        ${renderLinkList(
+          topics.map((topic) => ({
+            href: `/topics/${topic.slug}`,
+            label: topic.name,
+            meta: `${topic.reportCount} related reports`,
+          })),
+        )}
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "topics_index",
+      topicsIndex: topics,
+    },
+  };
+}
+
+async function getTopicRoute(slug: string): Promise<ResolvedHtmlRoute> {
+  const topic = await storage.getTopicLandingPage(slug, 24);
+  if (!topic) {
+    return getNotFoundRoute();
+  }
+
+  return {
+    routeType: "topic",
+    status: 200,
+    seoMeta: {
+      title: `${topic.name} Medicaid Audit Reports | ${SITE_NAME}`,
+      description: topic.description,
+      canonicalUrl: `${SITE_URL}/topics/${topic.slug}`,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [getOrganizationJsonLd()],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <h1>${escapeHtml(topic.name)} Medicaid audit reports</h1>
+        <p>${escapeHtml(topic.description)}</p>
+        ${renderLinkList(
+          topic.reports.map((report) => ({
+            href: `/reports/${report.id}`,
+            label: report.reportTitle,
+            meta: `${report.state} • ${report.publicationYear}`,
+          })),
+        )}
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "topic",
+      topicPage: topic,
+    },
   };
 }
 
@@ -824,6 +1112,46 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
     return getExploreRoute(url);
   }
 
+  if (pathname === "/reports") {
+    return getReportsIndexRoute(1);
+  }
+
+  const reportPageMatch = pathname.match(/^\/reports\/page\/(\d+)$/);
+  if (reportPageMatch) {
+    const page = Number(reportPageMatch[1]);
+    if (page === 1) {
+      return {
+        routeType: "redirect",
+        status: 301,
+        redirectTo: "/reports",
+        snapshotHtml: "",
+      };
+    }
+    return getReportsIndexRoute(page);
+  }
+
+  if (pathname === "/states") {
+    return getStatesIndexRoute();
+  }
+
+  if (pathname === "/agencies") {
+    return getAgenciesIndexRoute();
+  }
+
+  const agencyMatch = pathname.match(/^\/agencies\/([a-z0-9-]+)$/);
+  if (agencyMatch) {
+    return getAgencyRoute(agencyMatch[1]);
+  }
+
+  if (pathname === "/topics") {
+    return getTopicsIndexRoute();
+  }
+
+  const topicMatch = pathname.match(/^\/topics\/([a-z0-9-]+)$/);
+  if (topicMatch) {
+    return getTopicRoute(topicMatch[1]);
+  }
+
   if (pathname === "/dashboard") {
     return getDashboardRoute();
   }
@@ -920,17 +1248,31 @@ export async function generateSitemap(): Promise<string> {
   urls.push(
     { loc: SITE_URL, changefreq: "weekly", priority: "1.0" },
     { loc: `${SITE_URL}/explore`, changefreq: "daily", priority: "0.9" },
+    { loc: `${SITE_URL}/reports`, changefreq: "daily", priority: "0.9" },
+    { loc: `${SITE_URL}/states`, changefreq: "weekly", priority: "0.8" },
+    { loc: `${SITE_URL}/agencies`, changefreq: "weekly", priority: "0.7" },
+    { loc: `${SITE_URL}/topics`, changefreq: "weekly", priority: "0.7" },
     { loc: `${SITE_URL}/research`, changefreq: "weekly", priority: "0.7" },
     { loc: `${SITE_URL}/dashboard`, changefreq: "weekly", priority: "0.6" },
     { loc: `${SITE_URL}/about`, changefreq: "monthly", priority: "0.4" },
   );
 
   try {
-    const [statePages, reportResults, researchSlugs] = await Promise.all([
+    const [statePages, reportResults, researchSlugs, agencyPages] = await Promise.all([
       storage.getIndexableStates(60),
       storage.getReports({}, 1, 5000),
       listResearchReportSlugs(),
+      storage.getAgenciesWithCounts(200),
     ]);
+
+    const reportPageCount = Math.ceil(reportResults.total / 24);
+    for (let page = 2; page <= reportPageCount; page++) {
+      urls.push({
+        loc: `${SITE_URL}/reports/page/${page}`,
+        changefreq: "daily",
+        priority: "0.7",
+      });
+    }
 
     for (const state of statePages) {
       urls.push({
@@ -940,6 +1282,25 @@ export async function generateSitemap(): Promise<string> {
           : undefined,
         changefreq: "weekly",
         priority: "0.8",
+      });
+    }
+
+    for (const agency of agencyPages) {
+      urls.push({
+        loc: `${SITE_URL}/agencies/${agency.slug}`,
+        lastmod: agency.latestReport?.updatedAt
+          ? new Date(agency.latestReport.updatedAt).toISOString().split("T")[0]
+          : undefined,
+        changefreq: "weekly",
+        priority: "0.6",
+      });
+    }
+
+    for (const topic of TOPICS) {
+      urls.push({
+        loc: `${SITE_URL}/topics/${topic.slug}`,
+        changefreq: "weekly",
+        priority: "0.6",
       });
     }
 

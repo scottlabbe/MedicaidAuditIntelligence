@@ -125,7 +125,19 @@ export default function ResearchReportPage() {
           "@type": "Article",
           headline: report.title,
           description: pageDescription,
+          url: `https://www.medicaidintelligence.com/research/${report.slug}`,
+          mainEntityOfPage: `https://www.medicaidintelligence.com/research/${report.slug}`,
           dateModified: report.updatedAt,
+          author: {
+            "@type": "Organization",
+            name: "Medicaid Audit Intelligence",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Medicaid Audit Intelligence",
+            url: "https://www.medicaidintelligence.com",
+          },
+          citation: report.sources.map((source) => source.resolvedHref),
         }}
       />
 
