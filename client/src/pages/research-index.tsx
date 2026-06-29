@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ExternalLink, FileStack, LibraryBig, Star } from "lucide-react";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { apiClient } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ResearchReportListItem } from "@/lib/types";
@@ -22,153 +19,174 @@ export default function ResearchIndexPage() {
     error: Error | null;
   };
 
-  if (error) {
-    return (
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8">
-        <PageMeta
-          title="Research"
-          description="Research reports for Medicaid oversight topics."
-          robots="noindex, follow"
-        />
-        <Card className="p-8 text-center">
-          <CardContent>
-            <p className="text-destructive">Error loading research reports: {error.message}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1120px] px-5 py-10 sm:px-6 lg:px-8 lg:py-14">
       <PageMeta
         title="Research"
-        description="Explore research reports with linked Medicaid audit citations and expandable analysis."
+        description="Cross-report Medicaid oversight analysis grounded in authoritative audit evidence."
         canonicalPath="/research"
         ogType="website"
       />
 
-      <section className="rounded-[2rem] border border-orange-200/80 bg-gradient-to-br from-orange-50/90 via-background to-amber-50/70 px-8 py-9 warm-shadow-lg">
-        <div className="mb-5 flex flex-wrap items-center gap-3">
-          <Badge variant="secondary" className="gap-2 border border-orange-300/60 bg-orange-100 text-orange-950">
-            <LibraryBig className="h-3.5 w-3.5" />
-            Research Library
-          </Badge>
-          <span className="text-sm font-medium text-orange-900/75">
-            Long-form oversight analysis linked to report detail pages
-          </span>
-        </div>
-        <h1 className="max-w-4xl text-4xl font-black tracking-tight text-orange-950 lg:text-5xl">
-          Research reports
+      <header className="max-w-[760px]">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+          Research
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-[-0.025em] text-foreground sm:text-4xl">
+          Medicaid oversight research
         </h1>
-        <p className="mt-4 max-w-3xl text-lg leading-relaxed text-slate-700">
-          Browse topic-level research reports built from the Medicaid audit library. Each report links directly to the underlying audit report detail pages for source review.
+        <p className="mt-4 font-serif text-lg leading-8 text-muted-foreground">
+          Cross-report analysis grounded in the audit library. Each research
+          brief connects recurring findings to the original evidence records.
         </p>
         <a
           href={AI_RESEARCH_AGENT_ARTICLE_URL}
           target="_blank"
           rel="noreferrer"
-          className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-orange-900 underline-offset-4 hover:underline"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          Learn how the AI-generated research projects were created
-          <ExternalLink className="h-4 w-4" />
+          How this research is produced
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
         </a>
+      </header>
+
+      <section className="mt-12" aria-labelledby="research-briefs-heading">
+        <div className="flex items-end justify-between gap-4 border-b-2 border-primary pb-3">
+          <h2
+            id="research-briefs-heading"
+            className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground"
+          >
+            Research briefs
+          </h2>
+          {!isLoading && !error && (
+            <span className="font-mono text-xs text-muted-foreground">
+              {reports?.length ?? 0}{" "}
+              {reports?.length === 1 ? "brief" : "briefs"}
+            </span>
+          )}
+        </div>
+
+        {isLoading ? (
+          <ResearchRegisterSkeleton />
+        ) : error ? (
+          <div className="border-b border-border py-8" role="alert">
+            <h3 className="text-lg font-semibold">
+              Research briefs could not be loaded
+            </h3>
+            <p className="mt-2 text-muted-foreground">
+              Refresh the page to try again.
+            </p>
+          </div>
+        ) : reports?.length ? (
+          <div className="border-b border-border">
+            {reports.map((report) => (
+              <article
+                key={report.slug}
+                className="grid border-b border-border py-7 last:border-b-0 md:grid-cols-[160px_minmax(0,1fr)_150px] md:gap-7"
+              >
+                <div>
+                  <p className="font-mono text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                    {report.category}
+                  </p>
+                  {typeof report.sourceCount === "number" && (
+                    <p className="mt-2 font-mono text-xs text-muted-foreground">
+                      {report.sourceCount} cited audit{" "}
+                      {report.sourceCount === 1 ? "report" : "reports"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-4 md:mt-0">
+                  <h3 className="text-xl font-semibold leading-7 tracking-[-0.01em]">
+                    <Link
+                      href={`/research/${report.slug}`}
+                      className="decoration-primary/40 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      {report.title}
+                    </Link>
+                  </h3>
+                  <p className="mt-3 max-w-[680px] font-serif leading-7 text-muted-foreground">
+                    {report.description}
+                  </p>
+                </div>
+
+                <div className="mt-5 border-t border-border pt-4 md:mt-0 md:border-t-0 md:pt-0">
+                  <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                    {formatReportDate(report)}
+                  </p>
+                  <Link
+                    href={`/research/${report.slug}`}
+                    className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    Open research
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="border-b border-border py-8">
+            <h3 className="text-lg font-semibold">
+              No research briefs are available
+            </h3>
+            <p className="mt-2 text-muted-foreground">
+              Search the audit library for individual evidence records.
+            </p>
+          </div>
+        )}
       </section>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {[...Array(4)].map((_, index) => (
-            <Card key={index} className="rounded-3xl">
-              <CardContent className="space-y-4 p-6">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-10 w-3/4" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-5 w-28" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : reports?.length ? (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {reports.map((report) => (
-            <Link key={report.slug} href={`/research/${report.slug}`}>
-              <Card className="h-full cursor-pointer rounded-3xl border border-border transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-lg">
-                <CardContent className="flex h-full flex-col gap-5 p-6">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-900">
-                      {report.category}
-                    </Badge>
-                    {report.featured ? (
-                      <Badge variant="secondary" className="gap-1 border border-orange-300/60 bg-orange-100 text-orange-950">
-                        <Star className="h-3 w-3" />
-                        Featured
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <div className="space-y-3">
-                    <h2 className="text-2xl font-semibold leading-tight text-foreground">
-                      {report.title}
-                    </h2>
-                    <p className="leading-relaxed text-muted-foreground">
-                      {report.description}
-                    </p>
-                  </div>
-                  <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-3 text-sm text-muted-foreground">
-                    <span>
-                      {formatReportDate(report)}
-                    </span>
-                    <span className="inline-flex items-center gap-2 font-medium text-orange-700">
-                      Open report
-                      <ArrowRight className="h-4 w-4" />
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <Card className="rounded-3xl border-dashed">
-          <CardContent className="p-10 text-center">
-            <FileStack className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h2 className="text-xl font-semibold text-foreground">
-              No research reports available yet
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Add a report folder with `report.md` and `metadata.json` under `reports/` to publish it here.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="flex justify-start">
-        <Link href="/explore">
-          <Button variant="outline" className="gap-2">
-            View audit report library
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+      <aside className="mt-10 border-l-4 border-primary bg-muted px-5 py-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+        <p className="font-semibold">Need an individual audit report?</p>
+        <Link
+          href="/reports"
+          className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:mt-0"
+        >
+          Search the audit library
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
-      </div>
+      </aside>
+    </div>
+  );
+}
+
+function ResearchRegisterSkeleton() {
+  return (
+    <div aria-hidden="true">
+      {Array.from({ length: 2 }, (_, index) => (
+        <div
+          key={index}
+          className="grid border-b border-border py-7 md:grid-cols-[160px_minmax(0,1fr)_150px] md:gap-7"
+        >
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+          <div className="mt-4 space-y-3 md:mt-0">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-4/5" />
+          </div>
+          <div className="mt-5 space-y-3 md:mt-0">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 function formatReportDate(report: ResearchReportListItem): string {
-  if (report.updatedDate) {
-    return `Updated ${new Date(report.updatedDate).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })}`;
-  }
+  const date = report.updatedDate || report.publishedDate;
+  if (!date) return "Date not listed";
 
-  if (report.publishedDate) {
-    return `Published ${new Date(report.publishedDate).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })}`;
-  }
-
-  return "Research report";
+  const prefix = report.updatedDate ? "Updated" : "Published";
+  return `${prefix} ${new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  })}`;
 }

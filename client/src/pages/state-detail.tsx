@@ -1,267 +1,311 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, useRoute } from "wouter";
-import { ArrowLeft, FileText, MapPin } from "lucide-react";
-import { apiClient } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import ReportCard from "@/components/reports/report-card";
-import PageMeta from "@/components/seo/PageMeta";
-import type { SearchResponse } from "@/lib/types";
 import { getStateEntryBySlug } from "@shared/states";
-
-function formatDate(
-  year?: number,
-  month?: number,
-  day?: number,
-): string | undefined {
-  if (!year) return undefined;
-
-  if (month && day) {
-    return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }
-
-  if (month) {
-    return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-    });
-  }
-
-  return String(year);
-}
+import { apiClient } from "@/lib/api";
+import PageMeta from "@/components/seo/PageMeta";
+import { Button } from "@/components/ui/button";
+import {
+  EvidenceLedger,
+  EvidenceLedgerSkeleton,
+  formatPublicationDate,
+} from "@/components/reports/evidence-ledger";
+import type { SearchResponse } from "@/lib/types";
 
 export default function StateDetail() {
   const [, params] = useRoute("/states/:slug");
   const slug = params?.slug;
   const stateEntry = useMemo(() => getStateEntryBySlug(slug), [slug]);
-
-  const { data, isLoading, error } = useQuery<SearchResponse>({
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<SearchResponse>({
     queryKey: ["/api/reports", "state-page", stateEntry?.code],
     enabled: Boolean(stateEntry?.code),
     queryFn: () =>
       apiClient.getReports(
         { state: stateEntry!.code, sortBy: "date_desc" },
-        { page: 1, pageSize: 12 },
+        { page: 1, pageSize: 24 },
       ) as Promise<SearchResponse>,
   });
 
-  const latestReport = data?.items[0];
-  const latestDate = latestReport
-    ? formatDate(
-        latestReport.publicationYear,
-        latestReport.publicationMonth,
-        latestReport.publicationDay,
-      )
-    : undefined;
-
   if (!stateEntry) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PageMeta
-          title="State page not found"
-          description="The requested state audit page does not exist."
-          robots="noindex, follow"
-        />
-        <Card className="p-8 text-center">
-          <CardContent>
-            <p className="text-muted-foreground">State page not found.</p>
-            <Link href="/explore">
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Explore
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <StateNotFound />;
   }
 
-  if (error) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PageMeta
-          title={`${stateEntry.name} Medicaid Audit Reports`}
-          description={`Browse Medicaid audit reports for ${stateEntry.name}.`}
-          canonicalPath={`/states/${stateEntry.slug}`}
-        />
-        <Card className="p-8 text-center">
-          <CardContent>
-            <p className="text-destructive">Error loading state page: {error.message}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!isLoading && data && data.total === 0) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PageMeta
-          title={`${stateEntry.name} Medicaid Audit Reports`}
-          description={`Browse Medicaid audit reports for ${stateEntry.name}.`}
-          robots="noindex, follow"
-        />
-        <Card className="p-8 text-center">
-          <CardContent>
-            <p className="text-muted-foreground">No indexed reports are available for this state.</p>
-            <Link href="/explore">
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Explore
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const description = latestDate
-    ? `Browse ${data?.total || 0} Medicaid audit reports for ${stateEntry.name}. Review findings, recommendations, and the latest oversight activity published through ${latestDate}.`
-    : `Browse ${data?.total || 0} Medicaid audit reports for ${stateEntry.name}. Review findings, recommendations, and oversight activity from public audit sources.`;
+  const latestReport = data?.items[0];
+  const description = latestReport
+    ? `Browse ${data?.total || 0} Medicaid audit reports for ${
+        stateEntry.name
+      }. Review findings, recommendations, and oversight activity published through ${formatPublicationDate(
+        latestReport,
+      )}.`
+    : `Browse Medicaid audit reports for ${stateEntry.name} with findings, recommendations, and original public sources.`;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
       <PageMeta
         title={`Medicaid Audit Reports in ${stateEntry.name}`}
         description={description}
         canonicalPath={`/states/${stateEntry.slug}`}
-        jsonLd={[
-          {
-            "@context": "https://schema.org",
-            "@type": "CollectionPage",
-            name: `Medicaid Audit Reports in ${stateEntry.name}`,
-            url: `https://www.medicaidintelligence.com/states/${stateEntry.slug}`,
-            description,
-          },
-          {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              {
-                "@type": "ListItem",
-                position: 1,
-                name: "Home",
-                item: "https://www.medicaidintelligence.com",
-              },
-              {
-                "@type": "ListItem",
-                position: 2,
-                name: "Explore",
-                item: "https://www.medicaidintelligence.com/explore",
-              },
-              {
-                "@type": "ListItem",
-                position: 3,
-                name: `${stateEntry.name} Medicaid Audit Reports`,
-                item: `https://www.medicaidintelligence.com/states/${stateEntry.slug}`,
-              },
-            ],
-          },
-        ]}
+        robots={!isLoading && data?.total === 0 ? "noindex, follow" : undefined}
+        jsonLd={buildStateJsonLd(stateEntry.name, stateEntry.slug, description)}
       />
 
-      <div className="mb-8">
-        <Link href="/explore">
-          <Button variant="ghost" size="sm" className="mb-4 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Explore
-          </Button>
-        </Link>
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{stateEntry.name}</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {stateEntry.name} Medicaid Audit Reports
-          </h1>
-          <p className="max-w-3xl text-muted-foreground">
-            Review Medicaid audit findings, recommendations, and oversight activity for {stateEntry.name}. Use this page to jump into report summaries or continue exploring the full library.
+      <div className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8 sm:py-14">
+        <nav aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <li>
+              <Link
+                href="/states"
+                className="underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                States
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">{stateEntry.name}</li>
+          </ol>
+        </nav>
+
+        <header className="mt-5 border-b-2 border-primary pb-8">
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+            {stateEntry.code} · Medicaid jurisdiction
           </p>
-        </div>
-      </div>
+          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.025em] text-foreground sm:text-5xl">
+            {stateEntry.name} Medicaid audit evidence
+          </h1>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
+            Review reports connected to {stateEntry.name} Medicaid oversight,
+            ordered by publication date.
+          </p>
+        </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        {isLoading ? (
-          [...Array(3)].map((_, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <Skeleton className="h-5 w-28" />
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <>
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-sm text-muted-foreground">Indexed Reports</p>
-                <p className="text-3xl font-bold text-foreground mt-2">{data?.total || 0}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-sm text-muted-foreground">Latest Publication</p>
-                <p className="text-lg font-semibold text-foreground mt-2">{latestDate || "Unknown"}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-sm text-muted-foreground">Next Step</p>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <Link href="/dashboard">
-                    <Button variant="outline" size="sm">View Dashboard</Button>
-                  </Link>
-                  <Link href="/explore">
-                    <Button size="sm">Explore All Reports</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
-
-      <section>
-        <div className="flex items-center gap-2 mb-6">
-          <FileText className="w-5 h-5 text-primary" />
-          <h2 className="text-2xl font-bold text-foreground">Recent Reports</h2>
-        </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, index) => (
-              <Card key={index}>
-                <CardContent className="p-6">
-                  <div className="space-y-3">
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        {error ? (
+          <div className="border-b border-border py-10">
+            <h2 className="text-xl font-semibold text-foreground">
+              {stateEntry.name} reports could not be loaded
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Check the connection and try again.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-5 rounded-sm"
+              onClick={() => {
+                void refetch();
+              }}
+            >
+              Try again
+            </Button>
           </div>
+        ) : !isLoading && data?.total === 0 ? (
+          <EmptyState name={stateEntry.name} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {data?.items.map((report) => (
-              <ReportCard key={report.id} report={report} />
-            ))}
+          <div className="py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-10">
+            <StateContext
+              name={stateEntry.name}
+              code={stateEntry.code}
+              total={data?.total}
+              latestDate={
+                latestReport ? formatPublicationDate(latestReport) : undefined
+              }
+              loading={isLoading}
+            />
+
+            <section
+              className="mt-8 min-w-0 lg:col-start-1 lg:row-start-1 lg:mt-0"
+              aria-labelledby="state-evidence-heading"
+            >
+              <div className="border-b border-border pb-4">
+                <h2
+                  id="state-evidence-heading"
+                  className="font-mono text-xs font-normal uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Evidence register
+                </h2>
+                <p className="mt-1 text-lg font-semibold text-foreground" role="status">
+                  {isLoading
+                    ? "Loading reports…"
+                    : `${data?.total || 0} ${
+                        data?.total === 1 ? "report" : "reports"
+                      }`}
+                </p>
+              </div>
+
+              {isLoading ? (
+                <EvidenceLedgerSkeleton />
+              ) : data?.items.length ? (
+                <EvidenceLedger reports={data.items} />
+              ) : null}
+            </section>
           </div>
         )}
-      </section>
+      </div>
+    </>
+  );
+}
+
+function StateContext({
+  name,
+  code,
+  total,
+  latestDate,
+  loading,
+}: {
+  name: string;
+  code: string;
+  total?: number;
+  latestDate?: string;
+  loading: boolean;
+}) {
+  return (
+    <aside
+      className="border-t-2 border-primary bg-muted px-5 py-5 lg:col-start-2 lg:row-start-1"
+      aria-labelledby="state-context-heading"
+    >
+      <h2
+        id="state-context-heading"
+        className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-primary"
+      >
+        Coverage
+      </h2>
+      <dl className="mt-5 space-y-5">
+        <ContextField label="Jurisdiction" value={`${name} (${code})`} />
+        <ContextField
+          label="Indexed reports"
+          value={loading ? "Loading…" : String(total || 0)}
+          mono
+        />
+        <ContextField
+          label="Latest publication"
+          value={loading ? "Loading…" : latestDate || "Not available"}
+          mono
+        />
+      </dl>
+      <div className="mt-6 border-t border-border pt-5">
+        <Link
+          href={`/reports?state=${code}`}
+          className="inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          Search {name} reports
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </div>
+    </aside>
+  );
+}
+
+function ContextField({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div>
+      <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        {label}
+      </dt>
+      <dd
+        className={`mt-1.5 text-sm font-semibold leading-5 text-foreground ${
+          mono ? "font-mono" : ""
+        }`}
+      >
+        {value}
+      </dd>
     </div>
   );
+}
+
+function EmptyState({ name }: { name: string }) {
+  return (
+    <div className="border-b border-border py-10">
+      <h2 className="text-xl font-semibold text-foreground">
+        No indexed reports are available for {name}
+      </h2>
+      <p className="mt-2 max-w-2xl text-muted-foreground">
+        The public library does not currently contain a report assigned to this
+        jurisdiction.
+      </p>
+      <Link
+        href="/reports"
+        className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        View all reports
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+    </div>
+  );
+}
+
+function StateNotFound() {
+  return (
+    <div className="mx-auto max-w-[1120px] px-5 py-14 sm:px-8">
+      <PageMeta
+        title="State not found"
+        description="The requested state audit page does not exist."
+        robots="noindex, follow"
+      />
+      <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+        State register
+      </p>
+      <h1 className="mt-3 text-4xl font-semibold tracking-[-0.025em] text-foreground">
+        State not found
+      </h1>
+      <p className="mt-4 text-lg text-muted-foreground">
+        The requested jurisdiction is not part of the state register.
+      </p>
+      <Link
+        href="/states"
+        className="mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        View all states
+      </Link>
+    </div>
+  );
+}
+
+function buildStateJsonLd(name: string, slug: string, description: string) {
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: `${name} Medicaid audit evidence`,
+      url: `https://www.medicaidintelligence.com/states/${slug}`,
+      description,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://www.medicaidintelligence.com",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "States",
+          item: "https://www.medicaidintelligence.com/states",
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name,
+          item: `https://www.medicaidintelligence.com/states/${slug}`,
+        },
+      ],
+    },
+  ];
 }

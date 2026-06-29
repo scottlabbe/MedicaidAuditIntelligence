@@ -27,15 +27,15 @@ export default function Footer() {
   });
 
   return (
-    <footer className="bg-card border-t border-border mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <footer className="mt-0 border-t border-border bg-muted">
+      <div className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-3">
             <p className="text-lg font-semibold text-foreground">
               Medicaid Audit Intelligence
             </p>
             <p className="max-w-xl text-sm text-muted-foreground">
-              Search and analyze Medicaid audit reports, compare oversight activity across states, and trace findings back to their original source documents.
+              Find Medicaid audit findings, review structured evidence, and trace each record back to its original public source.
             </p>
           </div>
 

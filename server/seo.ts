@@ -204,18 +204,18 @@ function getNotFoundRoute(): ResolvedHtmlRoute {
 async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
   let totalReports = 100;
   let statesWithReports = 40;
-  let featuredReports: any[] = [];
+  let latestReports: any[] = [];
   let states: any[] = [];
 
   try {
-    const [stats, featured, stateSummaries] = await Promise.all([
+    const [stats, latest, stateSummaries] = await Promise.all([
       storage.getDashboardStats(),
-      storage.getFeaturedReports(6),
+      storage.getReports({ sortBy: "date_desc" }, 1, 4),
       storage.getIndexableStates(8),
     ]);
     totalReports = stats.totalReports;
     statesWithReports = stats.statesWithReports;
-    featuredReports = featured;
+    latestReports = latest.items;
     states = stateSummaries;
   } catch {
     // Keep defaults if the database is unavailable.
@@ -225,8 +225,8 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
     routeType: "home",
     status: 200,
     seoMeta: {
-      title: `${SITE_NAME} - Search & Analyze Medicaid Audit Reports`,
-      description: `Search and analyze ${totalReports}+ Medicaid audit reports across ${statesWithReports} states. Explore findings, recommendations, and financial impacts from state and federal oversight agencies.`,
+      title: `${SITE_NAME} - Find Medicaid Audit Evidence`,
+      description: `Find and verify evidence from ${totalReports}+ Medicaid audit reports across ${statesWithReports} states, with direct links to original public sources.`,
       canonicalUrl: SITE_URL,
       ogType: "website",
       robots: "index, follow",
@@ -249,15 +249,15 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
     },
     snapshotHtml: renderPageShell(`
       <header>
-        <h1>Search and analyze Medicaid audit reports</h1>
+        <h1>Find Medicaid audit findings</h1>
         <p>${escapeHtml(
-          `Medicaid Audit Intelligence helps teams review ${totalReports}+ audit reports across ${statesWithReports} states, compare findings, and trace issues back to original source documents.`,
+          `Search ${totalReports}+ audit reports across ${statesWithReports} states by topic, state, publishing agency, report title, or finding language.`,
         )}</p>
       </header>
       <section>
-        <h2>Featured reports</h2>
+        <h2>Latest evidence</h2>
         ${renderLinkList(
-          featuredReports.map((report: any) => ({
+          latestReports.map((report: any) => ({
             href: `/reports/${report.id}`,
             label: report.reportTitle,
             meta: `${report.state} • ${report.auditOrganization} • ${report.publicationYear}`,
@@ -274,7 +274,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
           })),
         )}
       </section>
-      <p><a href="/explore">Explore all reports</a> or <a href="/dashboard">view the dashboard</a>.</p>
+      <p><a href="/states">Browse by state</a>, <a href="/agencies">agency</a>, or <a href="/topics">topic</a>.</p>
     `),
     initialRouteData: {
       routeType: "home",
@@ -283,9 +283,9 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
           totalReports,
           statesWithReports,
           criticalFindings: 0,
-          recentReports: featuredReports,
+          recentReports: latestReports,
         },
-        featuredReports,
+        latestReports,
         states,
       },
     },
@@ -595,9 +595,9 @@ async function getAgencyRoute(slug: string): Promise<ResolvedHtmlRoute> {
 }
 
 async function getTopicsIndexRoute(): Promise<ResolvedHtmlRoute> {
-  const topics = await storage.getTopicsWithCounts();
+  const keywords = await storage.getTopKeywords(24);
   const description =
-    "Browse Medicaid audit reports by topic, including managed care, pharmacy benefit managers, eligibility, enrollment, and program integrity.";
+    "Browse plain-language definitions for frequently used terms in the Medicaid Audit Intelligence evidence library.";
 
   return {
     routeType: "topics_index",
@@ -615,17 +615,17 @@ async function getTopicsIndexRoute(): Promise<ResolvedHtmlRoute> {
         <h1>Medicaid audit topics</h1>
         <p>${escapeHtml(description)}</p>
         ${renderLinkList(
-          topics.map((topic) => ({
-            href: `/topics/${topic.slug}`,
-            label: topic.name,
-            meta: `${topic.reportCount} related reports`,
+          keywords.map((item) => ({
+            href: `/topics?keyword=${encodeURIComponent(item.keyword)}`,
+            label: item.keyword,
+            meta: `${item.reportCount} indexed reports`,
           })),
         )}
       </section>
     `),
     initialRouteData: {
       routeType: "topics_index",
-      topicsIndex: topics,
+      topicsIndex: [],
     },
   };
 }

@@ -23,8 +23,18 @@ export function primeInitialRouteData(
       initialRouteData.home.stats,
     );
     client.setQueryData(
-      ["/api/reports/featured"],
-      initialRouteData.home.featuredReports,
+      [
+        "/api/reports",
+        { sortBy: "date_desc" },
+        { page: 1, pageSize: 4 },
+      ],
+      {
+        items: initialRouteData.home.latestReports,
+        total: initialRouteData.home.stats.totalReports,
+        page: 1,
+        pageSize: 4,
+        filters: { sortBy: "date_desc" },
+      },
     );
   }
 

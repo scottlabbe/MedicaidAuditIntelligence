@@ -727,6 +727,7 @@ function toListItem(report: ResearchReportPageData): ResearchReportListItem {
     featured: report.featured,
     publishedDate: report.publishedDate,
     updatedDate: report.updatedDate || report.updatedAt,
+    sourceCount: report.sources.length,
   };
 }
 

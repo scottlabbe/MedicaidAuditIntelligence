@@ -4,7 +4,6 @@ import { Search, FileText, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import CommandPalette from "@/components/ui/command-palette";
-import { Logo } from "../ui/logo";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -43,11 +42,8 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
-              <Link href="/" className="flex items-center space-x-3">
-                <div style={{ border: "2px solid blue", padding: "2px" }}>
-                  <Logo />
-                </div>
-                <span className="text-xl font-semibold text-black">
+              <Link href="/" className="flex items-center">
+                <span className="text-xl font-bold tracking-[-0.03em] text-black">
                   Medicaid Audit Intelligence
                 </span>
               </Link>

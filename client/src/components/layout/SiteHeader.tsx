@@ -1,17 +1,23 @@
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Logo } from "@/components/ui/logo";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { preloadRouteHref } from "@/lib/routeLoaders";
 
 const NAV = [
-  { href: "/", label: "Home" },
   { href: "/reports", label: "Reports" },
-  { href: "/explore", label: "Explore" },
+  { href: "/states", label: "States" },
+  { href: "/agencies", label: "Agencies" },
+  { href: "/topics", label: "Topics" },
   { href: "/research", label: "Research" },
-  { href: "/dashboard", label: "Dashboard" },
   { href: "/about", label: "About" },
 ];
 
@@ -25,28 +31,34 @@ export default function SiteHeader() {
   });
 
   return (
-    <header className="sticky top-0 z-50 bg-background/70 backdrop-blur border-b border-border">
-      <div className="mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2" {...prefetchHandlers("/")}>
-          <Logo />
-          <span className="font-semibold tracking-tight text-foreground">
+    <header className="sticky top-0 z-50 border-b border-white/25 bg-primary text-primary-foreground">
+      <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-5 sm:px-8">
+        <Link
+          href="/"
+          className="flex min-w-0 items-center py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+          aria-label="Medicaid Audit Intelligence home"
+          {...prefetchHandlers("/")}
+        >
+          <span className="max-w-[13rem] text-[15px] font-bold leading-[1.05] tracking-[-0.03em] text-white sm:max-w-none sm:text-lg sm:leading-none">
             Medicaid Audit Intelligence
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 text-sm">
+        <nav
+          className="hidden items-stretch self-stretch md:flex"
+          aria-label="Primary navigation"
+        >
           {NAV.map(({ href, label }) => {
-            const active = href === "/" ? location === href : location.startsWith(href);
+            const active = location.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`transition-colors ${
+                className={`flex items-center border-b-4 px-3 pt-1 text-sm font-medium text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
                   active
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "border-white"
+                    : "border-transparent hover:border-white/55"
                 }`}
                 {...prefetchHandlers(href)}
               >
@@ -56,35 +68,36 @@ export default function SiteHeader() {
           })}
         </nav>
 
-        {/* Mobile Menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="sm">
-              <Menu className="w-5 h-5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/10"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-64">
-            <div className="flex justify-between items-center mb-6">
-              <span className="font-semibold">Menu</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-            <nav className="space-y-4">
+          <SheetContent side="right" className="w-72 rounded-none border-l-border">
+            <SheetHeader className="mb-8 text-left">
+              <SheetTitle>Navigation</SheetTitle>
+              <SheetDescription className="sr-only">
+                Browse Medicaid audit reports and evidence indexes.
+              </SheetDescription>
+            </SheetHeader>
+            <nav className="border-t border-border" aria-label="Mobile navigation">
               {NAV.map(({ href, label }) => {
-                const active = href === "/" ? location === href : location.startsWith(href);
+                const active = location.startsWith(href);
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`block py-2 px-3 rounded-lg transition-colors ${
+                    aria-current={active ? "page" : undefined}
+                    className={`block border-b border-border px-1 py-4 text-base font-semibold ${
                       active
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
+                        ? "text-primary"
+                        : "text-foreground hover:text-primary"
                     }`}
                     onClick={() => setMobileMenuOpen(false)}
                     {...prefetchHandlers(href)}

@@ -3,128 +3,99 @@
 @tailwind utilities;
 
 :root {
-  /* Warm Cream & Neutral Scale */
-  --canvas: 28 82 94;           /* #FFF0E5 - Warm light orange background */
-  --surface-1: 0 0 100;         /* white - L1 Cards */
-  --surface-2: 28 82 94;        /* #FFF0E5 - L2 Badges */
-  --border: 48 88 79;           /* #FDE68A - Golden borders */
-  --text-primary: 222 84 4;     /* #18181B - Near black */
-  --text-secondary: 217 10 27;  /* #71717A - Neutral gray */
-  --text-muted: 216 12 36;      /* #A1A1AA - Placeholders */
-  --text-subtle: 220 9 46;      /* #D4D4D8 - Empty state icons */
-  
-  /* Burnt Orange Accent System */
-  --orange-primary: 20 91 48;   /* #EA580C - Primary actions */
-  --orange-light: 28 82 83;     /* #FED7AA - Hover/selected */
-  --orange-dark: 22 88 38;      /* #C2410C - Button hover */
-  
-  /* Legacy Slate Colors (for gradual migration) */
-  --slate-50: 248 250 252;
-  --slate-100: 241 245 249;
-  --slate-200: 226 232 240;
-  --slate-300: 203 213 225;
-  --slate-400: 148 163 184;
-  --slate-500: 100 116 139;
-  --slate-600: 71 85 105;
-  --slate-700: 51 65 85;
-  --slate-800: 30 41 59;
-  --slate-900: 15 23 42;
-  
-  /* Chart Colors */
-  --emerald-600: 5 150 105;
-  --amber-600: 217 119 6;
-  --rose-600: 225 29 72;
-  
-  /* Design System Colors - Warm Cream & Burnt Orange */
+  /* Public Audit Ledger */
+  --institutional-green: 159 51% 14%; /* #12372A */
+  --interactive-green: 158 64% 25%;   /* #176B4D */
+  --evidence-wash: 147 24% 93%;       /* #E8F1EC */
+  --ink: 137 17% 8%;                  /* #111813 */
+  --secondary-ink: 147 7% 32%;        /* #4B5650 */
+  --paper: 0 0% 100%;                 /* #FFFFFF */
+  --quiet-surface: 150 9% 96%;        /* #F3F5F4 */
+  --ledger-border: 147 7% 74%;        /* #B7C0BB */
+  --keyboard-focus: 52 100% 50%;      /* #FFDD00 */
+  --error-red: 0 58% 49%;             /* #C83232 */
+  --warning-amber: 39 100% 27%;       /* #8A5A00 */
+
+  /* Compatibility aliases used across the existing application. */
+  --canvas: var(--paper);
+  --surface-1: var(--paper);
+  --surface-2: var(--quiet-surface);
+  --text-primary: var(--ink);
+  --text-secondary: var(--secondary-ink);
+  --text-muted: var(--secondary-ink);
+  --text-subtle: var(--ledger-border);
+  --orange-primary: var(--interactive-green);
+  --orange-light: var(--evidence-wash);
+  --orange-dark: var(--institutional-green);
+  --emerald-600: var(--interactive-green);
+  --amber-600: var(--warning-amber);
+  --rose-600: var(--error-red);
+
   --background: var(--canvas);
   --foreground: var(--text-primary);
   --card: var(--surface-1);
   --card-foreground: var(--text-primary);
   --popover: var(--surface-1);
   --popover-foreground: var(--text-primary);
-  --primary: var(--orange-primary);
+  --primary: var(--institutional-green);
   --primary-foreground: var(--surface-1);
-  --secondary: var(--surface-2);
-  --secondary-foreground: var(--text-secondary);
-  --muted: var(--surface-2);
+  --secondary: var(--evidence-wash);
+  --secondary-foreground: var(--ink);
+  --muted: var(--quiet-surface);
   --muted-foreground: var(--text-muted);
-  --accent: var(--orange-light);
-  --accent-foreground: var(--orange-primary);
+  --accent: var(--evidence-wash);
+  --accent-foreground: var(--interactive-green);
   --destructive: var(--rose-600);
   --destructive-foreground: var(--surface-1);
-  --border: var(--border);
-  --input: var(--border);
-  --ring: var(--orange-primary);
-  --chart-1: var(--orange-primary);
+  --border: var(--ledger-border);
+  --input: var(--ledger-border);
+  --ring: var(--keyboard-focus);
+  --chart-1: var(--interactive-green);
   --chart-2: var(--emerald-600);
   --chart-3: var(--amber-600);
   --chart-4: var(--emerald-600);
   --chart-5: var(--rose-600);
   --sidebar: var(--surface-1);
   --sidebar-foreground: var(--text-primary);
-  --sidebar-primary: var(--orange-primary);
+  --sidebar-primary: var(--institutional-green);
   --sidebar-primary-foreground: var(--surface-1);
-  --sidebar-accent: var(--surface-2);
-  --sidebar-accent-foreground: var(--text-secondary);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--orange-primary);
+  --sidebar-accent: var(--evidence-wash);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--ledger-border);
+  --sidebar-ring: var(--keyboard-focus);
 
-  /* Enhanced map theme tokens for better visibility and scannability */
-  --map-canvas: hsl(var(--muted) / 0.35);   /* panel behind the SVG */
-  --map-no-data: #f3f4f6;  /* base fill for states w/ no data - light grey */
-  --map-has-data: hsl(var(--primary) / 0.18); /* brand-tinted fill for states w/ data */
+  --map-canvas: hsl(var(--muted));
+  --map-no-data: #f3f5f4;
+  --map-has-data: hsl(var(--interactive-green) / 0.18);
   --map-hover: hsl(var(--primary) / 0.72);
-  --map-stroke: #d1d5db;  /* light grey stroke for state borders */
+  --map-stroke: #b7c0bb;
 
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Public Sans', sans-serif;
   --font-serif: 'Source Serif 4', serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
-  --radius: 1rem;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+  --radius: 2px;
 }
 
 .dark {
-  /* Dark mode maintains warm undertones */
-  --canvas: 20 20 23;           /* Dark warm canvas */
-  --surface-1: 39 39 42;        /* Dark cards */
-  --surface-2: 63 63 70;        /* Dark badges */
-  --border: 82 82 91;           /* Dark borders */
-  --text-primary: 244 244 245;  /* Light text */
-  --text-secondary: 161 161 170; /* Medium text */
-  --text-muted: 113 113 122;    /* Muted text */
-  --text-subtle: 82 82 91;      /* Subtle text */
-  
-  --background: var(--canvas);
-  --foreground: var(--text-primary);
-  --card: var(--surface-1);
-  --card-foreground: var(--text-primary);
-  --popover: var(--surface-1);
-  --popover-foreground: var(--text-primary);
-  --primary: var(--orange-primary);
-  --primary-foreground: var(--surface-1);
-  --secondary: var(--surface-2);
-  --secondary-foreground: var(--text-secondary);
-  --muted: var(--surface-2);
-  --muted-foreground: var(--text-muted);
-  --accent: var(--orange-light);
-  --accent-foreground: var(--orange-primary);
-  --destructive: 239 68 68;
-  --destructive-foreground: var(--text-primary);
-  --border: var(--border);
-  --input: var(--border);
-  --ring: hsl(var(--orange-primary));
-  --chart-1: hsl(var(--orange-primary));
-  --chart-2: hsl(34 197 94);
-  --chart-3: hsl(251 146 60);
-  --chart-4: hsl(34 197 94);
-  --chart-5: hsl(239 68 68);
-  --sidebar: hsl(var(--surface-1));
-  --sidebar-foreground: hsl(var(--text-primary));
-  --sidebar-primary: hsl(var(--orange-primary));
-  --sidebar-primary-foreground: hsl(var(--surface-1));
-  --sidebar-accent: hsl(var(--surface-2));
-  --sidebar-accent-foreground: hsl(var(--text-secondary));
-  --sidebar-border: hsl(var(--border));
-  --sidebar-ring: hsl(var(--orange-primary));
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--institutional-green);
+  --primary-foreground: var(--paper);
+  --secondary: var(--evidence-wash);
+  --secondary-foreground: var(--ink);
+  --muted: var(--quiet-surface);
+  --muted-foreground: var(--secondary-ink);
+  --accent: var(--evidence-wash);
+  --accent-foreground: var(--interactive-green);
+  --destructive: var(--error-red);
+  --destructive-foreground: var(--paper);
+  --border: var(--ledger-border);
+  --input: var(--ledger-border);
+  --ring: var(--keyboard-focus);
 }
 
 @layer base {
@@ -146,6 +117,20 @@
 
   .prose p {
     @apply font-serif leading-relaxed;
+  }
+
+  .research-prose ul {
+    @apply font-serif;
+  }
+
+  .research-prose li::marker {
+    color: hsl(var(--interactive-green));
+  }
+
+  .research-prose a:focus-visible {
+    outline: 2px solid hsl(var(--ink));
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px hsl(var(--keyboard-focus));
   }
 }
 
@@ -180,16 +165,16 @@
   
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    --tw-ring-color: hsl(var(--orange-primary));
+    --tw-ring-color: hsl(var(--keyboard-focus));
   }
   
   /* Warm shadows */
   .warm-shadow {
-    box-shadow: 0 2px 4px rgba(234, 88, 12, 0.05);
+    box-shadow: none;
   }
   
   .warm-shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(234, 88, 12, 0.1), 0 4px 6px -4px rgba(234, 88, 12, 0.05);
+    box-shadow: none;
   }
   
 

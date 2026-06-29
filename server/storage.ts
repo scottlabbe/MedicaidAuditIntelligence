@@ -94,6 +94,17 @@ export class DatabaseStorage implements IStorage {
         potentialObjectiveSummary: reports.potentialObjectiveSummary,
         auditScope: reports.auditScope,
         originalReportSourceUrl: reports.originalReportSourceUrl,
+        totalFinancialImpact: reports.totalFinancialImpact,
+        findingCount: sql<number>`(
+          select count(*)
+          from ${findings}
+          where ${findings.reportId} = ${reports.id}
+        )`,
+        recommendationCount: sql<number>`(
+          select count(*)
+          from ${recommendations}
+          where ${recommendations.reportId} = ${reports.id}
+        )`,
         originalFilename: reports.originalFilename,
         fileHash: reports.fileHash,
         featured: reports.featured,
@@ -128,7 +139,31 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(reports.publicationYear, filters.year));
     }
 
+    if (filters.theme) {
+      const topic = TOPICS.find((entry) => entry.slug === filters.theme);
+      if (topic) {
+        const topicTerms = topic.query.split(/\s+/).filter(Boolean);
+        conditions.push(
+          or(
+            ...topicTerms.flatMap((term) => [
+              ilike(reports.reportTitle, `%${term}%`),
+              ilike(reports.overallConclusion, `%${term}%`),
+              ilike(reports.auditScope, `%${term}%`),
+            ]),
+          ),
+        );
+      }
+    }
 
+    if (filters.sourceStatus === "available") {
+      conditions.push(
+        sql`${reports.originalReportSourceUrl} is not null and ${reports.originalReportSourceUrl} <> ''`,
+      );
+    } else if (filters.sourceStatus === "record") {
+      conditions.push(
+        sql`${reports.originalReportSourceUrl} is null or ${reports.originalReportSourceUrl} = ''`,
+      );
+    }
 
     // Filter out hidden reports
     conditions.push(eq(reports.hidden, false));
@@ -193,6 +228,9 @@ export class DatabaseStorage implements IStorage {
       potentialObjectiveSummary: item.potentialObjectiveSummary ?? undefined,
       auditScope: item.auditScope ?? undefined,
       originalReportSourceUrl: item.originalReportSourceUrl ?? undefined,
+      totalFinancialImpact: item.totalFinancialImpact ?? undefined,
+      findingCount: Number(item.findingCount) || 0,
+      recommendationCount: Number(item.recommendationCount) || 0,
       originalFilename: item.originalFilename ?? undefined,
       fileHash: item.fileHash ?? undefined,
       featured: item.featured ?? undefined,
@@ -257,6 +295,7 @@ export class DatabaseStorage implements IStorage {
       potentialObjectiveSummary: report[0].potentialObjectiveSummary ?? undefined,
       auditScope: report[0].auditScope ?? undefined,
       originalReportSourceUrl: report[0].originalReportSourceUrl ?? undefined,
+      totalFinancialImpact: report[0].totalFinancialImpact ?? undefined,
       originalFilename: report[0].originalFilename ?? undefined,
       fileHash: report[0].fileHash ?? undefined,
       featured: report[0].featured ?? undefined,
@@ -293,6 +332,7 @@ export class DatabaseStorage implements IStorage {
         potentialObjectiveSummary: reports.potentialObjectiveSummary,
         auditScope: reports.auditScope,
         originalReportSourceUrl: reports.originalReportSourceUrl,
+        totalFinancialImpact: reports.totalFinancialImpact,
         originalFilename: reports.originalFilename,
         fileHash: reports.fileHash,
         featured: reports.featured,
@@ -314,6 +354,7 @@ export class DatabaseStorage implements IStorage {
       potentialObjectiveSummary: item.potentialObjectiveSummary ?? undefined,
       auditScope: item.auditScope ?? undefined,
       originalReportSourceUrl: item.originalReportSourceUrl ?? undefined,
+      totalFinancialImpact: item.totalFinancialImpact ?? undefined,
       originalFilename: item.originalFilename ?? undefined,
       fileHash: item.fileHash ?? undefined,
       featured: item.featured ?? undefined,
@@ -582,36 +623,45 @@ export class DatabaseStorage implements IStorage {
       LIMIT ${limit}
     `);
 
-    return (result.rows as any[]).map((row) => ({
-      slug: slugify(row.audit_organization),
-      name: row.audit_organization,
-      reportCount: Number(row.report_count) || 0,
-      latestReport: {
-        id: row.id,
-        reportTitle: row.report_title,
-        state: row.state,
-        auditOrganization: row.audit_organization,
-        publicationYear: row.publication_year,
-        publicationMonth: row.publication_month ?? undefined,
-        publicationDay: row.publication_day ?? undefined,
-        overallConclusion: row.overall_conclusion ?? undefined,
-        llmInsight: row.llm_insight ?? undefined,
-        potentialObjectiveSummary: row.potential_objective_summary ?? undefined,
-        auditScope: row.audit_scope ?? undefined,
-        originalReportSourceUrl: row.original_report_source_url ?? undefined,
-        originalFilename: row.original_filename ?? undefined,
-        fileHash: row.file_hash ?? undefined,
-        featured: row.featured ?? undefined,
-        status: row.status ?? undefined,
-        createdAt: row.created_at ?? undefined,
-        updatedAt: row.updated_at ?? undefined,
-        keywords: [],
-        programs: [],
-        conclusionExcerpt: row.overall_conclusion
-          ? row.overall_conclusion.substring(0, 200) + (row.overall_conclusion.length > 200 ? "..." : "")
-          : undefined,
-      },
-    }));
+    const slugCounts = new Map<string, number>();
+
+    return (result.rows as any[]).map((row) => {
+      const baseSlug = slugify(row.audit_organization);
+      const occurrence = (slugCounts.get(baseSlug) || 0) + 1;
+      slugCounts.set(baseSlug, occurrence);
+
+      return {
+        slug: occurrence === 1 ? baseSlug : `${baseSlug}--${occurrence}`,
+        name: row.audit_organization,
+        reportCount: Number(row.report_count) || 0,
+        latestReport: {
+          id: row.id,
+          reportTitle: row.report_title,
+          state: row.state,
+          auditOrganization: row.audit_organization,
+          publicationYear: row.publication_year,
+          publicationMonth: row.publication_month ?? undefined,
+          publicationDay: row.publication_day ?? undefined,
+          overallConclusion: row.overall_conclusion ?? undefined,
+          llmInsight: row.llm_insight ?? undefined,
+          potentialObjectiveSummary: row.potential_objective_summary ?? undefined,
+          auditScope: row.audit_scope ?? undefined,
+          originalReportSourceUrl: row.original_report_source_url ?? undefined,
+          originalFilename: row.original_filename ?? undefined,
+          fileHash: row.file_hash ?? undefined,
+          featured: row.featured ?? undefined,
+          status: row.status ?? undefined,
+          createdAt: row.created_at ?? undefined,
+          updatedAt: row.updated_at ?? undefined,
+          keywords: [],
+          programs: [],
+          conclusionExcerpt: row.overall_conclusion
+            ? row.overall_conclusion.substring(0, 200) +
+              (row.overall_conclusion.length > 200 ? "..." : "")
+            : undefined,
+        },
+      };
+    });
   }
 
   async getAgencyLandingPage(slug: string, limit = 24): Promise<AgencyLandingPageData | undefined> {

@@ -1,121 +1,116 @@
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Link as LinkIcon } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
-import type { ResearchReportSection as ResearchReportSectionType } from "@/lib/types";
+import { Link as LinkIcon } from "lucide-react";
+import type {
+  ResearchReportSection as ResearchReportSectionType,
+  ResearchReportSource,
+} from "@/lib/types";
 
 interface ResearchSectionProps {
   section: ResearchReportSectionType;
-  activeHashId?: string;
+  sourcesById: Map<number, ResearchReportSource>;
   depth?: number;
 }
 
 export default function ResearchSection({
   section,
-  activeHashId,
+  sourcesById,
   depth = 0,
 }: ResearchSectionProps) {
-  const [open, setOpen] = useState(section.defaultExpanded);
-  const containsActiveHash = useMemo(
-    () => (activeHashId ? sectionContainsId(section, activeHashId) : false),
-    [activeHashId, section],
-  );
-
-  useEffect(() => {
-    if (containsActiveHash) {
-      setOpen(true);
-    }
-  }, [containsActiveHash]);
-
   const HeadingTag = depth === 0 ? "h2" : depth === 1 ? "h3" : "h4";
+  const citations = getSectionCitations(section.contentHtml, sourcesById);
 
   return (
     <section
       id={section.id}
-      className={cn(
-        "scroll-mt-24 rounded-2xl border border-border bg-card/70",
-        depth === 0 ? "warm-shadow-lg" : "warm-shadow",
-      )}
+      className={`scroll-mt-24 ${
+        depth === 0
+          ? "border-t-2 border-primary pt-7 first:border-t-0 first:pt-0"
+          : "border-t border-border pt-6"
+      }`}
     >
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <div
-          className={cn(
-            "flex items-start gap-2 px-5 py-4",
-            depth === 0 ? "bg-muted/30" : "bg-background/50",
-          )}
-        >
-          <div className="min-w-0 flex-1">
-            <HeadingTag className={cn("min-w-0", depth === 0 ? "text-2xl font-semibold" : "text-lg font-semibold")}>
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className="focus-ring flex w-full items-start gap-3 text-left text-foreground transition-colors hover:text-orange-700"
-                >
-                  <span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">
-                    {section.title}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "mt-0.5 h-5 w-5 shrink-0 transition-transform duration-200",
-                      open && "rotate-180",
-                    )}
-                  />
-                </button>
-              </CollapsibleTrigger>
+      <div className="xl:grid xl:grid-cols-[minmax(0,680px)_minmax(150px,1fr)] xl:gap-8">
+        <div>
+          <div className="flex items-start gap-3">
+            <HeadingTag
+              className={
+                depth === 0
+                  ? "text-2xl font-semibold leading-8 tracking-[-0.015em]"
+                  : depth === 1
+                    ? "text-xl font-semibold leading-7"
+                    : "text-lg font-semibold leading-7"
+              }
+            >
+              {section.title}
             </HeadingTag>
+            <a
+              href={`#${section.id}`}
+              className="mt-0.5 shrink-0 p-1 text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={`Link to ${section.title}`}
+            >
+              <LinkIcon className="h-4 w-4" aria-hidden="true" />
+            </a>
           </div>
-          <a
-            href={`#${section.id}`}
-            className="mt-0.5 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
-            onClick={(event) => event.stopPropagation()}
-            aria-label={`Link to ${section.title}`}
-          >
-            <LinkIcon className="h-4 w-4" />
-          </a>
+
+          {section.contentHtml ? (
+            <div
+              className="research-prose prose mt-5 max-w-none prose-p:my-4 prose-ul:my-5 prose-li:my-2 prose-strong:text-foreground prose-a:font-sans prose-a:font-semibold prose-a:text-primary prose-a:underline prose-a:decoration-primary/40 prose-a:underline-offset-4 prose-figure:my-8 prose-img:my-0 prose-img:w-full prose-img:max-w-full prose-img:rounded-sm prose-img:border prose-img:border-border prose-img:bg-white"
+              dangerouslySetInnerHTML={{ __html: section.contentHtml }}
+            />
+          ) : null}
         </div>
 
-        <CollapsibleContent>
-          <div className="space-y-5 px-5 pb-5">
-            {section.contentHtml ? (
-              <div
-                className={cn(
-                  "prose max-w-none prose-p:my-3 prose-ul:my-4 prose-li:my-2 prose-a:text-orange-700 prose-a:no-underline hover:prose-a:underline prose-figure:my-6 prose-img:my-0 prose-img:w-full prose-img:max-w-full prose-img:rounded-xl prose-img:border prose-img:border-orange-200/80 prose-img:bg-white prose-img:shadow-sm",
-                  depth > 0 && "text-sm",
-                )}
-                dangerouslySetInnerHTML={{ __html: section.contentHtml }}
-              />
-            ) : null}
+        {citations.length > 0 && (
+          <aside
+            className="mt-6 border-l-2 border-primary bg-muted px-4 py-4 xl:mt-0 xl:self-start xl:bg-transparent xl:py-0 xl:pr-0"
+            aria-label={`Evidence cited in ${section.title}`}
+          >
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              Evidence in this section
+            </p>
+            <ul className="mt-3 space-y-3">
+              {citations.map((source) => (
+                <li key={source.reportId}>
+                  <a
+                    href={source.resolvedHref}
+                    className="block text-sm font-semibold leading-5 text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    Report {source.reportId}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
+      </div>
 
-            {section.children?.length ? (
-              <div className="space-y-4 border-l border-border/70 pl-4">
-                {section.children.map((child) => (
-                  <ResearchSection
-                    key={child.id}
-                    section={child}
-                    activeHashId={activeHashId}
-                    depth={depth + 1}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      {section.children?.length ? (
+        <div className="mt-7 space-y-7">
+          {section.children.map((child) => (
+            <ResearchSection
+              key={child.id}
+              section={child}
+              sourcesById={sourcesById}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function sectionContainsId(
-  section: ResearchReportSectionType,
-  targetId: string,
-): boolean {
-  if (section.id === targetId) {
-    return true;
+function getSectionCitations(
+  html: string,
+  sourcesById: Map<number, ResearchReportSource>,
+): ResearchReportSource[] {
+  const ids = new Set<number>();
+  const pattern = /href="\/reports\/(\d+)"/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(html)) !== null) {
+    ids.add(Number(match[1]));
   }
 
-  return section.children?.some((child) => sectionContainsId(child, targetId)) ?? false;
+  return Array.from(ids)
+    .map((id) => sourcesById.get(id))
+    .filter((source): source is ResearchReportSource => Boolean(source));
 }

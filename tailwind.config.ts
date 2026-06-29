@@ -20,11 +20,11 @@ export default {
         '128': '32rem',
       },
       borderRadius: {
-        'lg': "var(--radius)",
-        'md': "calc(var(--radius) - 2px)", 
-        'sm': "calc(var(--radius) - 4px)",
-        '2xl': '1rem',
-        '3xl': '1.5rem',
+        'lg': "4px",
+        'md': "2px",
+        'sm': "2px",
+        '2xl': '4px',
+        '3xl': '4px',
       },
       colors: {
         background: "hsl(var(--background))",
@@ -61,7 +61,7 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         
-        // Warm Cream & Burnt Orange System
+        // Compatibility aliases for the Public Audit Ledger system
         canvas: "hsl(var(--canvas))",
         surface: {
           1: "hsl(var(--surface-1))",

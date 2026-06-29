@@ -3,6 +3,8 @@ export interface SearchFilters {
   state?: string;
   agency?: string;
   year?: number;
+  theme?: string;
+  sourceStatus?: "available" | "record";
   sortBy?: string;
 }
 
@@ -28,6 +30,9 @@ export interface ReportListItem {
   potentialObjectiveSummary?: string;
   auditScope?: string;
   originalReportSourceUrl?: string;
+  totalFinancialImpact?: number;
+  findingCount?: number;
+  recommendationCount?: number;
   originalFilename?: string;
   fileHash?: string;
   featured?: boolean;
@@ -144,6 +149,7 @@ export interface ResearchReportListItem {
   featured?: boolean;
   publishedDate?: string;
   updatedDate?: string;
+  sourceCount?: number;
 }
 
 export interface ResearchReportSection {
@@ -172,7 +178,7 @@ export interface ResearchReportPageData {
 
 export interface HomeRouteData {
   stats: DashboardStats;
-  featuredReports: ReportListItem[];
+  latestReports: ReportListItem[];
   states: IndexableStateSummary[];
 }
 

@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, ExternalLink, FileStack, LibraryBig } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
+import { getStateNameByCode } from "@shared/states";
 import { apiClient } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageMeta from "@/components/seo/PageMeta";
 import ResearchSection from "@/components/research/ResearchSection";
-import type { ResearchReportPageData } from "@/lib/types";
+import type {
+  ResearchReportPageData,
+  ResearchReportSection,
+  ResearchReportSource,
+} from "@/lib/types";
 
 const AI_RESEARCH_AGENT_ARTICLE_URL =
   "https://scottlabbe.me/articles/building-an-ai-research-agent/";
@@ -17,14 +19,6 @@ const AI_RESEARCH_AGENT_ARTICLE_URL =
 export default function ResearchReportPage() {
   const [, params] = useRoute("/research/:slug");
   const slug = params?.slug;
-  const [activeHashId, setActiveHashId] = useState(getHashId());
-
-  useEffect(() => {
-    const updateHash = () => setActiveHashId(getHashId());
-    updateHash();
-    window.addEventListener("hashchange", updateHash);
-    return () => window.removeEventListener("hashchange", updateHash);
-  }, []);
 
   const { data: report, isLoading, error } = useQuery({
     queryKey: ["/api/research-reports", slug],
@@ -36,85 +30,41 @@ export default function ResearchReportPage() {
     error: Error | null;
   };
 
-  useEffect(() => {
-    if (!report || !activeHashId) {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      document.getElementById(activeHashId)?.scrollIntoView({
-        block: "start",
-        behavior: "smooth",
-      });
-    });
-  }, [activeHashId, report]);
-
-  const pageDescription = useMemo(() => {
-    return (
-      report?.description ||
-      "Research report with linked Medicaid audit citations and expandable sections."
-    );
-  }, [report]);
+  const pageDescription =
+    report?.description ||
+    "Research synthesis grounded in linked Medicaid audit evidence.";
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8">
-        <PageMeta
-          title="Research Report"
-          description="Research report page"
-          robots="noindex, follow"
-        />
-        <Card className="p-8 text-center">
-          <CardContent>
-            <p className="text-destructive">Error loading research report: {error.message}</p>
-            <Link href="/research">
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Research
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <ResearchState
+        title="Research report could not be loaded"
+        message="Return to the research index and try opening the report again."
+      />
     );
   }
 
   if (isLoading) {
-    return (
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-6">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-12 w-3/4" />
-        <Skeleton className="h-28 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    );
+    return <ResearchReportSkeleton />;
   }
 
   if (!report) {
     return (
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8">
-        <PageMeta
-          title="Research report not found"
-          description="The requested research report could not be found."
-          robots="noindex, follow"
-        />
-        <Card className="p-8 text-center">
-          <CardContent>
-            <p className="text-muted-foreground">Research report not found</p>
-            <Link href="/research">
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Research
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <ResearchState
+        title="Research report not found"
+        message="The requested research report is not available."
+      />
     );
   }
 
+  const contentSections = report.sections.filter(
+    (section) => section.title.toLowerCase() !== "sources referenced",
+  );
+  const sourcesById = new Map(
+    report.sources.map((source) => [source.reportId, source]),
+  );
+
   return (
-    <div className="bg-background min-h-screen">
+    <div className="min-h-screen bg-background">
       <PageMeta
         title={report.title}
         description={pageDescription}
@@ -141,89 +91,332 @@ export default function ResearchReportPage() {
         }}
       />
 
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
-        <div>
-          <Link href="/research">
-            <Button variant="ghost" size="sm" className="mb-4 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Research
-            </Button>
-          </Link>
+      <div className="mx-auto w-full max-w-[1120px] px-5 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <nav aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <li>
+              <Link
+                href="/research"
+                className="underline decoration-primary/40 underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                Research
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page" className="text-foreground">
+              {report.category}
+            </li>
+          </ol>
+        </nav>
 
-          <div className="research-report-shell overflow-hidden rounded-[2rem] border border-orange-200/80 bg-gradient-to-br from-orange-50/90 via-background to-amber-50/70 warm-shadow-lg">
-            <div className="research-report-title border-b border-orange-200/80 bg-[linear-gradient(135deg,rgba(255,247,237,0.98),rgba(255,237,213,0.96)_48%,rgba(255,251,235,0.98))] px-8 py-8 lg:px-10 lg:py-10">
-              <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-orange-200/70 pb-5">
-                <Badge variant="secondary" className="gap-2 border border-orange-300/60 bg-orange-100 text-orange-950">
-                  <LibraryBig className="h-3.5 w-3.5" />
-                  Research Report
-                </Badge>
-                <Badge variant="outline" className="gap-2 border-orange-300/70 bg-white/90 text-orange-900">
-                  <FileStack className="h-3.5 w-3.5" />
-                  {report.sources.length} linked audit reports
-                </Badge>
-                {report.updatedAt ? (
-                  <span className="text-sm font-medium text-orange-900/75">
-                    Updated {new Date(report.updatedAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="space-y-4">
-                <p className="max-w-4xl text-sm font-semibold uppercase tracking-[0.22em] text-orange-800/80">
-                  {report.category}
-                </p>
-                <h1 className="max-w-5xl text-4xl font-black leading-tight tracking-tight text-orange-950 lg:text-5xl">
-                  {report.title}
-                </h1>
-                <p className="max-w-4xl text-lg leading-relaxed text-slate-700">
-                  {pageDescription}
-                </p>
-                <a
-                  href={AI_RESEARCH_AGENT_ARTICLE_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-orange-900 underline-offset-4 hover:underline"
-                >
-                  Learn how the AI-generated research projects were created
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </div>
-
-              {report.introHtml ? (
-                <div
-                  className="prose mt-6 max-w-4xl text-sm text-slate-700 prose-p:my-2 prose-a:text-orange-700 prose-a:no-underline hover:prose-a:underline prose-figure:my-6 prose-img:my-0 prose-img:w-full prose-img:max-w-full prose-img:rounded-xl prose-img:border prose-img:border-orange-200/80 prose-img:bg-white prose-img:shadow-sm"
-                  dangerouslySetInnerHTML={{ __html: report.introHtml }}
-                />
-              ) : null}
-            </div>
-
-            <div className="px-5 py-6 lg:px-6 lg:py-7">
-              <div className="space-y-5">
-                {report.sections.map((section) => (
-                  <ResearchSection
-                    key={section.id}
-                    section={section}
-                    activeHashId={activeHashId}
-                  />
-                ))}
-              </div>
+        <header className="mt-7 border-b-2 border-primary pb-9">
+          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+              Research synthesis
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
+              <span>{report.sources.length} cited audit reports</span>
+              {report.updatedAt && (
+                <span>{formatResearchDate(report.updatedAt)}</span>
+              )}
             </div>
           </div>
+
+          <h1 className="mt-5 max-w-[900px] text-3xl font-semibold leading-tight tracking-[-0.03em] sm:text-4xl lg:text-[44px]">
+            {report.title}
+          </h1>
+          <p className="mt-5 max-w-[760px] font-serif text-lg leading-8 text-muted-foreground">
+            {pageDescription}
+          </p>
+          <a
+            href={AI_RESEARCH_AGENT_ARTICLE_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            How this research was produced
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </a>
+
+          {report.introHtml ? (
+            <div
+              className="research-prose prose mt-7 max-w-[760px] border-l-4 border-primary bg-muted px-5 py-4 prose-p:my-2 prose-a:font-sans prose-a:font-semibold prose-a:text-primary prose-a:underline"
+              dangerouslySetInnerHTML={{ __html: report.introHtml }}
+            />
+          ) : null}
+        </header>
+
+        <MobileSectionIndex sections={contentSections} />
+
+        <div className="mt-10 lg:grid lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-10">
+          <SectionIndex sections={contentSections} />
+
+          <article className="min-w-0">
+            <div className="space-y-10">
+              {contentSections.map((section) => (
+                <ResearchSection
+                  key={section.id}
+                  section={section}
+                  sourcesById={sourcesById}
+                />
+              ))}
+            </div>
+
+            <SourceRegister sources={report.sources} />
+          </article>
         </div>
       </div>
     </div>
   );
 }
 
-function getHashId(): string | undefined {
-  if (typeof window === "undefined") {
-    return undefined;
+function SectionIndex({ sections }: { sections: ResearchReportSection[] }) {
+  return (
+    <nav
+      aria-label="Research report sections"
+      className="sticky top-24 hidden self-start border-t-2 border-primary pt-4 lg:block"
+    >
+      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        In this report
+      </p>
+      <ul className="mt-4 space-y-3">
+        {sections.map((section) => (
+          <li key={section.id}>
+            <a
+              href={`#${section.id}`}
+              className="block text-sm font-semibold leading-5 text-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {section.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function MobileSectionIndex({
+  sections,
+}: {
+  sections: ResearchReportSection[];
+}) {
+  return (
+    <details className="mt-7 border-y border-border lg:hidden">
+      <summary className="min-h-12 cursor-pointer py-3 font-mono text-xs font-semibold uppercase tracking-[0.1em] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+        In this report
+      </summary>
+      <nav aria-label="Research report sections" className="pb-5">
+        <ul className="space-y-3">
+          {sections.map((section) => (
+            <li key={section.id}>
+              <a
+                href={`#${section.id}`}
+                className="block py-1 text-sm font-semibold leading-5 text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {section.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </details>
+  );
+}
+
+function SourceRegister({ sources }: { sources: ResearchReportSource[] }) {
+  return (
+    <section
+      id="sources-referenced"
+      className="mt-12 scroll-mt-24 border-t-2 border-primary pt-7"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+        <div>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            Evidence register
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold">Sources referenced</h2>
+        </div>
+        <span className="font-mono text-xs text-muted-foreground">
+          {sources.length} audit {sources.length === 1 ? "report" : "reports"}
+        </span>
+      </div>
+
+      <div className="border-b border-border">
+        {sources.map((source) => {
+          const details = parseSourceLabel(source);
+          return (
+            <article
+              key={source.reportId}
+              className="grid border-b border-border py-6 last:border-b-0 md:grid-cols-[110px_minmax(0,1fr)_145px] md:gap-6"
+            >
+              <dl className="grid grid-cols-2 gap-4 md:block">
+                <SourceField
+                  label="Report ID"
+                  value={`REPORT ${source.reportId}`}
+                  mono
+                />
+                {details.jurisdiction && (
+                  <SourceField
+                    label="Jurisdiction"
+                    value={details.jurisdiction}
+                  />
+                )}
+              </dl>
+
+              <div className="mt-4 border-t border-border pt-4 md:mt-0 md:border-t-0 md:pt-0">
+                <h3 className="text-lg font-semibold leading-6">
+                  <Link
+                    href={source.resolvedHref}
+                    className="decoration-primary/40 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    {details.title}
+                  </Link>
+                </h3>
+                {details.agency && (
+                  <p className="mt-3 text-sm font-semibold leading-5 text-muted-foreground">
+                    {details.agency}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-4 border-t border-border pt-4 md:mt-0 md:border-t-0 md:pt-0">
+                {details.date && (
+                  <SourceField label="Published" value={details.date} mono />
+                )}
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Source status
+                </p>
+                <p className="mt-1.5 text-sm font-semibold">Indexed evidence</p>
+                <Link
+                  href={source.resolvedHref}
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  Review audit
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function SourceField({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="mb-4 last:mb-0">
+      <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        {label}
+      </dt>
+      <dd
+        className={`mt-1.5 break-words text-sm leading-5 ${
+          mono ? "font-mono" : "font-semibold"
+        }`}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function parseSourceLabel(source: ResearchReportSource) {
+  const pattern =
+    /^\[Report \d+\]\s+(.+?)\s+\(state=([^;]+);\s*organization=(.+?);\s*publication_date=([^)]+)\)/;
+  const match = source.label.match(pattern);
+
+  if (!match) {
+    return {
+      title: source.label.replace(/^\[Report \d+\]\s*/, ""),
+      jurisdiction: undefined,
+      agency: undefined,
+      date: undefined,
+    };
   }
 
-  const raw = window.location.hash.replace(/^#/, "").trim();
-  return raw || undefined;
+  const stateCode = match[2].trim();
+  return {
+    title: match[1].trim(),
+    jurisdiction:
+      stateCode === "US"
+        ? "Federal"
+        : getStateNameByCode(stateCode) || stateCode,
+    agency: match[3].trim(),
+    date: new Date(`${match[4].trim()}T00:00:00Z`).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }),
+  };
+}
+
+function formatResearchDate(value: string) {
+  return `Updated ${new Date(value).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  })}`;
+}
+
+function ResearchState({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="mx-auto w-full max-w-[1120px] px-5 py-12 sm:px-6 lg:px-8">
+      <PageMeta
+        title={title}
+        description={message}
+        robots="noindex, follow"
+      />
+      <div className="max-w-[680px] border-y-2 border-primary py-8">
+        <h1 className="text-2xl font-semibold">{title}</h1>
+        <p className="mt-3 text-muted-foreground">{message}</p>
+        <Link
+          href="/research"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Return to research
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ResearchReportSkeleton() {
+  return (
+    <div
+      className="mx-auto w-full max-w-[1120px] px-5 py-10 sm:px-6 lg:px-8"
+      aria-busy="true"
+    >
+      <Skeleton className="h-4 w-40" />
+      <div className="mt-7 border-b-2 border-primary pb-9">
+        <Skeleton className="h-3 w-36" />
+        <Skeleton className="mt-5 h-11 w-4/5" />
+        <Skeleton className="mt-4 h-5 w-full max-w-[760px]" />
+        <Skeleton className="mt-3 h-5 w-3/4 max-w-[760px]" />
+      </div>
+      <div className="mt-10 grid gap-10 lg:grid-cols-[210px_minmax(0,1fr)]">
+        <div className="space-y-3">
+          {Array.from({ length: 6 }, (_, index) => (
+            <Skeleton key={index} className="h-4 w-full" />
+          ))}
+        </div>
+        <div className="space-y-5">
+          <Skeleton className="h-8 w-1/2" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
+      </div>
+    </div>
+  );
 }
