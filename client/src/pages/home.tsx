@@ -7,7 +7,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Link } from "wouter";
-import { TOPICS } from "@shared/topics";
 import { getStateNameByCode } from "@shared/states";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import type {
   ReportListItem,
   ReportWithDetails,
   SearchResponse,
+  TopicSummary,
 } from "@/lib/types";
 import { preloadRouteHref } from "@/lib/routeLoaders";
 import { useSsrData } from "@/lib/ssrData";
@@ -35,6 +35,8 @@ export default function Home() {
   const ssrData = useSsrData();
   const initialStateLinks =
     ssrData?.routeType === "home" ? ssrData.home?.states ?? [] : [];
+  const initialTopics =
+    ssrData?.routeType === "home" ? ssrData.home?.topics ?? [] : [];
   const [activeReportIndex, setActiveReportIndex] = useState(0);
 
   const { data: stats } = useQuery({
@@ -46,6 +48,12 @@ export default function Home() {
     queryKey: ["/api/states"],
     queryFn: () => apiClient.getStates(),
     initialData: initialStateLinks.length > 0 ? initialStateLinks : undefined,
+  });
+
+  const { data: topicLinks = initialTopics } = useQuery<TopicSummary[]>({
+    queryKey: ["/api/topics"],
+    queryFn: () => apiClient.getTopics(),
+    initialData: initialTopics.length > 0 ? initialTopics : undefined,
   });
 
   const {
@@ -247,6 +255,7 @@ export default function Home() {
         <BrowseEvidence
           states={stateLinks}
           agencies={agencyLinks}
+          topics={topicLinks}
           years={yearLinks}
           prefetchHandlers={prefetchHandlers}
         />
@@ -392,11 +401,13 @@ function Metric({ label, value }: { label: string; value: string }) {
 function BrowseEvidence({
   states,
   agencies,
+  topics,
   years,
   prefetchHandlers,
 }: {
   states: Array<{ code: string; name: string; slug: string; reportCount: number }>;
   agencies: ReportListItem[];
+  topics: TopicSummary[];
   years: number[];
   prefetchHandlers: (href: string) => Record<string, () => void>;
 }) {
@@ -428,9 +439,10 @@ function BrowseEvidence({
     {
       label: "By topic",
       href: "/topics",
-      intro: "Recurring program-integrity subjects.",
-      examples: TOPICS.slice(0, 2).map((topic) => ({
+      intro: "Subjects assigned through human review.",
+      examples: topics.slice(0, 2).map((topic) => ({
         label: topic.name,
+        meta: `${topic.reportCount} reports`,
         href: `/topics/${topic.slug}`,
       })),
     },

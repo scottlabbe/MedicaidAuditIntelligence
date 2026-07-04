@@ -82,6 +82,49 @@ NODE_ENV=development
 npm run db:push
 ```
 
+For the reviewed topic-evidence layer, first run the extraction repository's
+`migrations/add_source_uids.py` against the shared database, then apply committed
+website migrations:
+
+```bash
+npm run db:migrate
+```
+
+`migrations/0001_topic_evidence_layer.sql` seeds a draft taxonomy. It does not
+activate the taxonomy or change public topic routes.
+
+Preview a signed bundle before publication:
+
+```bash
+npm run topic:import -- preview \
+  --bundle /path/to/topic-evidence.json \
+  --public-key /path/to/topic-evidence-public.pem \
+  --key-id "local-topic-export-1" \
+  --actor "$USER"
+```
+
+After reviewing the preview counts, explicitly activate its matching taxonomy,
+then publish the same signed artifact:
+
+```bash
+npm run topic:import -- activate-taxonomy \
+  --version "2026-07-03-draft" \
+  --sha256 "c777901704bf0cc20ad9979a3cc6450d7b05bfce3e41ffec5692ff0bc1c88efa"
+
+npm run topic:import -- publish \
+  --bundle /path/to/topic-evidence.json \
+  --public-key /path/to/topic-evidence-public.pem \
+  --key-id "local-topic-export-1"
+```
+
+Preview and publish are idempotent for the same bundle. Publication revalidates
+all source identities and evidence hashes, requires an active matching taxonomy,
+and replaces each included report's reviewed assignments in one serializable
+database transaction.
+
+For the cross-repository processing and publication contract, see
+[`docs/topic-evidence-handoff.md`](docs/topic-evidence-handoff.md).
+
 5. Start development server:
 ```bash
 npm run dev
@@ -133,6 +176,8 @@ The application uses a star schema design centered around audit reports:
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Build for production
 - `npm run db:push` - Push schema changes to database
+- `npm run db:migrate` - Apply committed database migrations
+- `npm run topic:import` - Preview, activate, or publish a reviewed topic bundle
 - `npm run llms:generate` - Generate `/llms.txt` and `/llms-full.txt` from live report data
 - `npm run db:studio` - Open Drizzle Studio for database management
 

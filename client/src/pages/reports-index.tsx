@@ -10,17 +10,18 @@ import {
   Search,
 } from "lucide-react";
 import { STATE_ENTRIES, getStateNameByCode } from "@shared/states";
-import { TOPICS } from "@shared/topics";
 import { apiClient } from "@/lib/api";
 import PageMeta from "@/components/seo/PageMeta";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSsrData } from "@/lib/ssrData";
 import type {
   AgencySummary,
   ReportListItem,
   SearchFilters,
   SearchResponse,
+  TopicSummary,
 } from "@/lib/types";
 
 const PAGE_SIZE = 24;
@@ -29,9 +30,30 @@ const YEARS = Array.from({ length: CURRENT_YEAR - 1999 }, (_, index) => CURRENT_
 
 export default function ReportsIndex() {
   const [location, setLocation] = useLocation();
+  const ssrData = useSsrData();
+  const initialFilters =
+    ssrData?.routeType === "reports_index"
+      ? ssrData.reportsIndex?.filters
+      : undefined;
+  const [search, setSearch] = useState(() =>
+    typeof window !== "undefined"
+      ? window.location.search
+      : initialFilters
+        ? buildReportsSearch(initialFilters)
+        : "",
+  );
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const parsed = useMemo(() => parseReportsLocation(location), [location]);
+  const parsed = useMemo(
+    () => parseReportsLocation(`${location}${search}`),
+    [location, search],
+  );
   const [queryDraft, setQueryDraft] = useState(parsed.filters.query || "");
+
+  useEffect(() => {
+    const syncSearchFromUrl = () => setSearch(window.location.search);
+    window.addEventListener("popstate", syncSearchFromUrl);
+    return () => window.removeEventListener("popstate", syncSearchFromUrl);
+  }, []);
 
   useEffect(() => {
     setQueryDraft(parsed.filters.query || "");
@@ -40,6 +62,11 @@ export default function ReportsIndex() {
   const { data: agencies = [] } = useQuery<AgencySummary[]>({
     queryKey: ["/api/agencies"],
     queryFn: () => apiClient.getAgencies(),
+  });
+
+  const { data: topics = [] } = useQuery<TopicSummary[]>({
+    queryKey: ["/api/topics"],
+    queryFn: () => apiClient.getTopics(),
   });
 
   const { data, isLoading, error } = useQuery<SearchResponse>({
@@ -56,6 +83,11 @@ export default function ReportsIndex() {
   const canonicalPath =
     parsed.page === 1 ? "/reports" : `/reports/page/${parsed.page}`;
 
+  const navigateToReports = (href: string) => {
+    setSearch(href.includes("?") ? href.slice(href.indexOf("?")) : "");
+    setLocation(href);
+  };
+
   const updateFilters = (changes: Partial<SearchFilters>) => {
     const next = { ...parsed.filters, ...changes };
     Object.keys(next).forEach((key) => {
@@ -64,7 +96,7 @@ export default function ReportsIndex() {
         delete next[typedKey];
       }
     });
-    setLocation(buildReportsHref(1, next));
+    navigateToReports(buildReportsHref(1, next));
   };
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
@@ -75,7 +107,7 @@ export default function ReportsIndex() {
   const clearFilters = () => {
     const sortBy = parsed.filters.sortBy;
     setQueryDraft("");
-    setLocation(buildReportsHref(1, sortBy ? { sortBy } : {}));
+    navigateToReports(buildReportsHref(1, sortBy ? { sortBy } : {}));
   };
 
   return (
@@ -192,7 +224,7 @@ export default function ReportsIndex() {
                   onChange={(value) => updateFilters({ theme: value || undefined })}
                 >
                   <option value="">All topics</option>
-                  {TOPICS.map((topic) => (
+                  {topics.map((topic) => (
                     <option key={topic.slug} value={topic.slug}>
                       {topic.name}
                     </option>
@@ -602,6 +634,11 @@ function buildReportsHref(page: number, filters: SearchFilters) {
   });
   const path = page === 1 ? "/reports" : `/reports/page/${page}`;
   return `${path}${params.size ? `?${params.toString()}` : ""}`;
+}
+
+function buildReportsSearch(filters: SearchFilters): string {
+  const href = buildReportsHref(1, filters);
+  return href.includes("?") ? href.slice(href.indexOf("?")) : "";
 }
 
 function countActiveFilters(filters: SearchFilters) {

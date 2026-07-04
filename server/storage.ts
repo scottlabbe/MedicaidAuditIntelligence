@@ -19,6 +19,14 @@ import {
   programs,
   reportPrograms,
   aiProcessingLogs,
+  topicTaxonomyRevisions,
+  publicTopics,
+  publicTopicDefinitions,
+  publicTopicSlugAliases,
+  reportTopicAssignments,
+  reportTopicFindingEvidence,
+  reportTopicRecommendationEvidence,
+  reportTopicMetadataEvidence,
   type Report,
   type InsertReport,
   type User,
@@ -40,9 +48,11 @@ import type {
   AgencyLandingPageData,
   TopicSummary,
   TopicLandingPageData,
+  TopicEvidence,
+  TopicSlugResolution,
 } from "../client/src/lib/types";
 import { getStateEntryByCode } from "@shared/states";
-import { TOPICS, getTopicEntryBySlug } from "@shared/topics";
+import { getTopicGuideContent } from "@shared/topicGuides";
 
 function slugify(value: string): string {
   return value
@@ -50,6 +60,28 @@ function slugify(value: string): string {
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function metadataEvidenceLabel(fieldName: string): string {
+  const labels: Record<string, string> = {
+    report_title: "Report title",
+    audit_organization: "Publishing agency",
+    audit_scope: "Audit scope",
+    overall_conclusion: "Overall conclusion",
+    potential_objective_summary: "Audit objective",
+  };
+
+  return labels[fieldName] || "Report metadata";
+}
+
+function evidenceTypeOrder(
+  sourceType: TopicEvidence["sourceType"],
+): number {
+  return {
+    finding: 0,
+    recommendation: 1,
+    metadata: 2,
+  }[sourceType];
 }
 
 export interface IStorage {
@@ -64,6 +96,7 @@ export interface IStorage {
   getAgenciesWithCounts(limit?: number): Promise<AgencySummary[]>;
   getAgencyLandingPage(slug: string, limit?: number): Promise<AgencyLandingPageData | undefined>;
   getTopicsWithCounts(): Promise<TopicSummary[]>;
+  resolveTopicSlug(slug: string): Promise<TopicSlugResolution>;
   getTopicLandingPage(slug: string, limit?: number): Promise<TopicLandingPageData | undefined>;
   
   // Dashboard
@@ -140,19 +173,21 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters.theme) {
-      const topic = TOPICS.find((entry) => entry.slug === filters.theme);
-      if (topic) {
-        const topicTerms = topic.query.split(/\s+/).filter(Boolean);
-        conditions.push(
-          or(
-            ...topicTerms.flatMap((term) => [
-              ilike(reports.reportTitle, `%${term}%`),
-              ilike(reports.overallConclusion, `%${term}%`),
-              ilike(reports.auditScope, `%${term}%`),
-            ]),
-          ),
-        );
-      }
+      conditions.push(sql`EXISTS (
+        SELECT 1
+        FROM ${reportTopicAssignments} assignment
+        INNER JOIN ${publicTopics} topic
+          ON topic.id = assignment.topic_id
+        INNER JOIN ${publicTopicDefinitions} definition
+          ON definition.topic_id = topic.id
+        INNER JOIN ${topicTaxonomyRevisions} revision
+          ON revision.id = definition.taxonomy_revision_id
+        WHERE assignment.report_id = ${reports.id}
+          AND definition.slug = ${filters.theme}
+          AND revision.status = 'active'
+          AND topic.retired_at IS NULL
+          AND assignment.retired_at IS NULL
+      )`);
     }
 
     if (filters.sourceStatus === "available") {
@@ -684,28 +719,310 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTopicsWithCounts(): Promise<TopicSummary[]> {
-    const topics = await Promise.all(
-      TOPICS.map(async (topic) => {
-        const results = await this.getReports({ query: topic.query }, 1, 1);
-        return {
-          ...topic,
-          reportCount: results.total,
-        };
-      }),
-    );
+    const result = await db
+      .select({
+        slug: publicTopicDefinitions.slug,
+        name: publicTopicDefinitions.name,
+        shortDescription: publicTopicDefinitions.shortDescription,
+        scope: publicTopicDefinitions.scope,
+        reportCount: sql<number>`count(distinct case
+          when ${reportTopicAssignments.retiredAt} is null
+            and ${reports.hidden} = false
+          then ${reports.id}
+        end)`,
+        sortOrder: publicTopicDefinitions.sortOrder,
+      })
+      .from(publicTopicDefinitions)
+      .innerJoin(
+        topicTaxonomyRevisions,
+        eq(
+          publicTopicDefinitions.taxonomyRevisionId,
+          topicTaxonomyRevisions.id,
+        ),
+      )
+      .innerJoin(
+        publicTopics,
+        eq(publicTopicDefinitions.topicId, publicTopics.id),
+      )
+      .leftJoin(
+        reportTopicAssignments,
+        eq(reportTopicAssignments.topicId, publicTopics.id),
+      )
+      .leftJoin(reports, eq(reports.id, reportTopicAssignments.reportId))
+      .where(
+        and(
+          eq(topicTaxonomyRevisions.status, "active"),
+          sql`${publicTopics.retiredAt} is null`,
+        ),
+      )
+      .groupBy(
+        publicTopicDefinitions.slug,
+        publicTopicDefinitions.name,
+        publicTopicDefinitions.shortDescription,
+        publicTopicDefinitions.scope,
+        publicTopicDefinitions.sortOrder,
+      )
+      .orderBy(asc(publicTopicDefinitions.sortOrder));
 
-    return topics;
+    return result.map(({ sortOrder: _sortOrder, ...topic }) => {
+      const guide = getTopicGuideContent(topic.slug);
+      return {
+        ...topic,
+        shortDescription: guide?.definition || topic.shortDescription,
+        reportCount: Number(topic.reportCount) || 0,
+      };
+    });
+  }
+
+  async resolveTopicSlug(slug: string): Promise<TopicSlugResolution> {
+    const canonical = await db
+      .select({ slug: publicTopicDefinitions.slug })
+      .from(publicTopicDefinitions)
+      .innerJoin(
+        topicTaxonomyRevisions,
+        eq(
+          publicTopicDefinitions.taxonomyRevisionId,
+          topicTaxonomyRevisions.id,
+        ),
+      )
+      .innerJoin(
+        publicTopics,
+        eq(publicTopicDefinitions.topicId, publicTopics.id),
+      )
+      .where(
+        and(
+          eq(publicTopicDefinitions.slug, slug),
+          eq(topicTaxonomyRevisions.status, "active"),
+          sql`${publicTopics.retiredAt} is null`,
+        ),
+      )
+      .limit(1);
+
+    if (canonical[0]) {
+      return { kind: "canonical", slug: canonical[0].slug };
+    }
+
+    const alias = await db
+      .select({
+        canonicalSlug: publicTopicDefinitions.slug,
+        redirectStatus: publicTopicSlugAliases.redirectStatus,
+      })
+      .from(publicTopicSlugAliases)
+      .innerJoin(
+        publicTopics,
+        eq(publicTopicSlugAliases.topicId, publicTopics.id),
+      )
+      .innerJoin(
+        publicTopicDefinitions,
+        eq(publicTopicDefinitions.topicId, publicTopics.id),
+      )
+      .innerJoin(
+        topicTaxonomyRevisions,
+        eq(
+          publicTopicDefinitions.taxonomyRevisionId,
+          topicTaxonomyRevisions.id,
+        ),
+      )
+      .where(
+        and(
+          eq(publicTopicSlugAliases.aliasSlug, slug),
+          eq(topicTaxonomyRevisions.status, "active"),
+          sql`${publicTopicSlugAliases.retiredAt} is null`,
+          sql`${publicTopics.retiredAt} is null`,
+        ),
+      )
+      .limit(1);
+
+    if (!alias[0]) {
+      return { kind: "not_found", slug };
+    }
+
+    return {
+      kind: "alias",
+      slug,
+      canonicalSlug: alias[0].canonicalSlug,
+      redirectStatus: alias[0].redirectStatus as 301 | 308,
+    };
   }
 
   async getTopicLandingPage(slug: string, limit = 24): Promise<TopicLandingPageData | undefined> {
-    const topic = getTopicEntryBySlug(slug);
-    if (!topic) return undefined;
+    const topicRows = await db
+      .select({
+        topicId: publicTopics.id,
+        slug: publicTopicDefinitions.slug,
+        name: publicTopicDefinitions.name,
+        shortDescription: publicTopicDefinitions.shortDescription,
+        scope: publicTopicDefinitions.scope,
+      })
+      .from(publicTopicDefinitions)
+      .innerJoin(
+        topicTaxonomyRevisions,
+        eq(
+          publicTopicDefinitions.taxonomyRevisionId,
+          topicTaxonomyRevisions.id,
+        ),
+      )
+      .innerJoin(
+        publicTopics,
+        eq(publicTopicDefinitions.topicId, publicTopics.id),
+      )
+      .where(
+        and(
+          eq(publicTopicDefinitions.slug, slug),
+          eq(topicTaxonomyRevisions.status, "active"),
+          sql`${publicTopics.retiredAt} is null`,
+        ),
+      )
+      .limit(1);
 
-    const results = await this.getReports({ query: topic.query, sortBy: "date_desc" }, 1, limit);
+    const topic = topicRows[0];
+    if (!topic) return undefined;
+    const guide = getTopicGuideContent(topic.slug);
+
+    const reportRows = await db
+      .select({
+        assignmentId: reportTopicAssignments.id,
+        id: reports.id,
+        reportTitle: reports.reportTitle,
+        agency: reports.auditOrganization,
+        jurisdiction: reports.state,
+        publicationYear: reports.publicationYear,
+        publicationMonth: reports.publicationMonth,
+        publicationDay: reports.publicationDay,
+        rationale: reportTopicAssignments.rationale,
+        totalCount: sql<number>`count(*) over()`,
+      })
+      .from(reportTopicAssignments)
+      .innerJoin(reports, eq(reportTopicAssignments.reportId, reports.id))
+      .where(
+        and(
+          eq(reportTopicAssignments.topicId, topic.topicId),
+          sql`${reportTopicAssignments.retiredAt} is null`,
+          eq(reports.hidden, false),
+        ),
+      )
+      .orderBy(
+        desc(reports.publicationYear),
+        desc(reports.publicationMonth),
+        desc(reports.publicationDay),
+        desc(reports.id),
+      )
+      .limit(limit);
+
+    const assignmentIds = reportRows.map((report) => report.assignmentId);
+    const evidenceByAssignment = new Map<string, TopicEvidence[]>();
+
+    if (assignmentIds.length > 0) {
+      const [findingRows, recommendationRows, metadataRows] = await Promise.all([
+        db
+          .select({
+            assignmentId: reportTopicFindingEvidence.assignmentId,
+            text: reportTopicFindingEvidence.snapshot,
+            rank: reportTopicFindingEvidence.rank,
+          })
+          .from(reportTopicFindingEvidence)
+          .where(inArray(reportTopicFindingEvidence.assignmentId, assignmentIds)),
+        db
+          .select({
+            assignmentId: reportTopicRecommendationEvidence.assignmentId,
+            text: reportTopicRecommendationEvidence.snapshot,
+            rank: reportTopicRecommendationEvidence.rank,
+          })
+          .from(reportTopicRecommendationEvidence)
+          .where(
+            inArray(
+              reportTopicRecommendationEvidence.assignmentId,
+              assignmentIds,
+            ),
+          ),
+        db
+          .select({
+            assignmentId: reportTopicMetadataEvidence.assignmentId,
+            fieldName: reportTopicMetadataEvidence.fieldName,
+            text: reportTopicMetadataEvidence.snapshot,
+            rank: reportTopicMetadataEvidence.rank,
+          })
+          .from(reportTopicMetadataEvidence)
+          .where(inArray(reportTopicMetadataEvidence.assignmentId, assignmentIds)),
+      ]);
+
+      const addEvidence = (assignmentId: string, evidence: TopicEvidence) => {
+        const entries = evidenceByAssignment.get(assignmentId) || [];
+        entries.push(evidence);
+        evidenceByAssignment.set(assignmentId, entries);
+      };
+
+      findingRows.forEach((row) =>
+        addEvidence(row.assignmentId, {
+          sourceType: "finding",
+          sourceLabel: "Finding",
+          text: row.text,
+          rank: row.rank,
+        }),
+      );
+      recommendationRows.forEach((row) =>
+        addEvidence(row.assignmentId, {
+          sourceType: "recommendation",
+          sourceLabel: "Recommendation",
+          text: row.text,
+          rank: row.rank,
+        }),
+      );
+      metadataRows.forEach((row) =>
+        addEvidence(row.assignmentId, {
+          sourceType: "metadata",
+          sourceLabel: metadataEvidenceLabel(row.fieldName),
+          text: row.text,
+          rank: row.rank,
+        }),
+      );
+
+      evidenceByAssignment.forEach((entries) => {
+        entries.sort(
+          (a, b) =>
+            a.rank - b.rank ||
+            evidenceTypeOrder(a.sourceType) - evidenceTypeOrder(b.sourceType),
+        );
+      });
+    }
+
     return {
-      ...topic,
-      reportCount: results.total,
-      reports: results.items,
+      slug: topic.slug,
+      name: topic.name,
+      shortDescription: guide?.definition || topic.shortDescription,
+      scope: topic.scope,
+      definition: guide?.definition || topic.shortDescription,
+      whyAuditorsCare: guide?.whyAuditorsCare || topic.scope,
+      reportCount: Number(reportRows[0]?.totalCount) || 0,
+      stateCount: new Set(
+        reportRows
+          .map((report) => report.jurisdiction)
+          .filter((jurisdiction) => jurisdiction && jurisdiction !== "US"),
+      ).size,
+      hasFederalReports: reportRows.some(
+        (report) => report.jurisdiction === "US",
+      ),
+      agencyCount: new Set(reportRows.map((report) => report.agency)).size,
+      publicationYearStart:
+        reportRows.length > 0
+          ? Math.min(...reportRows.map((report) => report.publicationYear))
+          : undefined,
+      publicationYearEnd:
+        reportRows.length > 0
+          ? Math.max(...reportRows.map((report) => report.publicationYear))
+          : undefined,
+      reports: reportRows.map((report) => ({
+        id: report.id,
+        reportTitle: report.reportTitle,
+        agency: report.agency,
+        jurisdiction: report.jurisdiction,
+        publicationYear: report.publicationYear,
+        publicationMonth: report.publicationMonth ?? undefined,
+        publicationDay: report.publicationDay ?? undefined,
+        rationale: report.rationale,
+        evidence: evidenceByAssignment.get(report.assignmentId) || [],
+        reportPath: `/reports/${report.id}`,
+      })),
     };
   }
 

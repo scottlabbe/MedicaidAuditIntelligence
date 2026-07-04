@@ -10,7 +10,7 @@ import {
   ResearchReportNotFoundError,
   ResearchReportValidationError,
 } from "./researchReports";
-import { TOPICS } from "@shared/topics";
+import type { SearchFilters } from "../client/src/lib/types";
 
 const SITE_URL =
   process.env.SITE_URL || "https://www.medicaidintelligence.com";
@@ -206,17 +206,20 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
   let statesWithReports = 40;
   let latestReports: any[] = [];
   let states: any[] = [];
+  let topics: any[] = [];
 
   try {
-    const [stats, latest, stateSummaries] = await Promise.all([
+    const [stats, latest, stateSummaries, topicSummaries] = await Promise.all([
       storage.getDashboardStats(),
       storage.getReports({ sortBy: "date_desc" }, 1, 4),
       storage.getIndexableStates(8),
+      storage.getTopicsWithCounts(),
     ]);
     totalReports = stats.totalReports;
     statesWithReports = stats.statesWithReports;
     latestReports = latest.items;
     states = stateSummaries;
+    topics = topicSummaries;
   } catch {
     // Keep defaults if the database is unavailable.
   }
@@ -287,6 +290,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
         },
         latestReports,
         states,
+        topics,
       },
     },
   };
@@ -406,13 +410,47 @@ async function getExploreRoute(url: URL): Promise<ResolvedHtmlRoute> {
   };
 }
 
-async function getReportsIndexRoute(page: number): Promise<ResolvedHtmlRoute> {
+function getReportFilters(url: URL): SearchFilters {
+  const filters: SearchFilters = {};
+  const year = Number(url.searchParams.get("year"));
+  const sourceStatus = url.searchParams.get("sourceStatus");
+  const sortBy = url.searchParams.get("sortBy");
+
+  if (url.searchParams.get("query")) {
+    filters.query = url.searchParams.get("query") || undefined;
+  }
+  if (url.searchParams.get("state")) {
+    filters.state = url.searchParams.get("state") || undefined;
+  }
+  if (url.searchParams.get("agency")) {
+    filters.agency = url.searchParams.get("agency") || undefined;
+  }
+  if (Number.isInteger(year) && year > 0) filters.year = year;
+  if (url.searchParams.get("theme")) {
+    filters.theme = url.searchParams.get("theme") || undefined;
+  }
+  if (sourceStatus === "available" || sourceStatus === "record") {
+    filters.sourceStatus = sourceStatus;
+  }
+  if (
+    sortBy === "date_desc" ||
+    sortBy === "date_asc" ||
+    sortBy === "title" ||
+    sortBy === "state"
+  ) {
+    filters.sortBy = sortBy;
+  }
+
+  return filters;
+}
+
+async function getReportsIndexRoute(
+  page: number,
+  url: URL,
+): Promise<ResolvedHtmlRoute> {
   const safePage = Math.max(1, page);
-  const reportResults = await storage.getReports(
-    { sortBy: "date_desc" },
-    safePage,
-    24,
-  );
+  const filters = getReportFilters(url);
+  const reportResults = await storage.getReports(filters, safePage, 24);
   const canonicalUrl =
     safePage === 1 ? `${SITE_URL}/reports` : `${SITE_URL}/reports/page/${safePage}`;
   const title =
@@ -595,9 +633,9 @@ async function getAgencyRoute(slug: string): Promise<ResolvedHtmlRoute> {
 }
 
 async function getTopicsIndexRoute(): Promise<ResolvedHtmlRoute> {
-  const keywords = await storage.getTopKeywords(24);
+  const topics = await storage.getTopicsWithCounts();
   const description =
-    "Browse plain-language definitions for frequently used terms in the Medicaid Audit Intelligence evidence library.";
+    "Browse Medicaid audit topic guides with definitions, findings, recommendations, and related reports.";
 
   return {
     routeType: "topics_index",
@@ -615,33 +653,60 @@ async function getTopicsIndexRoute(): Promise<ResolvedHtmlRoute> {
         <h1>Medicaid audit topics</h1>
         <p>${escapeHtml(description)}</p>
         ${renderLinkList(
-          keywords.map((item) => ({
-            href: `/topics?keyword=${encodeURIComponent(item.keyword)}`,
-            label: item.keyword,
-            meta: `${item.reportCount} indexed reports`,
+          topics.map((topic) => ({
+            href: `/topics/${topic.slug}`,
+            label: topic.name,
+            meta: `${topic.reportCount} ${topic.reportCount === 1 ? "report" : "reports"}`,
           })),
         )}
       </section>
     `),
     initialRouteData: {
       routeType: "topics_index",
-      topicsIndex: [],
+      topicsIndex: topics,
     },
   };
 }
 
 async function getTopicRoute(slug: string): Promise<ResolvedHtmlRoute> {
-  const topic = await storage.getTopicLandingPage(slug, 24);
+  const resolution = await storage.resolveTopicSlug(slug);
+  if (resolution.kind === "alias") {
+    return {
+      routeType: "redirect",
+      status: resolution.redirectStatus,
+      redirectTo: `/topics/${resolution.canonicalSlug}`,
+      snapshotHtml: "",
+    };
+  }
+  if (resolution.kind === "not_found") {
+    return getNotFoundRoute();
+  }
+
+  const topic = await storage.getTopicLandingPage(resolution.slug, 100);
   if (!topic) {
     return getNotFoundRoute();
   }
+  const findings = topic.reports
+    .flatMap((report) =>
+      report.evidence
+        .filter((evidence) => evidence.sourceType === "finding")
+        .map((evidence) => ({ evidence, report })),
+    )
+    .slice(0, 3);
+  const recommendations = topic.reports
+    .flatMap((report) =>
+      report.evidence
+        .filter((evidence) => evidence.sourceType === "recommendation")
+        .map((evidence) => ({ evidence, report })),
+    )
+    .slice(0, 3);
 
   return {
     routeType: "topic",
     status: 200,
     seoMeta: {
-      title: `${topic.name} Medicaid Audit Reports | ${SITE_NAME}`,
-      description: topic.description,
+      title: `${topic.name} Medicaid Audit Guide | ${SITE_NAME}`,
+      description: topic.definition,
       canonicalUrl: `${SITE_URL}/topics/${topic.slug}`,
       ogType: "website",
       robots: "index, follow",
@@ -649,13 +714,35 @@ async function getTopicRoute(slug: string): Promise<ResolvedHtmlRoute> {
     },
     snapshotHtml: renderPageShell(`
       <section>
-        <h1>${escapeHtml(topic.name)} Medicaid audit reports</h1>
-        <p>${escapeHtml(topic.description)}</p>
+        <h1>${escapeHtml(topic.name)} Medicaid audit guide</h1>
+        <h2>Definition</h2>
+        <p>${escapeHtml(topic.definition)}</p>
+        <h2>Why auditors care</h2>
+        <p>${escapeHtml(topic.whyAuditorsCare)}</p>
+        <h2>Supporting findings</h2>
+        <ul>
+          ${findings.map(({ evidence, report }) => `
+            <li>
+              <blockquote>${escapeHtml(evidence.text)}</blockquote>
+              <a href="${report.reportPath}">${escapeHtml(report.reportTitle)}</a>
+            </li>
+          `).join("")}
+        </ul>
+        <h2>Recommendations</h2>
+        <ul>
+          ${recommendations.map(({ evidence, report }) => `
+            <li>
+              <blockquote>${escapeHtml(evidence.text)}</blockquote>
+              <a href="${report.reportPath}">${escapeHtml(report.reportTitle)}</a>
+            </li>
+          `).join("")}
+        </ul>
+        <h2>Related reports</h2>
         ${renderLinkList(
           topic.reports.map((report) => ({
-            href: `/reports/${report.id}`,
+            href: report.reportPath,
             label: report.reportTitle,
-            meta: `${report.state} • ${report.publicationYear}`,
+            meta: `${report.jurisdiction} • ${report.agency} • ${report.publicationYear}`,
           })),
         )}
       </section>
@@ -1113,7 +1200,7 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
   }
 
   if (pathname === "/reports") {
-    return getReportsIndexRoute(1);
+    return getReportsIndexRoute(1, url);
   }
 
   const reportPageMatch = pathname.match(/^\/reports\/page\/(\d+)$/);
@@ -1127,7 +1214,7 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
         snapshotHtml: "",
       };
     }
-    return getReportsIndexRoute(page);
+    return getReportsIndexRoute(page, url);
   }
 
   if (pathname === "/states") {
@@ -1258,11 +1345,12 @@ export async function generateSitemap(): Promise<string> {
   );
 
   try {
-    const [statePages, reportResults, researchSlugs, agencyPages] = await Promise.all([
+    const [statePages, reportResults, researchSlugs, agencyPages, topicPages] = await Promise.all([
       storage.getIndexableStates(60),
       storage.getReports({}, 1, 5000),
       listResearchReportSlugs(),
       storage.getAgenciesWithCounts(200),
+      storage.getTopicsWithCounts(),
     ]);
 
     const reportPageCount = Math.ceil(reportResults.total / 24);
@@ -1296,7 +1384,7 @@ export async function generateSitemap(): Promise<string> {
       });
     }
 
-    for (const topic of TOPICS) {
+    for (const topic of topicPages) {
       urls.push({
         loc: `${SITE_URL}/topics/${topic.slug}`,
         changefreq: "weekly",

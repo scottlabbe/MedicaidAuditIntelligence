@@ -36,6 +36,7 @@ export function primeInitialRouteData(
         filters: { sortBy: "date_desc" },
       },
     );
+    client.setQueryData(["/api/topics"], initialRouteData.home.topics);
   }
 
   if (
@@ -45,7 +46,7 @@ export function primeInitialRouteData(
     client.setQueryData(
       [
         "/api/reports",
-        { sortBy: initialRouteData.reportsIndex.filters.sortBy || "date_desc" },
+        initialRouteData.reportsIndex.filters,
         initialRouteData.reportsIndex.page,
       ],
       initialRouteData.reportsIndex,

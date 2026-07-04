@@ -117,14 +117,56 @@ export interface AgencyLandingPageData extends AgencySummary {
 export interface TopicSummary {
   slug: string;
   name: string;
-  query: string;
-  description: string;
+  shortDescription: string;
+  scope: string;
   reportCount: number;
 }
 
-export interface TopicLandingPageData extends TopicSummary {
-  reports: ReportListItem[];
+export type TopicEvidenceSourceType =
+  | "finding"
+  | "recommendation"
+  | "metadata";
+
+export interface TopicEvidence {
+  sourceType: TopicEvidenceSourceType;
+  sourceLabel: string;
+  text: string;
+  rank: number;
 }
+
+export interface TopicReport {
+  id: number;
+  reportTitle: string;
+  agency: string;
+  jurisdiction: string;
+  publicationYear: number;
+  publicationMonth?: number;
+  publicationDay?: number;
+  rationale: string;
+  evidence: TopicEvidence[];
+  reportPath: string;
+}
+
+export interface TopicLandingPageData extends TopicSummary {
+  definition: string;
+  whyAuditorsCare: string;
+  stateCount: number;
+  hasFederalReports: boolean;
+  agencyCount: number;
+  publicationYearStart?: number;
+  publicationYearEnd?: number;
+  reports: TopicReport[];
+}
+
+export type TopicSlugResolution =
+  | { kind: "canonical"; slug: string }
+  | {
+      kind: "alias";
+      slug: string;
+      canonicalSlug: string;
+      redirectStatus: 301 | 308;
+    }
+  | { kind: "not_found"; slug: string };
 
 export interface StateLandingPageData {
   code: string;
@@ -180,6 +222,7 @@ export interface HomeRouteData {
   stats: DashboardStats;
   latestReports: ReportListItem[];
   states: IndexableStateSummary[];
+  topics: TopicSummary[];
 }
 
 export interface ExploreRouteData {

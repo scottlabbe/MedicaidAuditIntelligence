@@ -429,3 +429,78 @@ Scan the vocabulary used across Medicaid audit records, understand a term withou
 - Reduced-motion review: selection and scrolling use no animation; loading placeholders disable their pulse under `prefers-reduced-motion`.
 - Content review: all 24 terms returned by the live frequency endpoint have reviewed definitions. No definition contains an individual report reference.
 - Implementation correction: the first interaction updated the query string without changing the view because the router excludes query parameters from its location value. The final implementation synchronizes selection with the URL explicitly and handles browser back/forward events.
+
+## 2026-07-03 — Reviewed topic register and evidence pages
+
+**User job**
+
+Find reports assigned to a Medicaid audit subject through human review and verify each assignment against its approved source evidence.
+
+**Plan**
+
+- Color: reuse institutional green `#12372A`, interactive green `#176B4D`, evidence wash `#E8F1EC`, ink `#111813`, secondary ink `#4B5650`, paper `#FFFFFF`, quiet surface `#F3F5F4`, and border `#B7C0BB`.
+- Type: Public Sans for taxonomy structure and navigation, Source Serif 4 for rationales and evidence snapshots, and IBM Plex Mono for publication and evidence-source labels.
+- Layout: replace the keyword glossary with a single ruled canonical register. Topic detail uses a full-width heading and scope note followed by vertically ordered report dockets; each docket divides reviewer rationale from approved evidence on wide screens and stacks them on mobile.
+- Signature: each topic-report relationship is itself an evidence docket, exposing provenance, the reviewer-approved rationale, and verbatim stored evidence before the full-report link.
+- No new color, typeface, radius, shadow, or animation pattern was introduced.
+
+**Pre-build critique**
+
+- What felt generic: a card grid with topic icons and badges would resemble a generic directory, while numbered register rows would imply a ranking the taxonomy does not have.
+- What changed: topic order remains the approved taxonomy order without decorative numbering. Rules encode topic boundaries, and the only count shown is the reviewed-report count.
+- Why it is specific to Medicaid audit evidence: detail pages distinguish findings, recommendations, and approved report metadata and preserve each stored evidence snapshot without paraphrase.
+- Rejected alternative: reusing the general report card was rejected because it hides the topic-specific rationale and evidence provenance that make these assignments publicly defensible.
+
+**Rendered review**
+
+- Viewports reviewed: `1440 × 1000` desktop and `390 × 844` mobile for both the canonical register and a 20-report Program Oversight evidence page.
+- Desktop: the register reads as one continuous taxonomy rather than a card grid. Report counts remain secondary, and detail-page rationale/evidence columns have distinct roles without competing with the report title.
+- Mobile: the register and evidence dockets stack without horizontal overflow (`scrollWidth` equals the `390px` viewport). Long agency names, report titles, rationales, and evidence snapshots wrap without clipping.
+- Keyboard and focus review: topic entries and full-report actions are semantic links in document order and retain the approved yellow focus-ring classes. Native report filters preserve labeled keyboard operation.
+- Reduced-motion review: neither topic page introduces motion. Loading pulses retain the existing `motion-reduce:animate-none` behavior.
+- Accessibility findings: pages use one `h1`, section headings, ordered lists, labeled regions, semantic `article` elements, `blockquote` for stored evidence snapshots, and text source labels rather than color-only attribution.
+- Functional correction: direct report-filter URLs initially lost their query string because the router location omits search parameters. Query state now synchronizes on initial load, filter changes, and browser history; SSR parses the same filters to avoid hydration mismatch.
+- Local-preview correction: the development script now loads `.env` explicitly. Port `5000` was occupied in the review environment, so the verified preview ran on `4173`.
+
+**Decision**
+
+Keep the ruled canonical register and split rationale/evidence docket. No visual tokens or decorative elements were added after review. The rendered hierarchy is sufficiently restrained, and preserving full approved evidence text is more important than reducing vertical page length.
+
+## 2026-07-04 — Topic field guides
+
+**User job**
+
+Understand why a Medicaid audit topic matters, see the evidence and recommended actions that recur within it, and reach the complete source-report set without reading a report-by-report evidence dump.
+
+**Plan**
+
+- Color: reuse institutional green `#12372A`, interactive green `#176B4D`, evidence wash `#E8F1EC`, ink `#111813`, secondary ink `#4B5650`, paper `#FFFFFF`, and border `#B7C0BB`.
+- Type: Public Sans for guide structure, Source Serif 4 for definitions and evidence excerpts, and IBM Plex Mono for coverage facts and source metadata.
+- Layout: a `220px` contents and coverage rail beside a `760px` reading column on desktop, collapsing to a single document flow on mobile.
+- Signature: a ruled finding schedule places each stored evidence excerpt before its report citation. Findings and recommendations initially show three entries and expand in place.
+- Public titles use ordinary evidence-library language. Review workflow terminology remains internal and is not used as a visual badge or section name.
+- No new color, typeface, radius, shadow, or animation pattern was introduced.
+
+**Pre-build critique**
+
+- What felt generic: a sticky metric rail could make the page resemble a SaaS dashboard, while summary cards would fragment what should read as a reference guide.
+- What changed: the rail is limited to document navigation and four coverage facts. The main column remains a continuous briefing with ruled sections and direct source citations.
+- Why it is specific to Medicaid audit evidence: the page separates topic definition, oversight significance, finding evidence, recommended actions, and the complete report record—the sequence an auditor uses to orient, assess, and verify.
+- Data limitation: “States represented” is explicitly based on each report’s recorded jurisdiction. The page does not claim to measure every state affected. Findings are called supporting evidence rather than “most severe” because the current evidence model has no severity review field.
+- Rejected alternative: dynamically generated topic summaries and severity rankings were rejected because they would introduce unsupported interpretation into an otherwise source-traceable page.
+
+**Rendered review**
+
+- Viewports reviewed: `1440 × 1000` desktop and `390 × 844` mobile using the Eligibility and Enrollment guide.
+- Desktop: the contents and coverage rail remains subordinate to the reading column, while the definition and oversight significance establish the guide before evidence appears. The finding schedule keeps each excerpt and report citation visually inseparable.
+- Mobile: the first pass placed the desktop rail before the definition, consuming the opening viewport. The final layout hides the rail, leads with Definition and Why auditors care, then introduces a compact Evidence coverage section before findings.
+- Responsive review: the final document has no horizontal overflow at `390px`. Section count labels stack below headings when needed, preventing the Recommendations count from widening the page.
+- Interaction review: “Show 7 more findings” expands from three to all ten excerpts, updates to “Show fewer findings,” and exposes `aria-expanded="true"`.
+- Keyboard and focus review: contents links, report citations, expanders, and related-report links use semantic controls and the approved visible focus treatment.
+- Reduced-motion review: the redesign adds no motion; only the existing loading skeleton animates and retains `motion-reduce:animate-none`.
+- Accessibility findings: the nested page-level `main` discovered in the first pass was replaced with `article`; final output contains one page `main`, one `h1`, ordered section headings, blockquotes, source links, and labeled coverage data.
+- Terminology review: no public topic-page text contains “reviewed,” “reviewer-approved,” or “approved evidence.”
+
+**Decision**
+
+Keep the field-guide structure and desktop coverage rail. On mobile, prioritize explanatory content over navigation and move coverage into the document flow. Keep evidence ordering transparent and avoid severity language until severity is captured as a reviewed data field.

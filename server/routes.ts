@@ -417,7 +417,18 @@ Sitemap: ${siteUrl}/sitemap.xml`
 
   app.get("/api/topics/:slug", rateLimit, async (req, res) => {
     try {
-      const topic = await storage.getTopicLandingPage(req.params.slug, 24);
+      const resolution = await storage.resolveTopicSlug(req.params.slug);
+      if (resolution.kind === "alias") {
+        return res.redirect(
+          resolution.redirectStatus,
+          `/api/topics/${resolution.canonicalSlug}`,
+        );
+      }
+      if (resolution.kind === "not_found") {
+        return res.status(404).json({ error: "Topic not found" });
+      }
+
+      const topic = await storage.getTopicLandingPage(resolution.slug, 100);
       if (!topic) {
         return res.status(404).json({ error: "Topic not found" });
       }
