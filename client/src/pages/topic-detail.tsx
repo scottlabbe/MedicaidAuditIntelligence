@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { apiClient } from "@/lib/api";
 import PageMeta from "@/components/seo/PageMeta";
@@ -22,8 +22,6 @@ interface GuideEvidenceItem {
 export default function TopicDetail() {
   const [, params] = useRoute("/topics/:slug");
   const slug = params?.slug || "";
-  const [showAllFindings, setShowAllFindings] = useState(false);
-  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
   const { data, isLoading, error } = useQuery<TopicLandingPageData>({
     queryKey: ["/api/topics", slug],
     enabled: Boolean(slug),
@@ -140,49 +138,23 @@ export default function TopicDetail() {
               </p>
             </section>
 
-            <GuideSection
+            <EvidenceGuideSection
               id="supporting-findings"
               title="Supporting findings"
-              countLabel={`${findings.length} ${findings.length === 1 ? "finding" : "findings"}`}
-            >
-              <EvidenceSchedule
-                items={
-                  showAllFindings
-                    ? findings
-                    : findings.slice(0, INITIAL_EVIDENCE_COUNT)
-                }
-                emptyText="No finding excerpts are available for this topic."
-              />
-              <EvidenceToggle
-                total={findings.length}
-                expanded={showAllFindings}
-                itemLabel="findings"
-                onClick={() => setShowAllFindings((expanded) => !expanded)}
-              />
-            </GuideSection>
+              items={findings}
+              singularLabel="finding"
+              pluralLabel="findings"
+              emptyText="No finding excerpts are available for this topic."
+            />
 
-            <GuideSection
+            <EvidenceGuideSection
               id="recommendations"
               title="Recommendations"
-              countLabel={`${recommendations.length} ${recommendations.length === 1 ? "recommendation" : "recommendations"}`}
-            >
-              <EvidenceSchedule
-                items={
-                  showAllRecommendations
-                    ? recommendations
-                    : recommendations.slice(0, INITIAL_EVIDENCE_COUNT)
-                }
-                emptyText="No recommendation excerpts are available for this topic."
-              />
-              <EvidenceToggle
-                total={recommendations.length}
-                expanded={showAllRecommendations}
-                itemLabel="recommendations"
-                onClick={() =>
-                  setShowAllRecommendations((expanded) => !expanded)
-                }
-              />
-            </GuideSection>
+              items={recommendations}
+              singularLabel="recommendation"
+              pluralLabel="recommendations"
+              emptyText="No recommendation excerpts are available for this topic."
+            />
 
             <GuideSection
               id="related-reports"
@@ -223,11 +195,13 @@ function GuideSection({
   id,
   title,
   countLabel,
+  headerExtra,
   children,
 }: {
   id: string;
   title: string;
   countLabel?: string;
+  headerExtra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -236,17 +210,25 @@ function GuideSection({
       className="scroll-mt-24 border-b border-border pb-12 pt-2 first:pt-0 sm:pb-14 [&+section]:pt-12 sm:[&+section]:pt-14"
       aria-labelledby={`${id}-heading`}
     >
-      <div className="mb-6 flex flex-col items-start gap-1 border-b border-border pb-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-5">
+      <div className="mb-6 flex flex-col items-start gap-3 border-b border-border pb-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-5">
         <h2
           id={`${id}-heading`}
           className="text-2xl font-bold tracking-[-0.015em] text-foreground"
         >
           {title}
         </h2>
-        {countLabel && (
-          <p className="shrink-0 font-mono text-xs text-muted-foreground">
-            {countLabel}
-          </p>
+        {(countLabel || headerExtra) && (
+          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+            {headerExtra}
+            {countLabel && (
+              <p
+                aria-live="polite"
+                className="shrink-0 font-mono text-xs text-muted-foreground"
+              >
+                {countLabel}
+              </p>
+            )}
+          </div>
         )}
       </div>
       {children}
@@ -254,12 +236,118 @@ function GuideSection({
   );
 }
 
+function EvidenceGuideSection({
+  id,
+  title,
+  items,
+  singularLabel,
+  pluralLabel,
+  emptyText,
+}: {
+  id: string;
+  title: string;
+  items: GuideEvidenceItem[];
+  singularLabel: string;
+  pluralLabel: string;
+  emptyText: string;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const terms = useMemo(() => parseQueryTerms(query), [query]);
+  const matches = useMemo(() => filterEvidence(items, terms), [items, terms]);
+
+  const isFiltering = terms.length > 0;
+  const visibleItems = isFiltering
+    ? matches
+    : showAll
+      ? items
+      : items.slice(0, INITIAL_EVIDENCE_COUNT);
+
+  const countLabel = isFiltering
+    ? `${matches.length} of ${items.length} ${pluralLabel}`
+    : `${items.length} ${items.length === 1 ? singularLabel : pluralLabel}`;
+
+  return (
+    <GuideSection
+      id={id}
+      title={title}
+      countLabel={countLabel}
+      headerExtra={
+        items.length > 0 ? (
+          <EvidenceSearchInput
+            id={`${id}-search`}
+            label={`Filter ${pluralLabel} by keyword`}
+            placeholder={`Filter ${pluralLabel}…`}
+            value={query}
+            onChange={setQuery}
+          />
+        ) : undefined
+      }
+    >
+      <EvidenceSchedule
+        items={visibleItems}
+        highlightTerms={terms}
+        emptyText={
+          isFiltering
+            ? `No ${pluralLabel} match “${query.trim()}”.`
+            : emptyText
+        }
+      />
+      {!isFiltering && (
+        <EvidenceToggle
+          total={items.length}
+          expanded={showAll}
+          itemLabel={pluralLabel}
+          onClick={() => setShowAll((expanded) => !expanded)}
+        />
+      )}
+    </GuideSection>
+  );
+}
+
+function EvidenceSearchInput({
+  id,
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <label htmlFor={id} className="sr-only">
+        {label}
+      </label>
+      <Search
+        className="pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
+      <input
+        id={id}
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="w-48 border-b border-border bg-transparent pb-1 pl-6 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus-visible:ring-0"
+      />
+    </div>
+  );
+}
+
 function EvidenceSchedule({
   items,
   emptyText,
+  highlightTerms = [],
 }: {
   items: GuideEvidenceItem[];
   emptyText: string;
+  highlightTerms?: string[];
 }) {
   if (items.length === 0) {
     return <p className="text-muted-foreground">{emptyText}</p>;
@@ -270,7 +358,7 @@ function EvidenceSchedule({
       {items.map((item) => (
         <li key={item.key} className="py-6">
           <blockquote className="border-l-4 border-primary pl-5 font-serif text-lg leading-8 text-foreground">
-            {item.text}
+            {highlightMatches(item.text, highlightTerms)}
           </blockquote>
           <p className="mt-4 pl-6 text-sm leading-6 text-muted-foreground">
             <Link
@@ -413,6 +501,52 @@ function buildGuideEvidence(
         (b.report.publicationDay || 0) - (a.report.publicationDay || 0) ||
         b.report.id - a.report.id,
     );
+}
+
+function parseQueryTerms(query: string): string[] {
+  return query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+function filterEvidence(
+  items: GuideEvidenceItem[],
+  terms: string[],
+): GuideEvidenceItem[] {
+  if (terms.length === 0) return items;
+
+  return items.filter((item) => {
+    const haystack =
+      `${item.text} ${item.report.reportTitle} ${item.report.agency}`.toLowerCase();
+    return terms.every((term) => haystack.includes(term));
+  });
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightMatches(
+  text: string,
+  terms: string[],
+): React.ReactNode {
+  if (terms.length === 0) return text;
+
+  const pattern = new RegExp(
+    `(${terms.map(escapeRegExp).join("|")})`,
+    "gi",
+  );
+  // Terms are captured, so matches land at the odd indices of the split.
+  return text.split(pattern).map((part, index) =>
+    index % 2 === 1 ? (
+      <mark
+        key={index}
+        className="rounded-sm bg-primary/15 px-0.5 text-inherit"
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
 }
 
 function formatStateCoverage(
