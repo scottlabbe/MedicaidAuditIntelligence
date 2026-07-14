@@ -48,6 +48,32 @@ export default function About() {
         title="About Medicaid Audit Intelligence"
         description="How Medicaid Audit Intelligence organizes public Medicaid audit reports, uses AI-assisted extraction, and supports verification against original sources."
         canonicalPath="/about"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "AboutPage",
+            name: "About Medicaid Audit Intelligence",
+            url: "https://www.medicaidintelligence.com/about",
+            about: {
+              "@type": "Organization",
+              name: "Medicaid Audit Intelligence",
+              url: "https://www.medicaidintelligence.com",
+              founder: {
+                "@type": "Person",
+                name: "Scott Labbe",
+                url: "https://scottlabbe.me",
+              },
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: "Scott Labbe",
+            url: "https://scottlabbe.me",
+            sameAs: [CASE_STUDY_URL],
+            knowsAbout: ["Medicaid", "Government auditing", "Program integrity"],
+          },
+        ]}
       />
 
       <header className="max-w-[820px] border-b-2 border-primary pb-10">

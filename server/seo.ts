@@ -10,6 +10,7 @@ import {
   ResearchReportNotFoundError,
   ResearchReportValidationError,
 } from "./researchReports";
+import { resolveAgencySlugAlias } from "./agencyAliases";
 import type { SearchFilters } from "../client/src/lib/types";
 
 const SITE_URL =
@@ -594,6 +595,16 @@ async function getAgenciesIndexRoute(): Promise<ResolvedHtmlRoute> {
 }
 
 async function getAgencyRoute(slug: string): Promise<ResolvedHtmlRoute> {
+  const aliasTarget = resolveAgencySlugAlias(slug);
+  if (aliasTarget) {
+    return {
+      routeType: "redirect",
+      status: 301,
+      redirectTo: `/agencies/${aliasTarget}`,
+      snapshotHtml: "",
+    };
+  }
+
   const agency = await storage.getAgencyLandingPage(slug, 24);
   if (!agency) {
     return getNotFoundRoute();

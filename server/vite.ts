@@ -180,7 +180,14 @@ export function serveStatic(app: Express) {
         headHtml,
         resolvedRoute.initialRouteData,
       );
-      res.status(resolvedRoute.status).set({ "Content-Type": "text/html" }).send(html);
+      const cacheControl =
+        resolvedRoute.status === 200
+          ? "public, s-maxage=300, stale-while-revalidate=86400"
+          : "no-cache";
+      res
+        .status(resolvedRoute.status)
+        .set({ "Content-Type": "text/html", "Cache-Control": cacheControl })
+        .send(html);
     } catch (e) {
       console.warn("SSR failed, serving base HTML:", e);
       res.status(200).set({ "Content-Type": "text/html" }).send(indexHtmlTemplate);

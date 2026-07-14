@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { hmacAuth } from "./auth";
 import { z } from "zod";
 import { generateSitemap } from "./seo";
+import { resolveAgencySlugAlias } from "./agencyAliases";
 import {
   getResearchReportAsset,
   getResearchReportBySlug,
@@ -392,7 +393,8 @@ Sitemap: ${siteUrl}/sitemap.xml`
 
   app.get("/api/agencies/:slug", rateLimit, async (req, res) => {
     try {
-      const agency = await storage.getAgencyLandingPage(req.params.slug, 24);
+      const slug = resolveAgencySlugAlias(req.params.slug) ?? req.params.slug;
+      const agency = await storage.getAgencyLandingPage(slug, 24);
       if (!agency) {
         return res.status(404).json({ error: "Agency not found" });
       }

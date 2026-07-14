@@ -121,6 +121,11 @@ export default function Home() {
             url: "https://www.medicaidintelligence.com",
             description:
               "A public evidence library for Medicaid audit findings, recommendations, financial impacts, and source documents.",
+            founder: {
+              "@type": "Person",
+              name: "Scott Labbe",
+              url: "https://scottlabbe.me",
+            },
           },
           {
             "@context": "https://schema.org",

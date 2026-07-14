@@ -72,8 +72,10 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
       </div>
 
       <div className="p-6">
+        {/* Panels stay mounted (forceMount) so findings/recommendations text is
+            present in server-rendered HTML for crawlers; inactive ones are CSS-hidden. */}
         {/* SUMMARY */}
-        <TabsContent value="summary" className="mt-0">
+        <TabsContent forceMount value="summary" className="mt-0 data-[state=inactive]:hidden">
           <div className="space-y-6">
             {/* Overall Conclusion */}
             {overallConclusion && (
@@ -226,7 +228,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         </TabsContent>
 
         {/* OBJECTIVES */}
-        <TabsContent value="objectives" className="mt-0">
+        <TabsContent forceMount value="objectives" className="mt-0 data-[state=inactive]:hidden">
           <div className="space-y-4">
             <h3 className="text-xl font-semibold mb-4 text-black">
               Audit Objectives
@@ -267,7 +269,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         </TabsContent>
 
         {/* FINDINGS */}
-        <TabsContent value="findings" className="mt-0">
+        <TabsContent forceMount value="findings" className="mt-0 data-[state=inactive]:hidden">
           <div className="space-y-4">
             <h3 className="text-xl font-semibold mb-4 text-black">
               Audit Findings ({findings.length})
@@ -308,7 +310,7 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
         </TabsContent>
 
         {/* RECOMMENDATIONS */}
-        <TabsContent value="recommendations" className="mt-0">
+        <TabsContent forceMount value="recommendations" className="mt-0 data-[state=inactive]:hidden">
           <div className="space-y-4">
             <h3 className="text-xl font-semibold mb-4 text-black">
               Recommendations ({recommendations.length})

@@ -79,8 +79,9 @@ export default function ResearchReportPage() {
           mainEntityOfPage: `https://www.medicaidintelligence.com/research/${report.slug}`,
           dateModified: report.updatedAt,
           author: {
-            "@type": "Organization",
-            name: "Medicaid Audit Intelligence",
+            "@type": "Person",
+            name: "Scott Labbe",
+            url: "https://scottlabbe.me",
           },
           publisher: {
             "@type": "Organization",
