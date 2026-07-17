@@ -204,7 +204,7 @@ export default function ReportDetail() {
                   href={AI_RESEARCH_AGENT_ARTICLE_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-orange-700 underline-offset-4 hover:underline"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary underline decoration-primary/40 underline-offset-4"
                 >
                   Learn how the AI-generated research projects were created
                   <ExternalLink className="h-4 w-4" />

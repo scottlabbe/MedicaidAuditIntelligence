@@ -131,12 +131,12 @@ export class DatabaseStorage implements IStorage {
         findingCount: sql<number>`(
           select count(*)
           from ${findings}
-          where ${findings.reportId} = ${reports.id}
+          where ${findings.reportId} = ${sql.raw('"reports"."id"')}
         )`,
         recommendationCount: sql<number>`(
           select count(*)
           from ${recommendations}
-          where ${recommendations.reportId} = ${reports.id}
+          where ${recommendations.reportId} = ${sql.raw('"reports"."id"')}
         )`,
         originalFilename: reports.originalFilename,
         fileHash: reports.fileHash,
