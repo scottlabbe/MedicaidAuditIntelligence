@@ -208,19 +208,23 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
   let latestReports: any[] = [];
   let states: any[] = [];
   let topics: any[] = [];
+  let researchReports: any[] = [];
 
   try {
-    const [stats, latest, stateSummaries, topicSummaries] = await Promise.all([
-      storage.getDashboardStats(),
-      storage.getReports({ sortBy: "date_desc" }, 1, 4),
-      storage.getIndexableStates(8),
-      storage.getTopicsWithCounts(),
-    ]);
+    const [stats, latest, stateSummaries, topicSummaries, researchSummaries] =
+      await Promise.all([
+        storage.getDashboardStats(),
+        storage.getReports({ sortBy: "date_desc" }, 1, 4),
+        storage.getIndexableStates(8),
+        storage.getTopicsWithCounts(),
+        listResearchReports(),
+      ]);
     totalReports = stats.totalReports;
     statesWithReports = stats.statesWithReports;
     latestReports = latest.items;
     states = stateSummaries;
     topics = topicSummaries;
+    researchReports = researchSummaries;
   } catch {
     // Keep defaults if the database is unavailable.
   }
@@ -269,6 +273,16 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
         )}
       </section>
       <section>
+        <h2>Research briefs</h2>
+        ${renderLinkList(
+          researchReports.map((report: any) => ({
+            href: `/research/${report.slug}`,
+            label: report.title,
+            meta: report.category,
+          })),
+        )}
+      </section>
+      <section>
         <h2>Browse state audit coverage</h2>
         ${renderLinkList(
           states.map((state: any) => ({
@@ -278,7 +292,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
           })),
         )}
       </section>
-      <p><a href="/states">Browse by state</a>, <a href="/agencies">agency</a>, or <a href="/topics">topic</a>.</p>
+      <p><a href="/states">Browse by state</a>, <a href="/agencies">agency</a>, <a href="/topics">topic</a>, or <a href="/research">research</a>.</p>
     `),
     initialRouteData: {
       routeType: "home",
@@ -292,6 +306,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
         latestReports,
         states,
         topics,
+        researchReports,
       },
     },
   };

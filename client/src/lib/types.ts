@@ -223,6 +223,7 @@ export interface HomeRouteData {
   latestReports: ReportListItem[];
   states: IndexableStateSummary[];
   topics: TopicSummary[];
+  researchReports?: ResearchReportListItem[];
 }
 
 export interface ExploreRouteData {

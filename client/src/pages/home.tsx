@@ -18,6 +18,7 @@ import type {
   IndexableStateSummary,
   ReportListItem,
   ReportWithDetails,
+  ResearchReportListItem,
   SearchResponse,
   TopicSummary,
 } from "@/lib/types";
@@ -37,6 +38,8 @@ export default function Home() {
     ssrData?.routeType === "home" ? ssrData.home?.states ?? [] : [];
   const initialTopics =
     ssrData?.routeType === "home" ? ssrData.home?.topics ?? [] : [];
+  const initialResearch =
+    ssrData?.routeType === "home" ? ssrData.home?.researchReports ?? [] : [];
   const [activeReportIndex, setActiveReportIndex] = useState(0);
 
   const { data: stats } = useQuery({
@@ -54,6 +57,14 @@ export default function Home() {
     queryKey: ["/api/topics"],
     queryFn: () => apiClient.getTopics(),
     initialData: initialTopics.length > 0 ? initialTopics : undefined,
+  });
+
+  const { data: researchBriefs = initialResearch } = useQuery<
+    ResearchReportListItem[]
+  >({
+    queryKey: ["/api/research-reports"],
+    queryFn: () => apiClient.getResearchReports(),
+    initialData: initialResearch.length > 0 ? initialResearch : undefined,
   });
 
   const {
@@ -257,16 +268,172 @@ export default function Home() {
           )}
         </section>
 
+        <ResearchBriefs
+          briefs={researchBriefs}
+          prefetchHandlers={prefetchHandlers}
+        />
+
+        <TopicBand topics={topicLinks} prefetchHandlers={prefetchHandlers} />
+
         <BrowseEvidence
           states={stateLinks}
           agencies={agencyLinks}
-          topics={topicLinks}
+          research={researchBriefs}
           years={yearLinks}
           prefetchHandlers={prefetchHandlers}
         />
       </div>
     </>
   );
+}
+
+function ResearchBriefs({
+  briefs,
+  prefetchHandlers,
+}: {
+  briefs: ResearchReportListItem[];
+  prefetchHandlers: (href: string) => Record<string, () => void>;
+}) {
+  if (!briefs.length) return null;
+
+  return (
+    <section
+      className="border-t-2 border-primary py-10 sm:py-14"
+      aria-labelledby="research-briefs-title"
+    >
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Research synthesis
+          </p>
+          <h2
+            id="research-briefs-title"
+            className="mt-2 text-2xl font-semibold tracking-tight text-foreground"
+          >
+            Cross-report research briefs
+          </h2>
+        </div>
+        <Link
+          href="/research"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline decoration-primary/40 underline-offset-4"
+          {...prefetchHandlers("/research")}
+        >
+          View all research
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </div>
+
+      <div className="grid border-l border-t border-border md:grid-cols-3">
+        {briefs.slice(0, 3).map((brief) => {
+          const briefHref = `/research/${brief.slug}`;
+          return (
+            <article
+              key={brief.slug}
+              className="flex flex-col border-b border-r border-border p-5"
+            >
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+                {brief.category}
+              </p>
+              <h3 className="mt-3 text-lg font-semibold leading-6 tracking-[-0.01em] text-foreground">
+                <Link
+                  href={briefHref}
+                  className="decoration-primary/40 underline-offset-4 hover:underline"
+                  {...prefetchHandlers(briefHref)}
+                >
+                  {brief.title}
+                </Link>
+              </h3>
+              <p className="mt-3 font-serif text-sm leading-6 text-muted-foreground">
+                {truncateText(brief.description, 150)}
+              </p>
+              {typeof brief.sourceCount === "number" && (
+                <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                  {brief.sourceCount} cited audit{" "}
+                  {brief.sourceCount === 1 ? "report" : "reports"}
+                </p>
+              )}
+              <Link
+                href={briefHref}
+                className="mt-auto inline-flex items-center gap-1.5 pt-5 text-sm font-semibold text-primary underline decoration-primary/40 underline-offset-4"
+                {...prefetchHandlers(briefHref)}
+              >
+                Read the brief
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function TopicBand({
+  topics,
+  prefetchHandlers,
+}: {
+  topics: TopicSummary[];
+  prefetchHandlers: (href: string) => Record<string, () => void>;
+}) {
+  const topTopics = [...topics]
+    .sort((a, b) => b.reportCount - a.reportCount)
+    .slice(0, 6);
+
+  if (!topTopics.length) return null;
+
+  return (
+    <section
+      className="border-t-2 border-primary py-10 sm:py-14"
+      aria-labelledby="topic-band-title"
+    >
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Curated subjects
+          </p>
+          <h2
+            id="topic-band-title"
+            className="mt-2 text-2xl font-semibold tracking-tight text-foreground"
+          >
+            Browse by topic
+          </h2>
+        </div>
+        <Link
+          href="/topics"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline decoration-primary/40 underline-offset-4"
+          {...prefetchHandlers("/topics")}
+        >
+          All topics
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </div>
+
+      <ul className="flex flex-wrap gap-3">
+        {topTopics.map((topic) => {
+          const topicHref = `/topics/${topic.slug}`;
+          return (
+            <li key={topic.slug}>
+              <Link
+                href={topicHref}
+                className="inline-flex min-h-11 items-center gap-2.5 border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                {...prefetchHandlers(topicHref)}
+              >
+                {topic.name}
+                <span className="font-mono text-[11px] font-normal text-muted-foreground">
+                  {topic.reportCount}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function truncateText(text: string, maxLength: number) {
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1).trim()}…`;
 }
 
 function EvidenceDocket({
@@ -406,13 +573,13 @@ function Metric({ label, value }: { label: string; value: string }) {
 function BrowseEvidence({
   states,
   agencies,
-  topics,
+  research,
   years,
   prefetchHandlers,
 }: {
   states: Array<{ code: string; name: string; slug: string; reportCount: number }>;
   agencies: ReportListItem[];
-  topics: TopicSummary[];
+  research: ResearchReportListItem[];
   years: number[];
   prefetchHandlers: (href: string) => Record<string, () => void>;
 }) {
@@ -442,13 +609,12 @@ function BrowseEvidence({
       })),
     },
     {
-      label: "By topic",
-      href: "/topics",
-      intro: "Subjects assigned through human review.",
-      examples: topics.slice(0, 2).map((topic) => ({
-        label: topic.name,
-        meta: `${topic.reportCount} reports`,
-        href: `/topics/${topic.slug}`,
+      label: "Research",
+      href: "/research",
+      intro: "Cross-report analysis grounded in audit evidence.",
+      examples: research.slice(0, 2).map((brief) => ({
+        label: brief.title,
+        href: `/research/${brief.slug}`,
       })),
     },
     {
