@@ -119,7 +119,8 @@
     @apply font-serif leading-relaxed;
   }
 
-  .research-prose ul {
+  .research-prose ul,
+  .research-prose ol {
     @apply font-serif;
   }
 

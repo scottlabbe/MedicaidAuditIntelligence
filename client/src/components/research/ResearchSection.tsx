@@ -52,7 +52,7 @@ export default function ResearchSection({
 
           {section.contentHtml ? (
             <div
-              className="research-prose prose mt-5 max-w-none prose-p:my-4 prose-ul:my-5 prose-li:my-2 prose-strong:text-foreground prose-a:font-sans prose-a:font-semibold prose-a:text-primary prose-a:underline prose-a:decoration-primary/40 prose-a:underline-offset-4 prose-figure:my-8 prose-img:my-0 prose-img:w-full prose-img:max-w-full prose-img:rounded-sm prose-img:border prose-img:border-border prose-img:bg-white"
+              className="research-prose prose mt-5 max-w-none prose-p:my-4 prose-ul:my-5 prose-ol:my-5 prose-li:my-2 prose-strong:text-foreground prose-a:font-sans prose-a:font-semibold prose-a:text-primary prose-a:underline prose-a:decoration-primary/40 prose-a:underline-offset-4 prose-figure:my-8 prose-img:my-0 prose-img:w-full prose-img:max-w-full prose-img:rounded-sm prose-img:border prose-img:border-border prose-img:bg-white"
               dangerouslySetInnerHTML={{ __html: section.contentHtml }}
             />
           ) : null}

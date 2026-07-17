@@ -414,19 +414,38 @@ function extractSources(
   return sources;
 }
 
+type BufferedLine = {
+  text: string;
+  hardBreak: boolean;
+};
+
 function renderMarkdownLines(lines: string[], slug: string): string {
   const html: string[] = [];
-  let paragraphBuffer: string[] = [];
-  let listBuffer: string[] = [];
+  let paragraphBuffer: BufferedLine[] = [];
+  let listBuffer: BufferedLine[][] = [];
+  let orderedBuffer: BufferedLine[][] = [];
+  let orderedStart = 1;
+  let orderedPendingBreak = false;
+
+  const joinBuffered = (segments: BufferedLine[]): string =>
+    segments
+      .map((segment, index) => {
+        const rendered = renderInlineMarkdown(segment.text);
+        if (index === segments.length - 1) {
+          return rendered;
+        }
+        return `${rendered}${segment.hardBreak ? "<br />" : " "}`;
+      })
+      .join("");
 
   const flushParagraph = () => {
     if (!paragraphBuffer.length) {
       return;
     }
 
-    const text = paragraphBuffer.join(" ").trim();
+    const text = joinBuffered(paragraphBuffer).trim();
     if (text) {
-      html.push(`<p>${renderInlineMarkdown(text)}</p>`);
+      html.push(`<p>${text}</p>`);
     }
     paragraphBuffer = [];
   };
@@ -438,18 +457,39 @@ function renderMarkdownLines(lines: string[], slug: string): string {
 
     html.push(
       `<ul>${listBuffer
-        .map((item) => `<li>${renderInlineMarkdown(item)}</li>`)
+        .map((item) => `<li>${joinBuffered(item)}</li>`)
         .join("")}</ul>`,
     );
     listBuffer = [];
   };
 
+  const flushOrderedList = () => {
+    if (!orderedBuffer.length) {
+      return;
+    }
+
+    const startAttr = orderedStart !== 1 ? ` start="${orderedStart}"` : "";
+    html.push(
+      `<ol${startAttr}>${orderedBuffer
+        .map((item) => `<li>${joinBuffered(item)}</li>`)
+        .join("")}</ol>`,
+    );
+    orderedBuffer = [];
+    orderedPendingBreak = false;
+  };
+
   for (const line of lines) {
     const trimmed = line.trim();
+    const hardBreak = /\S\s{2,}$/.test(line);
 
     if (!trimmed) {
       flushParagraph();
       flushList();
+      // Keep an ordered list open across the blank lines that separate
+      // numbered items, so they render as one list instead of many.
+      if (orderedBuffer.length) {
+        orderedPendingBreak = true;
+      }
       continue;
     }
 
@@ -457,6 +497,7 @@ function renderMarkdownLines(lines: string[], slug: string): string {
     if (image) {
       flushParagraph();
       flushList();
+      flushOrderedList();
       const titleAttr = image.title ? ` title="${image.title}"` : "";
       html.push(
         `<figure class="research-report-image"><img src="${image.src}" alt="${image.alt}" loading="lazy" decoding="async"${titleAttr} /></figure>`,
@@ -464,27 +505,51 @@ function renderMarkdownLines(lines: string[], slug: string): string {
       continue;
     }
 
+    const orderedMatch = trimmed.match(/^(\d+)[.)]\s+(.*)$/);
+    if (orderedMatch) {
+      flushParagraph();
+      flushList();
+      if (!orderedBuffer.length) {
+        orderedStart = Number(orderedMatch[1]);
+      }
+      orderedPendingBreak = false;
+      orderedBuffer.push([{ text: orderedMatch[2].trim(), hardBreak }]);
+      continue;
+    }
+
     if (trimmed.startsWith("- ")) {
       flushParagraph();
-      listBuffer.push(trimmed.slice(2).trim());
+      flushOrderedList();
+      listBuffer.push([{ text: trimmed.slice(2).trim(), hardBreak }]);
+      continue;
+    }
+
+    if (orderedBuffer.length) {
+      if (!orderedPendingBreak && /^\s{2,}\S/.test(line)) {
+        orderedBuffer[orderedBuffer.length - 1].push({ text: trimmed, hardBreak });
+      } else {
+        flushOrderedList();
+        paragraphBuffer.push({ text: trimmed, hardBreak });
+      }
       continue;
     }
 
     if (listBuffer.length) {
       if (/^\s{2,}\S/.test(line)) {
-        listBuffer[listBuffer.length - 1] = `${listBuffer[listBuffer.length - 1]} ${trimmed}`;
+        listBuffer[listBuffer.length - 1].push({ text: trimmed, hardBreak });
       } else {
         flushList();
-        paragraphBuffer.push(trimmed);
+        paragraphBuffer.push({ text: trimmed, hardBreak });
       }
       continue;
     }
 
-    paragraphBuffer.push(trimmed);
+    paragraphBuffer.push({ text: trimmed, hardBreak });
   }
 
   flushParagraph();
   flushList();
+  flushOrderedList();
   return html.join("");
 }
 
@@ -624,7 +689,7 @@ function buildAnchorTag(
   const external =
     options?.external ?? /^(?:https?:)?\/\//.test(href);
   const relAttrs = external ? ' target="_blank" rel="noopener noreferrer"' : "";
-  return `<a href="${href}" class="text-orange-700 underline-offset-2 hover:underline"${relAttrs}>${label}</a>`;
+  return `<a href="${href}" class="font-sans font-semibold text-primary underline decoration-primary/40 underline-offset-4"${relAttrs}>${label}</a>`;
 }
 
 function isSafeHref(href: string): boolean {
