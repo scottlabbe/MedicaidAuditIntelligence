@@ -146,7 +146,24 @@
         "state": { "const": "complete" },
         "reviewId": { "type": "string", "format": "uuid" },
         "reviewerId": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "completedAt": { "type": "string", "format": "date-time" }
+        "completedAt": { "type": "string", "format": "date-time" },
+        "origin": { "enum": ["human", "agent"] },
+        "auditStatus": {
+          "enum": ["not_required", "unaudited", "endorsed", "corrected"]
+        },
+        "autoFlags": {
+          "type": "array",
+          "maxItems": 40,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code"],
+            "properties": {
+              "code": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "topicKey": { "type": "string", "minLength": 1, "maxLength": 80 }
+            }
+          }
+        }
       }
     },
     "replacement": {

@@ -708,7 +708,7 @@ async function getTopicRoute(slug: string): Promise<ResolvedHtmlRoute> {
     return getNotFoundRoute();
   }
 
-  const topic = await storage.getTopicLandingPage(resolution.slug, 100);
+  const topic = await storage.getTopicLandingPage(resolution.slug);
   if (!topic) {
     return getNotFoundRoute();
   }

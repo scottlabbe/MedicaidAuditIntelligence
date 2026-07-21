@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.medicaidintelligence.com/schemas/opportunity-observatory-context-v1.schema.json",
+  "title": "Opportunity Observatory Context v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "inputs",
+    "corpus",
+    "gsc",
+    "liveSite",
+    "sourceRegistry",
+    "sourceReachability"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/inputStatus" },
+      "required": ["corpus", "gsc", "liveSite", "sourceReachability"]
+    },
+    "corpus": { "type": ["object", "null"] },
+    "gsc": { "type": ["object", "null"] },
+    "liveSite": { "type": ["object", "null"] },
+    "sourceRegistry": { "type": "object" },
+    "sourceReachability": { "type": ["array", "null"] }
+  },
+  "$defs": {
+    "inputStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["available", "unavailable", "skipped"] },
+        "detail": { "type": "string" }
+      }
+    }
+  }
+}

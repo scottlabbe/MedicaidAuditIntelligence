@@ -53,3 +53,6 @@ pnpm-debug.log*
 
 # Runtime
 *.pid
+
+# Opportunity Observatory generated and private inputs
+.observatory/

@@ -85,6 +85,21 @@ const reportSchema = z
         reviewId: uuid,
         reviewerId: z.string().min(1).max(120),
         completedAt: z.string().datetime(),
+        origin: z.enum(["human", "agent"]).optional(),
+        auditStatus: z
+          .enum(["not_required", "unaudited", "endorsed", "corrected"])
+          .optional(),
+        autoFlags: z
+          .array(
+            z
+              .object({
+                code: z.string().min(1).max(40),
+                topicKey: z.string().min(1).max(80).optional(),
+              })
+              .strict(),
+          )
+          .max(40)
+          .optional(),
       })
       .strict(),
     replacement: z

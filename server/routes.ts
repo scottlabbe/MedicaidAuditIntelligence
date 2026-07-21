@@ -430,7 +430,7 @@ Sitemap: ${siteUrl}/sitemap.xml`
         return res.status(404).json({ error: "Topic not found" });
       }
 
-      const topic = await storage.getTopicLandingPage(resolution.slug, 100);
+      const topic = await storage.getTopicLandingPage(resolution.slug);
       if (!topic) {
         return res.status(404).json({ error: "Topic not found" });
       }

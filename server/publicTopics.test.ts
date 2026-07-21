@@ -41,7 +41,7 @@ test("returns the active topic register in taxonomy order", async () => {
 
 test("topic detail exposes only active assignments and visible reports", async () => {
   for (const slug of CANONICAL_SLUGS) {
-    const topic = await storage.getTopicLandingPage(slug, 100);
+    const topic = await storage.getTopicLandingPage(slug);
     assert.ok(topic);
     assert.equal(topic.slug, slug);
     assert.equal(topic.reportCount, topic.reports.length);
@@ -101,7 +101,7 @@ test("topic detail exposes only active assignments and visible reports", async (
 });
 
 test("topic report filtering uses the same reviewed assignments", async () => {
-  const topic = await storage.getTopicLandingPage("managed-care", 100);
+  const topic = await storage.getTopicLandingPage("managed-care");
   assert.ok(topic);
 
   const filtered = await storage.getReports(

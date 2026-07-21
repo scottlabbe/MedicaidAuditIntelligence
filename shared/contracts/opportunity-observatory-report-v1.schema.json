@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.medicaidintelligence.com/schemas/opportunity-observatory-report-v1.schema.json",
+  "title": "Opportunity Observatory Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runDate",
+    "verdict",
+    "reviewScope",
+    "relevantReports",
+    "siteFindings",
+    "bestNextMove",
+    "technicalAlerts",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "runDate": { "type": "string", "format": "date" },
+    "verdict": { "type": "string", "maxLength": 1200 },
+    "reviewScope": { "$ref": "#/$defs/reviewScope" },
+    "relevantReports": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relevantReport" }
+    },
+    "siteFindings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/siteFinding" }
+    },
+    "bestNextMove": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/bestNextMove" }
+      ]
+    },
+    "technicalAlerts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "$defs": {
+    "reviewScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceDateWindow", "sourcesReviewed", "siteFamilyReviewed", "sitePagesReviewed"],
+      "properties": {
+        "sourceDateWindow": { "type": "string", "minLength": 1 },
+        "sourcesReviewed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "siteFamilyReviewed": {
+          "type": ["string", "null"]
+        },
+        "sitePagesReviewed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+    "relevantReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reportKey",
+        "publisher",
+        "title",
+        "reportNumber",
+        "publicationDate",
+        "sourceUrl",
+        "accessDate",
+        "relevance",
+        "corpusStatus",
+        "relatedCorpusReportIds",
+        "suggestedUse",
+        "evidenceStrength",
+        "uncertainty"
+      ],
+      "properties": {
+        "reportKey": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "publisher": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "reportNumber": { "type": ["string", "null"] },
+        "publicationDate": { "type": ["string", "null"], "format": "date" },
+        "sourceUrl": { "type": "string", "format": "uri" },
+        "accessDate": { "type": "string", "format": "date" },
+        "relevance": { "type": "string", "minLength": 1 },
+        "corpusStatus": { "enum": ["absent", "possible_duplicate", "present", "unknown"] },
+        "relatedCorpusReportIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "suggestedUse": {
+          "enum": ["add_report", "update_existing_page", "cross_report_synthesis", "monitor_only", "no_action"]
+        },
+        "evidenceStrength": { "enum": ["high", "medium", "low"] },
+        "uncertainty": { "type": "string" }
+      }
+    },
+    "siteFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "findingKey",
+        "category",
+        "finding",
+        "affectedPages",
+        "evidence",
+        "benefit",
+        "effort",
+        "confidence",
+        "nextVerification"
+      ],
+      "properties": {
+        "findingKey": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "category": {
+          "enum": [
+            "existing_page_improvement",
+            "cross_report_synthesis",
+            "coverage_gap",
+            "internal_linking_navigation",
+            "search_mismatch",
+            "thin_stale_content",
+            "new_feature",
+            "technical",
+            "gsc"
+          ]
+        },
+        "finding": { "type": "string", "minLength": 1 },
+        "affectedPages": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "benefit": { "type": "string", "minLength": 1 },
+        "effort": { "enum": ["small", "medium", "large"] },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "nextVerification": { "type": "string" }
+      }
+    },
+    "bestNextMove": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "referenceKey",
+        "recommendation",
+        "rationale",
+        "boundedScope",
+        "affectedPages",
+        "evidenceToReverify",
+        "implementationSteps",
+        "risks",
+        "completionChecks"
+      ],
+      "properties": {
+        "referenceKey": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "recommendation": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "boundedScope": { "type": "string", "minLength": 1 },
+        "affectedPages": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "evidenceToReverify": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "implementationSteps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "risks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "completionChecks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

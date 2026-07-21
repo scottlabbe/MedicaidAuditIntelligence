@@ -1,0 +1,4 @@
+interface:
+  display_name: "Opportunity Observatory"
+  short_description: "Inventory Medicaid audit and site opportunities"
+  default_prompt: "Use $opportunity-observatory to inventory qualified Medicaid audit reports and site improvements, then recommend at most one practical next move."

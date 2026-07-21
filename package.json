@@ -11,6 +11,11 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
     "llms:generate": "tsx server/llms/generateLlmsFiles.ts",
+    "observatory:context": "node --env-file=.env --import tsx scripts/observatory/build-context.ts",
+    "observatory:gsc": "node --import tsx scripts/observatory/import-gsc.ts",
+    "observatory:inventory": "node --env-file=.env --import tsx scripts/observatory/inventory-corpus.ts",
+    "observatory:test": "node --import tsx --test scripts/observatory/*.test.ts",
+    "observatory:validate": "node --import tsx scripts/observatory/validate.ts",
     "topic:import": "node --env-file=.env --import tsx server/topicImport/cli.ts",
     "topic:import:test": "node --import tsx --test server/topicImport/*.test.ts",
     "topic:public:test": "node --env-file=.env --import tsx --test server/publicTopics.test.ts"

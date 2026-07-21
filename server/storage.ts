@@ -97,7 +97,7 @@ export interface IStorage {
   getAgencyLandingPage(slug: string, limit?: number): Promise<AgencyLandingPageData | undefined>;
   getTopicsWithCounts(): Promise<TopicSummary[]>;
   resolveTopicSlug(slug: string): Promise<TopicSlugResolution>;
-  getTopicLandingPage(slug: string, limit?: number): Promise<TopicLandingPageData | undefined>;
+  getTopicLandingPage(slug: string): Promise<TopicLandingPageData | undefined>;
   
   // Dashboard
   getDashboardStats(): Promise<DashboardStats>;
@@ -845,7 +845,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getTopicLandingPage(slug: string, limit = 24): Promise<TopicLandingPageData | undefined> {
+  async getTopicLandingPage(slug: string): Promise<TopicLandingPageData | undefined> {
     const topicRows = await db
       .select({
         topicId: publicTopics.id,
@@ -906,8 +906,7 @@ export class DatabaseStorage implements IStorage {
         desc(reports.publicationMonth),
         desc(reports.publicationDay),
         desc(reports.id),
-      )
-      .limit(limit);
+      );
 
     const assignmentIds = reportRows.map((report) => report.assignmentId);
     const evidenceByAssignment = new Map<string, TopicEvidence[]>();

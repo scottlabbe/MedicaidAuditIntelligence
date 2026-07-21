@@ -1,0 +1,19 @@
+prefix_rule(
+    pattern = [
+        "npm",
+        "run",
+        "observatory:context",
+        "--",
+        "--output",
+        ".observatory/context.json",
+    ],
+    decision = "allow",
+    justification = "Allow the read-only Opportunity Observatory context builder to query the corpus and public monitoring URLs during unattended scheduled runs.",
+    match = [
+        "npm run observatory:context -- --output .observatory/context.json",
+    ],
+    not_match = [
+        "npm run observatory:gsc -- --output .observatory/context.json",
+        "npm run observatory:context",
+    ],
+)
