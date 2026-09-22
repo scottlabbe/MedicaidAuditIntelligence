@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { inspectHtml, parseSitemapUrls } from "./audit-site.ts";
+import { inspectHtml, inspectReportLedgerHtml, parseSitemapUrls } from "./audit-site.ts";
 
 test("parseSitemapUrls decodes XML entities", () => {
   assert.deepEqual(
@@ -21,9 +21,23 @@ test("inspectHtml records core discovery facts", () => {
   assert.equal(audit.h1Text, "Report");
   assert.equal(audit.title, "Report");
   assert.equal(audit.canonicalUrl, "https://example.gov/reports/1");
-  assert.equal(audit.descriptionPresent, true);
-  assert.equal(audit.internalLinkCount, 1);
-  assert.equal(audit.externalLinkCount, 1);
-  assert.ok(audit.wordCount >= 8);
+  assert.equal(audit.description, "Evidence");
   assert.equal(audit.jsonLdValid, true);
+});
+
+test("inspectReportLedgerHtml reads deterministic SSR pagination data", () => {
+  const audit = inspectReportLedgerHtml(
+    "https://example.gov/reports/page/2",
+    2,
+    200,
+    "https://example.gov/reports/page/2",
+    `<html><body><script>window.__INITIAL_ROUTE_DATA__ = {"routeType":"reports_index","reportsIndex":{"items":[{"id":25},{"id":26}],"total":"26","page":2,"pageSize":24}};</script></body></html>`,
+  );
+
+  assert.equal(audit.error, null);
+  assert.equal(audit.page, 2);
+  assert.equal(audit.pageSize, 24);
+  assert.equal(audit.total, 26);
+  assert.equal(audit.pageCount, 2);
+  assert.deepEqual(audit.itemIds, [25, 26]);
 });

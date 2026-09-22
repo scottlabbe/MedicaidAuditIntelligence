@@ -8,15 +8,28 @@ export interface PageAudit {
   title: string | null;
   description: string | null;
   h1Text: string | null;
-  titlePresent: boolean;
-  descriptionPresent: boolean;
   h1Count: number;
-  wordCount: number;
-  internalLinkCount: number;
-  externalLinkCount: number;
-  jsonLdBlocks: number;
   jsonLdValid: boolean;
   error: string | null;
+}
+
+export interface ReportLedgerPageAudit {
+  url: string;
+  status: number | null;
+  finalUrl: string | null;
+  page: number | null;
+  pageSize: number | null;
+  total: number | null;
+  pageCount: number | null;
+  itemIds: number[];
+  error: string | null;
+}
+
+export interface ReportLedgerAudit {
+  checkedAt: string;
+  consistent: boolean;
+  issues: string[];
+  pages: ReportLedgerPageAudit[];
 }
 
 export interface SiteAudit {
@@ -26,11 +39,9 @@ export interface SiteAudit {
   sitemapStatus: number | null;
   sitemapUrlCount: number;
   sampledUrlCount: number;
-  sitemapCountsByFamily: Array<{ family: string; count: number }>;
-  sampledCountsByFamily: Array<{ family: string; count: number }>;
   llmsTxtStatus: number | null;
-  failures: PageAudit[];
   pages: PageAudit[];
+  reportLedger: ReportLedgerAudit;
 }
 
 function decodeXml(value: string): string {
@@ -80,55 +91,23 @@ function pageFamily(url: string): string {
   return firstSegment ?? "home";
 }
 
-function countByFamily(urls: string[]): Array<{ family: string; count: number }> {
-  const counts = new Map<string, number>();
-  for (const url of urls) {
-    const family = pageFamily(url);
-    counts.set(family, (counts.get(family) ?? 0) + 1);
-  }
-  return Array.from(counts, ([family, count]) => ({ family, count }))
-    .sort((left, right) => right.count - left.count || left.family.localeCompare(right.family));
-}
-
-function linkCounts(html: string, pageUrl: string): { internalLinkCount: number; externalLinkCount: number } {
-  const pageOrigin = new URL(pageUrl).origin;
-  let internalLinkCount = 0;
-  let externalLinkCount = 0;
-  for (const match of Array.from(html.matchAll(/<a\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi))) {
-    try {
-      const target = new URL(match[1], pageUrl);
-      if (!['http:', 'https:'].includes(target.protocol)) continue;
-      if (target.origin === pageOrigin) internalLinkCount += 1;
-      else externalLinkCount += 1;
-    } catch {
-      // Ignore malformed and non-navigational href values in this diagnostic count.
-    }
-  }
-  return { internalLinkCount, externalLinkCount };
-}
-
 export function inspectHtml(url: string, status: number, finalUrl: string, html: string): PageAudit {
-  const jsonLd = Array.from(html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi))
-    .map((match) => match[1].trim());
-  let jsonLdValid = true;
-  for (const block of jsonLd) {
+  const jsonLd = Array.from(
+    html.matchAll(
+      /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+    ),
+  ).map((match) => match[1].trim());
+  const jsonLdValid = jsonLd.every((block) => {
     try {
       JSON.parse(block);
+      return true;
     } catch {
-      jsonLdValid = false;
+      return false;
     }
-  }
+  });
   const title = plainText(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "") || null;
   const description = getMetaContent(html, "description")?.trim() || null;
   const h1Matches = Array.from(html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi));
-  const h1Text = h1Matches.length === 1 ? plainText(h1Matches[0][1]) || null : null;
-  const contentText = plainText(
-    html
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
-      .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, " "),
-  );
-  const links = linkCounts(html, finalUrl);
 
   return {
     url,
@@ -139,16 +118,90 @@ export function inspectHtml(url: string, status: number, finalUrl: string, html:
     robots: getMetaContent(html, "robots"),
     title,
     description,
-    h1Text,
-    titlePresent: Boolean(title),
-    descriptionPresent: Boolean(description),
+    h1Text: h1Matches.length === 1 ? plainText(h1Matches[0][1]) || null : null,
     h1Count: h1Matches.length,
-    wordCount: contentText ? contentText.split(/\s+/).length : 0,
-    ...links,
-    jsonLdBlocks: jsonLd.length,
     jsonLdValid,
     error: null,
   };
+}
+
+function parseInitialRouteData(html: string): unknown {
+  const scripts = Array.from(html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi));
+  for (const script of scripts) {
+    const content = script[1];
+    const marker = "window.__INITIAL_ROUTE_DATA__";
+    const markerIndex = content.indexOf(marker);
+    if (markerIndex < 0) continue;
+    const assignmentIndex = content.indexOf("=", markerIndex + marker.length);
+    if (assignmentIndex < 0) continue;
+    return JSON.parse(content.slice(assignmentIndex + 1).trim().replace(/;\s*$/, ""));
+  }
+  throw new Error("missing initial route data");
+}
+
+export function inspectReportLedgerHtml(
+  url: string,
+  expectedPage: number,
+  status: number,
+  finalUrl: string,
+  html: string,
+): ReportLedgerPageAudit {
+  try {
+    const routeData = parseInitialRouteData(html) as {
+      routeType?: unknown;
+      reportsIndex?: {
+        items?: Array<{ id?: unknown }>;
+        page?: unknown;
+        pageSize?: unknown;
+        total?: unknown;
+      };
+    };
+    if (routeData.routeType !== "reports_index" || !routeData.reportsIndex) {
+      throw new Error("initial route data is not a reports index");
+    }
+    const page = Number(routeData.reportsIndex.page);
+    const pageSize = Number(routeData.reportsIndex.pageSize);
+    const total = Number(routeData.reportsIndex.total);
+    if (
+      !Number.isInteger(page)
+      || !Number.isInteger(pageSize)
+      || pageSize <= 0
+      || !Number.isInteger(total)
+      || total < 0
+    ) {
+      throw new Error("invalid reports pagination values");
+    }
+    if (page !== expectedPage) {
+      throw new Error(`expected page ${expectedPage}, received page ${page}`);
+    }
+    const itemIds = (routeData.reportsIndex.items ?? []).map((item) => Number(item.id));
+    if (itemIds.some((id) => !Number.isInteger(id) || id < 1)) {
+      throw new Error("invalid report identifier");
+    }
+    return {
+      url,
+      status,
+      finalUrl,
+      page,
+      pageSize,
+      total,
+      pageCount: Math.max(1, Math.ceil(total / pageSize)),
+      itemIds,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      url,
+      status,
+      finalUrl,
+      page: null,
+      pageSize: null,
+      total: null,
+      pageCount: null,
+      itemIds: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 async function fetchText(url: string): Promise<{ response: Response; text: string }> {
@@ -181,14 +234,30 @@ async function auditPage(url: string): Promise<PageAudit> {
       title: null,
       description: null,
       h1Text: null,
-      titlePresent: false,
-      descriptionPresent: false,
       h1Count: 0,
-      wordCount: 0,
-      internalLinkCount: 0,
-      externalLinkCount: 0,
-      jsonLdBlocks: 0,
       jsonLdValid: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function auditReportLedgerPage(
+  url: string,
+  expectedPage: number,
+): Promise<ReportLedgerPageAudit> {
+  try {
+    const { response, text } = await fetchText(url);
+    return inspectReportLedgerHtml(url, expectedPage, response.status, response.url, text);
+  } catch (error) {
+    return {
+      url,
+      status: null,
+      finalUrl: null,
+      page: null,
+      pageSize: null,
+      total: null,
+      pageCount: null,
+      itemIds: [],
       error: error instanceof Error ? error.message : String(error),
     };
   }
@@ -201,37 +270,82 @@ async function mapWithConcurrency<T, U>(
 ): Promise<U[]> {
   const results = new Array<U>(values.length);
   let cursor = 0;
-  await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, async () => {
-    while (cursor < values.length) {
-      const index = cursor;
-      cursor += 1;
-      results[index] = await mapper(values[index]);
-    }
-  }));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, values.length) }, async () => {
+      while (cursor < values.length) {
+        const index = cursor;
+        cursor += 1;
+        results[index] = await mapper(values[index]);
+      }
+    }),
+  );
   return results;
 }
 
 function selectSample(urls: string[], limit: number): string[] {
-  if (limit <= 0 || urls.length <= limit) return urls;
+  if (limit <= 0) return [];
+  const byPath = new Map(urls.map((url) => [new URL(url).pathname.replace(/\/$/, "") || "/", url]));
   const selected = new Set<string>();
-  const routePrefixes = ["/reports/", "/states/", "/agencies/", "/topics/", "/research/"];
-  selected.add(urls[0]);
-  for (const prefix of routePrefixes) {
-    const match = urls.find((url) => new URL(url).pathname.startsWith(prefix));
+  const indexPaths = [
+    "/",
+    "/reports",
+    "/reports/page/2",
+    "/states",
+    "/agencies",
+    "/topics",
+    "/research",
+  ];
+  for (const path of indexPaths) {
+    const url = byPath.get(path);
+    if (url) selected.add(url);
+  }
+  const detailPrefixes = ["/reports/", "/states/", "/agencies/", "/topics/", "/research/"];
+  for (const prefix of detailPrefixes) {
+    const match = urls.find((url) => {
+      const pathname = new URL(url).pathname;
+      return pathname.startsWith(prefix) && !pathname.startsWith("/reports/page/");
+    });
     if (match) selected.add(match);
   }
-  const step = Math.max(1, Math.floor(urls.length / limit));
-  for (let index = 0; index < urls.length && selected.size < limit; index += step) {
-    selected.add(urls[index]);
-  }
-  for (const url of urls) {
-    if (selected.size >= limit) break;
-    selected.add(url);
-  }
-  return Array.from(selected);
+  return Array.from(selected).slice(0, limit);
 }
 
-export async function auditSite(siteUrl: string, limit = 30): Promise<SiteAudit> {
+function assessReportLedger(pages: ReportLedgerPageAudit[]): ReportLedgerAudit {
+  const issues: string[] = [];
+  for (const page of pages) {
+    if (page.error) issues.push(`${page.url}: ${page.error}`);
+    if (page.status !== null && page.status !== 200) {
+      issues.push(`${page.url}: returned HTTP ${page.status}`);
+    }
+  }
+  const valid = pages.filter((page) => !page.error);
+  if (valid.length === 2) {
+    const [first, second] = valid;
+    if (first.pageSize !== second.pageSize) issues.push("page sizes differ");
+    if (first.total !== second.total) issues.push("report totals differ");
+    if (first.pageCount !== second.pageCount) issues.push("page counts differ");
+    const duplicateIds = first.itemIds.filter((id) => second.itemIds.includes(id));
+    if (duplicateIds.length) issues.push(`adjacent pages repeat report IDs: ${duplicateIds.join(", ")}`);
+    for (const page of valid) {
+      if (new Set(page.itemIds).size !== page.itemIds.length) {
+        issues.push(`${page.url}: contains duplicate report IDs`);
+      }
+      const offset = ((page.page ?? 1) - 1) * (page.pageSize ?? 0);
+      const expected = Math.max(0, Math.min(page.pageSize ?? 0, (page.total ?? 0) - offset));
+      if (page.itemIds.length !== expected) {
+        issues.push(`${page.url}: expected ${expected} report IDs, received ${page.itemIds.length}`);
+      }
+    }
+  }
+  return {
+    checkedAt: new Date().toISOString(),
+    consistent: issues.length === 0,
+    issues,
+    pages,
+  };
+}
+
+export async function auditSite(siteUrl: string, limit = 15): Promise<SiteAudit> {
   const normalized = siteUrl.replace(/\/$/, "");
   const sitemapUrl = `${normalized}/sitemap.xml`;
   const { response: sitemapResponse, text: sitemap } = await fetchText(sitemapUrl);
@@ -243,19 +357,14 @@ export async function auditSite(siteUrl: string, limit = 30): Promise<SiteAudit>
     throw new Error("sitemap contains no URLs");
   }
   const sampled = selectSample(urls, limit);
-  const [pages, llmsResponse] = await Promise.all([
+  const [pages, ledgerPages, llmsResponse] = await Promise.all([
     mapWithConcurrency(sampled, 5, auditPage),
+    Promise.all([
+      auditReportLedgerPage(`${normalized}/reports`, 1),
+      auditReportLedgerPage(`${normalized}/reports/page/2`, 2),
+    ]),
     fetch(`${normalized}/llms.txt`, { redirect: "follow" }).catch(() => null),
   ]);
-  const failures = pages.filter((page) =>
-    page.error
-    || page.status !== 200
-    || !page.titlePresent
-    || !page.descriptionPresent
-    || page.h1Count !== 1
-    || !page.canonicalUrl
-    || !page.jsonLdValid
-  );
 
   return {
     siteUrl: normalized,
@@ -264,10 +373,8 @@ export async function auditSite(siteUrl: string, limit = 30): Promise<SiteAudit>
     sitemapStatus: sitemapResponse.status,
     sitemapUrlCount: urls.length,
     sampledUrlCount: sampled.length,
-    sitemapCountsByFamily: countByFamily(urls),
-    sampledCountsByFamily: countByFamily(sampled),
     llmsTxtStatus: llmsResponse?.status ?? null,
-    failures,
     pages,
+    reportLedger: assessReportLedger(ledgerPages),
   };
 }

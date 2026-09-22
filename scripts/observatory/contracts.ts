@@ -8,8 +8,6 @@ export const sourceRegistryEntrySchema = z.object({
     message: "landingPage must use HTTPS",
   }),
   sourceType: z.enum(["report-index", "filtered-report-index", "search-index", "feed", "sitemap"]),
-  priority: z.number().int().positive(),
-  reportIdPattern: z.string().min(1),
   knownAccessLimitations: z.string(),
   lastHumanVerificationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   includeTerms: z.array(z.string().min(1)).min(1),
@@ -17,10 +15,9 @@ export const sourceRegistryEntrySchema = z.object({
 
 export const sourceRegistrySchema = z.object({
   schemaVersion: z.literal(1),
-  sources: z.array(sourceRegistryEntrySchema).min(1).max(50),
+  sources: z.array(sourceRegistryEntrySchema).min(1),
 }).superRefine((registry, context) => {
   const ids = new Set<string>();
-  const priorities = new Set<number>();
 
   registry.sources.forEach((source, index) => {
     if (ids.has(source.id)) {
@@ -30,25 +27,7 @@ export const sourceRegistrySchema = z.object({
         message: `duplicate source id ${source.id}`,
       });
     }
-    if (priorities.has(source.priority)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["sources", index, "priority"],
-        message: `duplicate priority ${source.priority}`,
-      });
-    }
     ids.add(source.id);
-    priorities.add(source.priority);
-
-    try {
-      new RegExp(source.reportIdPattern, "i");
-    } catch {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["sources", index, "reportIdPattern"],
-        message: "invalid regular expression",
-      });
-    }
   });
 });
 

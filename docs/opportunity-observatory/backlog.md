@@ -1,6 +1,6 @@
 # Opportunity backlog
 
-Record reviewed opportunities here. The scheduled observatory may read this file but must not change it.
+Record reviewed site, product, content, data, technical, and SEO improvements here. Report candidates and their ingestion lifecycle belong in the Miner `scraping_queue`, not this file. The scheduled observatory may read this file but must not change it.
 
 ## Status definitions
 

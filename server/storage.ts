@@ -151,11 +151,26 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
 
     if (filters.query) {
+      const searchTerm = `%${filters.query}%`;
       conditions.push(
         or(
-          ilike(reports.reportTitle, `%${filters.query}%`),
-          ilike(reports.auditOrganization, `%${filters.query}%`),
-          ilike(reports.overallConclusion, `%${filters.query}%`)
+          ilike(reports.reportTitle, searchTerm),
+          ilike(reports.auditOrganization, searchTerm),
+          ilike(reports.overallConclusion, searchTerm),
+          ilike(reports.potentialObjectiveSummary, searchTerm),
+          ilike(reports.auditScope, searchTerm),
+          sql`EXISTS (
+            SELECT 1
+            FROM ${findings}
+            WHERE ${findings.reportId} = ${reports.id}
+              AND ${findings.findingText} ILIKE ${searchTerm}
+          )`,
+          sql`EXISTS (
+            SELECT 1
+            FROM ${recommendations}
+            WHERE ${recommendations.reportId} = ${reports.id}
+              AND ${recommendations.recommendationText} ILIKE ${searchTerm}
+          )`
         )
       );
     }

@@ -1,57 +1,55 @@
 # Opportunity Observatory operations
 
-The Opportunity Observatory is a read-only research loop. It may recommend work; it does not edit or publish the site. The operating design is in [`../opportunity-observatory-implementation-plan.md`](../opportunity-observatory-implementation-plan.md).
+The Opportunity Observatory is a weekly research, candidate-intake, and site-review loop. The project-local skill and policy references define its research scope, evidence standards, safe write boundary, and report contract.
 
 ## Routine commands
 
-Build a complete local context file:
+Build the ignored deterministic context file:
 
 ```bash
 npm run observatory:context -- --output .observatory/context.json
 ```
 
-This reads the corpus through `DATABASE_URL`, checks the configured public site and source registry when network access is available, and includes the newest GSC summary under `.observatory/gsc/` when present. Input failures are recorded in the context instead of being hidden.
-
-Import one or more Search Console CSV exports:
-
-```bash
-npm run observatory:gsc -- --input /path/to/Queries.csv --input /path/to/Pages.csv
-```
-
-The importer accepts query, page, or combined query-and-page CSVs. It records totals separately for each input so query and page exports from the same period are not incorrectly added together. It writes an aggregated JSON snapshot under `.observatory/gsc/`; raw exports and generated summaries are intentionally ignored by Git.
-
-Validate committed operating data:
+Validate the source registry and run deterministic tests:
 
 ```bash
 npm run observatory:validate
-```
-
-Run deterministic tests:
-
-```bash
 npm run observatory:test
 ```
 
-## Weekly review
+The candidate command reads one validated JSON payload from standard input. It is a dry run unless `--apply` is present:
 
-1. Scan the relevant-report and site-findings tables; their length reflects qualified findings in the disclosed scope, not a quota.
-2. Review the single best next move, if present, and verify its primary sources and corpus report IDs.
-3. Choose accept, clarify, defer, reject, or complete.
-4. Record the rationale in `backlog.md` so later runs do not repeat unchanged ideas.
-5. Start a separate implementation task only for accepted work.
+```bash
+npm run observatory:queue
+npm run observatory:queue -- --apply
+```
 
-Keep only one observatory-sourced implementation active at a time. A useful weekly result may be “no strong opportunity.”
+The apply form may only insert qualified candidates as `pending_review`, refresh Observatory discovery metadata on an existing queue row, and add one `search_history` run manifest. It cannot approve, process, publish, delete, migrate, or change a queue status.
 
-The source registry is ordered by monitoring value. Start with the highest-priority sources and use a disclosed date window; a registry entry does not create an obligation to manually review every site every week. Lower-priority state sources are rotating authoritative discovery and verification sources, not a 32-item human checklist.
+## Weekly process
 
-Each weekly run also reviews one rotating page family (`reports`, `topics`, `states`, `agencies`, or `research`) for improvements beyond newly published reports. The output must list which sources and site pages it actually reviewed.
+1. Build deterministic corpus, queue, run-history, and live-site context.
+2. Attempt every registered authoritative source for the rolling 30-day window and exhaust available pagination.
+3. Revisit every unresolved queue candidate regardless of age.
+4. Reconcile candidates against the complete corpus and queue.
+5. Queue every qualified absent or possible-duplicate report for human review.
+6. Review every changed page and one deterministic family sample of unchanged pages.
+7. Return the exact six-section management report and recommend zero or one site implementation.
+8. Review report candidates in the Miner; any number of verified reports may proceed through ordinary ingestion.
+9. Record only accepted, clarified, deferred, rejected, or completed site/product decisions in `backlog.md`.
 
-## Inputs that require the maintainer
+## Deliberate bounds
 
-- Export GSC data manually until repeated use justifies an API integration.
-- Recheck source-registry URLs when a reachability alert or redirect appears; the current registry records the latest approved editorial verification date.
-- The project-local rule at `.codex/rules/observatory.rules` allows unattended execution of only `npm run observatory:context -- --output .observatory/context.json`. Restart Codex after adding or changing the rule so it is loaded. Do not grant the scheduled task full access.
-- Review and approve every new source-registry entry.
-- Decide whether to accept, defer, or reject an opportunity.
-- Authorize implementation and publication in a separate task.
-- Keep the computer on and the ChatGPT desktop app running for scheduled runs that use this local project.
+There is no internal maximum for registered sources, paginated source results, qualified candidates, queue rows, corpus comparisons, or report-inventory rows. The 30-day window bounds new-publication research, while unresolved candidates remain in scope until disposition.
+
+Timeouts, concurrency, retries, and sampling unchanged site pages are operational controls, not content quotas. A source that cannot be completed must be disclosed and makes the run partial.
+
+## Files and state
+
+- `.observatory/context.json` is the only routine generated file and is overwritten each run.
+- `scraping_queue` is the durable report-candidate record.
+- `search_history` stores one compact Observatory run manifest.
+- `backlog.md` stores site/product decisions only.
+- Codex Scheduled stores the weekly management report; do not commit dated run artifacts.
+
+The unattended allowlist should contain only the exact context-builder and candidate-queue apply commands. Restart Codex after changing `.codex/rules/observatory.rules`.

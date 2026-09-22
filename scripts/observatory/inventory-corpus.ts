@@ -9,6 +9,12 @@ export interface CorpusReportRow {
   agency: string;
   state: string;
   publicationYear: number;
+  publicationMonth: number | null;
+  publicationDay: number | null;
+  overallConclusion: string | null;
+  llmInsight: string | null;
+  potentialObjectiveSummary: string | null;
+  auditScope: string | null;
   sourceUrl: string | null;
   updatedAt: Date | string | null;
 }
@@ -31,6 +37,54 @@ export interface ResearchBriefFact {
   citedReportIds: number[];
 }
 
+interface QueueRow {
+  id: number;
+  url: string;
+  title: string;
+  status: string | null;
+  retry_count: number | null;
+  created_at: Date | string | null;
+  completed_at: Date | string | null;
+  error_message: string | null;
+  report_id: number | null;
+  observatory_metadata: unknown;
+}
+
+interface ObservatoryRunRow {
+  id: number;
+  search_params: unknown;
+  results_count: number | null;
+  created_at: Date | string | null;
+}
+
+export interface OperationsInventory {
+  generatedAt: string;
+  totalQueueItems: number;
+  countsByStatus: Array<{ value: string; count: number }>;
+  pendingReviewCount: number;
+  oldestPendingReviewAt: string | null;
+  failedCount: number;
+  linkedReportCount: number;
+  averageCompletionHours: number | null;
+  unresolvedItems: Array<{
+    id: number;
+    url: string;
+    title: string;
+    status: string;
+    retryCount: number;
+    createdAt: string | null;
+    errorMessage: string | null;
+    reportId: number | null;
+    observatoryMetadata: Record<string, unknown>;
+  }>;
+  observatoryRuns: Array<{
+    id: number;
+    createdAt: string | null;
+    resultsCount: number;
+    manifest: Record<string, unknown>;
+  }>;
+}
+
 export interface CorpusInventory {
   generatedAt: string;
   totalVisibleReports: number;
@@ -43,17 +97,52 @@ export interface CorpusInventory {
   countsByPublicationYear: Array<{ value: string; count: number }>;
   topics: Array<{ slug: string; name: string; reportCount: number }>;
   researchBriefs: ResearchBriefFact[];
+  qualityIssues: Array<{
+    reportId: number;
+    issue: "missing_summary" | "placeholder_overall_conclusion";
+    detail: string;
+  }>;
   reportIndex: Array<{
     id: number;
     title: string;
     agency: string;
     state: string;
     publicationYear: number;
+    publicationMonth: number | null;
+    publicationDay: number | null;
     sourceUrl: string | null;
     findingCount: number;
     recommendationCount: number;
     topics: string[];
   }>;
+}
+
+const PLACEHOLDER_SUMMARIES = new Set([
+  "n a",
+  "none",
+  "not available",
+  "not sufficient",
+  "unknown",
+]);
+
+function normalizeSummary(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function isoDate(value: Date | string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
 }
 
 function aggregate(values: string[]): Array<{ value: string; count: number }> {
@@ -94,6 +183,32 @@ export function summarizeCorpus(
   const updateTimes = reports
     .map((report) => report.updatedAt ? new Date(report.updatedAt).getTime() : Number.NaN)
     .filter(Number.isFinite);
+  const qualityIssues = reports.flatMap<CorpusInventory["qualityIssues"][number]>((report) => {
+    const summaries = [
+      report.overallConclusion,
+      report.llmInsight,
+      report.potentialObjectiveSummary,
+      report.auditScope,
+    ].filter((value): value is string => Boolean(value?.trim()));
+    if (!summaries.length) {
+      return [{
+        reportId: report.id,
+        issue: "missing_summary",
+        detail: "No conclusion, insight, objective summary, or audit scope is available.",
+      }];
+    }
+    if (
+      report.overallConclusion
+      && PLACEHOLDER_SUMMARIES.has(normalizeSummary(report.overallConclusion))
+    ) {
+      return [{
+        reportId: report.id,
+        issue: "placeholder_overall_conclusion",
+        detail: `Overall conclusion is ${JSON.stringify(report.overallConclusion.trim())}.`,
+      }];
+    }
+    return [];
+  }).sort((left, right) => left.reportId - right.reportId);
 
   return {
     generatedAt,
@@ -111,6 +226,7 @@ export function summarizeCorpus(
       .map(([slug, fact]) => ({ slug, name: fact.name, reportCount: fact.reportIds.size }))
       .sort((left, right) => right.reportCount - left.reportCount || left.slug.localeCompare(right.slug)),
     researchBriefs: [...researchBriefs].sort((left, right) => left.slug.localeCompare(right.slug)),
+    qualityIssues,
     reportIndex: reports
       .map((report) => ({
         id: report.id,
@@ -118,6 +234,8 @@ export function summarizeCorpus(
         agency: report.agency,
         state: report.state,
         publicationYear: report.publicationYear,
+        publicationMonth: report.publicationMonth,
+        publicationDay: report.publicationDay,
         sourceUrl: report.sourceUrl,
         findingCount: findingsByReport.get(report.id) ?? 0,
         recommendationCount: recommendationsByReport.get(report.id) ?? 0,
@@ -125,6 +243,14 @@ export function summarizeCorpus(
       }))
       .sort((left, right) => right.publicationYear - left.publicationYear || left.id - right.id),
   };
+}
+
+export function extractResearchBriefReportIds(markdown: string): number[] {
+  const ids = [
+    ...Array.from(markdown.matchAll(/\/reports\/(\d+)/gi)).map((match) => Number(match[1])),
+    ...Array.from(markdown.matchAll(/\[report\s+(\d+)\]/gi)).map((match) => Number(match[1])),
+  ];
+  return Array.from(new Set(ids)).sort((left, right) => left - right);
 }
 
 async function readResearchBriefs(root: string): Promise<ResearchBriefFact[]> {
@@ -142,15 +268,86 @@ async function readResearchBriefs(root: string): Promise<ResearchBriefFact[]> {
       fs.readFile(path.join(directory, "report.md"), "utf8"),
     ]);
     const metadata = JSON.parse(metadataRaw) as { title?: unknown; updatedDate?: unknown };
-    const ids = Array.from(markdown.matchAll(/\/reports\/(\d+)/g)).map((match) => Number(match[1]));
     briefs.push({
       slug: entry.name,
       title: typeof metadata.title === "string" ? metadata.title : entry.name,
       updatedDate: typeof metadata.updatedDate === "string" ? metadata.updatedDate : null,
-      citedReportIds: Array.from(new Set(ids)).sort((left, right) => left - right),
+      citedReportIds: extractResearchBriefReportIds(markdown),
     });
   }
   return briefs;
+}
+
+export function summarizeOperations(
+  rows: QueueRow[],
+  runRows: ObservatoryRunRow[],
+  generatedAt = new Date().toISOString(),
+): OperationsInventory {
+  const unresolvedStatuses = new Set(["pending_review", "pending", "downloading", "processing", "failed"]);
+  const pendingReviewDates = rows
+    .filter((row) => row.status === "pending_review")
+    .map((row) => row.created_at ? new Date(row.created_at).getTime() : Number.NaN)
+    .filter(Number.isFinite);
+  const completionHours = rows.flatMap((row) => {
+    if (!row.created_at || !row.completed_at) return [];
+    const elapsed = new Date(row.completed_at).getTime() - new Date(row.created_at).getTime();
+    return Number.isFinite(elapsed) && elapsed >= 0 ? [elapsed / 3_600_000] : [];
+  });
+
+  return {
+    generatedAt,
+    totalQueueItems: rows.length,
+    countsByStatus: aggregate(rows.map((row) => row.status ?? "unknown")),
+    pendingReviewCount: rows.filter((row) => row.status === "pending_review").length,
+    oldestPendingReviewAt: pendingReviewDates.length
+      ? new Date(Math.min(...pendingReviewDates)).toISOString()
+      : null,
+    failedCount: rows.filter((row) => row.status === "failed").length,
+    linkedReportCount: rows.filter((row) => row.report_id !== null).length,
+    averageCompletionHours: completionHours.length
+      ? completionHours.reduce((total, value) => total + value, 0) / completionHours.length
+      : null,
+    unresolvedItems: rows
+      .filter((row) => unresolvedStatuses.has(row.status ?? "unknown"))
+      .map((row) => ({
+        id: row.id,
+        url: row.url,
+        title: row.title,
+        status: row.status ?? "unknown",
+        retryCount: row.retry_count ?? 0,
+        createdAt: isoDate(row.created_at),
+        errorMessage: row.error_message,
+        reportId: row.report_id,
+        observatoryMetadata: objectValue(row.observatory_metadata),
+      }))
+      .sort((left, right) => left.id - right.id),
+    observatoryRuns: runRows.map((row) => ({
+      id: row.id,
+      createdAt: isoDate(row.created_at),
+      resultsCount: row.results_count ?? 0,
+      manifest: objectValue(row.search_params),
+    })),
+  };
+}
+
+export async function inventoryOperations(): Promise<OperationsInventory> {
+  const { sqlClient } = await import("../../server/database.ts");
+  const [queueRows, runRows] = await Promise.all([
+    sqlClient`
+      SELECT id, url, title, status, retry_count, created_at, completed_at,
+             error_message, report_id,
+             document_metadata -> 'observatory' AS observatory_metadata
+      FROM scraping_queue
+      ORDER BY id
+    `,
+    sqlClient`
+      SELECT id, search_params, results_count, created_at
+      FROM search_history
+      WHERE search_params ->> 'source' = 'opportunity-observatory'
+      ORDER BY created_at DESC, id DESC
+    `,
+  ]) as [QueueRow[], ObservatoryRunRow[]];
+  return summarizeOperations(queueRows, runRows);
 }
 
 export async function inventoryCorpus(root = process.cwd()): Promise<CorpusInventory> {
@@ -167,6 +364,12 @@ export async function inventoryCorpus(root = process.cwd()): Promise<CorpusInven
         agency: schema.reports.auditOrganization,
         state: schema.reports.state,
         publicationYear: schema.reports.publicationYear,
+        publicationMonth: schema.reports.publicationMonth,
+        publicationDay: schema.reports.publicationDay,
+        overallConclusion: schema.reports.overallConclusion,
+        llmInsight: schema.reports.llmInsight,
+        potentialObjectiveSummary: schema.reports.potentialObjectiveSummary,
+        auditScope: schema.reports.auditScope,
         sourceUrl: schema.reports.originalReportSourceUrl,
         updatedAt: schema.reports.updatedAt,
       }).from(schema.reports).where(eq(schema.reports.hidden, false)),

@@ -17,3 +17,22 @@ prefix_rule(
         "npm run observatory:context",
     ],
 )
+
+prefix_rule(
+    pattern = [
+        "npm",
+        "run",
+        "observatory:queue",
+        "--",
+        "--apply",
+    ],
+    decision = "allow",
+    justification = "Allow the Opportunity Observatory to upsert verified report candidates into the existing Miner review queue and record one run manifest; the command cannot approve, process, publish, delete, or change queue decisions.",
+    match = [
+        "npm run observatory:queue -- --apply",
+    ],
+    not_match = [
+        "npm run observatory:queue",
+        "npm run observatory:queue -- --dry-run",
+    ],
+)
