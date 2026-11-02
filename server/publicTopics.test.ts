@@ -114,15 +114,24 @@ test("topic report filtering uses the same reviewed assignments", async () => {
     new Set(topic.reports.map((report) => report.id)),
   );
 
-  const firstReport = filtered.items[0];
+  const firstReport = filtered.items.find(
+    (report) => report.subjectJurisdictions.length > 0,
+  );
   assert.ok(firstReport);
+  const subjectCode = firstReport.subjectJurisdictions[0].code;
   const combined = await storage.getReports(
-    { theme: "managed-care", state: firstReport.state },
+    { theme: "managed-care", jurisdiction: subjectCode },
     1,
     100,
   );
   assert.ok(combined.items.length > 0);
-  combined.items.forEach((report) => assert.equal(report.state, firstReport.state));
+  combined.items.forEach((report) =>
+    assert.ok(
+      report.subjectJurisdictions.some(
+        (jurisdiction) => jurisdiction.code === subjectCode,
+      ),
+    ),
+  );
 });
 
 test("resolves aliases permanently and returns normal 404 behavior", async () => {

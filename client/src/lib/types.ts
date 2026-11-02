@@ -1,5 +1,8 @@
 export interface SearchFilters {
   query?: string;
+  jurisdiction?: string;
+  sourceJurisdiction?: string;
+  /** Temporary compatibility parameter. New links use jurisdiction/sourceJurisdiction. */
   state?: string;
   agency?: string;
   year?: number;
@@ -17,10 +20,27 @@ export interface PaginationParams {
 export type { Report, InsertReport, Objective, Finding, Recommendation } from "@shared/schema";
 
 // Extended types for UI
+export type JurisdictionKind = "federal" | "state" | "district" | "territory";
+export type JurisdictionScopeType =
+  | "single_jurisdiction"
+  | "multi_jurisdiction"
+  | "national"
+  | "unknown";
+
+export interface JurisdictionRef {
+  code: string;
+  name: string;
+  slug: string;
+  kind: JurisdictionKind;
+}
+
 export interface ReportListItem {
   id: number;
   reportTitle: string;
   state: string;
+  sourceJurisdiction?: JurisdictionRef;
+  subjectJurisdictions: JurisdictionRef[];
+  jurisdictionScopeType: JurisdictionScopeType;
   auditOrganization: string;
   publicationYear: number;
   publicationMonth?: number;
@@ -76,6 +96,10 @@ export interface SearchResponse {
 
 export interface DashboardStats {
   totalReports: number;
+  statesWithSubjectCoverage: number;
+  jurisdictionsWithSubjectCoverage: number;
+  federalSourceReportCount: number;
+  /** Compatibility alias while remaining consumers migrate. */
   statesWithReports: number;
   criticalFindings: number;
   recentReports: ReportListItem[];
@@ -139,6 +163,9 @@ export interface TopicReport {
   reportTitle: string;
   agency: string;
   jurisdiction: string;
+  sourceJurisdiction?: JurisdictionRef;
+  subjectJurisdictions: JurisdictionRef[];
+  jurisdictionScopeType: JurisdictionScopeType;
   publicationYear: number;
   publicationMonth?: number;
   publicationDay?: number;
@@ -177,10 +204,25 @@ export interface StateLandingPageData {
   reports: ReportListItem[];
 }
 
+export interface FederalLandingPageData {
+  code: "US";
+  name: "Federal";
+  slug: "federal";
+  reportCount: number;
+  latestReport?: ReportListItem;
+  reports: ReportListItem[];
+}
+
 export interface ResearchReportSource {
   reportId: number;
   label: string;
   resolvedHref: string;
+  reportTitle?: string;
+  auditOrganization?: string;
+  publicationLabel?: string;
+  sourceJurisdiction?: JurisdictionRef;
+  subjectJurisdictions?: JurisdictionRef[];
+  jurisdictionScopeType?: JurisdictionScopeType;
 }
 
 export interface ResearchReportListItem {
@@ -226,15 +268,9 @@ export interface HomeRouteData {
   researchReports?: ResearchReportListItem[];
 }
 
-export interface ExploreRouteData {
-  states: IndexableStateSummary[];
-  featuredReports: ReportListItem[];
-}
-
 export interface InitialRouteData {
   routeType?: string;
   home?: HomeRouteData;
-  explore?: ExploreRouteData;
   reportsIndex?: SearchResponse;
   statesIndex?: IndexableStateSummary[];
   agenciesIndex?: AgencySummary[];
@@ -248,4 +284,5 @@ export interface InitialRouteData {
   dashboardMapData?: StateLatestResponse;
   stateCode?: string;
   stateSearchResults?: SearchResponse;
+  federalPage?: FederalLandingPageData;
 }

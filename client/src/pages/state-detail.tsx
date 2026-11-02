@@ -27,7 +27,7 @@ export default function StateDetail() {
     enabled: Boolean(stateEntry?.code),
     queryFn: () =>
       apiClient.getReports(
-        { state: stateEntry!.code, sortBy: "date_desc" },
+        { jurisdiction: stateEntry!.code, sortBy: "date_desc" },
         { page: 1, pageSize: 24 },
       ) as Promise<SearchResponse>,
   });
@@ -79,8 +79,8 @@ export default function StateDetail() {
             {stateEntry.name} Medicaid audit evidence
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
-            Review reports connected to {stateEntry.name} Medicaid oversight,
-            ordered by publication date.
+            Review reports that examine {stateEntry.name} Medicaid oversight,
+            including evidence published by state and federal authorities.
           </p>
         </header>
 
@@ -189,7 +189,7 @@ function StateContext({
       </dl>
       <div className="mt-6 border-t border-border pt-5">
         <Link
-          href={`/reports?state=${code}`}
+          href={`/reports?jurisdiction=${code}`}
           className="inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           Search {name} reports

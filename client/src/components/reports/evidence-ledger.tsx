@@ -1,8 +1,12 @@
 import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
-import { getStateNameByCode } from "@shared/states";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ReportListItem } from "@/lib/types";
+import {
+  formatScopeType,
+  formatSourceJurisdiction,
+  formatSubjectJurisdictions,
+} from "@/lib/jurisdictions";
 
 export function EvidenceLedger({ reports }: { reports: ReportListItem[] }) {
   return (
@@ -19,7 +23,7 @@ export function EvidenceDocket({ report }: { report: ReportListItem }) {
   const summary = getReportSummary(report);
 
   return (
-    <article className="grid border-t border-border py-6 first:border-t-0 lg:grid-cols-[118px_150px_minmax(0,1fr)_128px] lg:gap-5 lg:py-7">
+    <article className="grid border-t border-border py-6 first:border-t-0 lg:grid-cols-[118px_190px_minmax(0,1fr)_128px] lg:gap-5 lg:py-7">
       <dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-b border-border pb-4 lg:block lg:border-b-0 lg:pb-0">
         <LedgerField
           label="Published"
@@ -27,17 +31,27 @@ export function EvidenceDocket({ report }: { report: ReportListItem }) {
           mono
         />
         <LedgerField
-          label="Jurisdiction"
-          value={getJurisdictionLabel(report.state)}
+          label="Scope"
+          value={formatScopeType(report.jurisdictionScopeType)}
         />
       </dl>
 
       <dl className="border-b border-border py-4 lg:border-b-0 lg:py-0">
+        <LedgerField
+          label="Source authority"
+          value={formatSourceJurisdiction(report)}
+        />
         <LedgerField label="Publishing agency" value={report.auditOrganization} />
         <LedgerField label="Report ID" value={`REPORT ${report.id}`} mono />
       </dl>
 
       <div className="py-5 lg:py-0">
+        <dl className="mb-3">
+          <LedgerField
+            label="Examines"
+            value={formatSubjectJurisdictions(report)}
+          />
+        </dl>
         <h3 className="text-xl font-semibold leading-7 tracking-[-0.01em] text-foreground">
           <Link
             href={reportHref}
@@ -162,7 +176,7 @@ export function EvidenceLedgerSkeleton({ rows = 4 }: { rows?: number }) {
       {Array.from({ length: rows }, (_, item) => (
         <div
           key={item}
-          className="grid gap-5 border-b border-border py-7 lg:grid-cols-[118px_150px_minmax(0,1fr)_128px]"
+          className="grid gap-5 border-b border-border py-7 lg:grid-cols-[118px_190px_minmax(0,1fr)_128px]"
         >
           <div className="space-y-3">
             <Skeleton className="h-3 w-16" />
@@ -213,11 +227,6 @@ function formatCurrency(value: number) {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
-}
-
-function getJurisdictionLabel(stateCode: string) {
-  if (stateCode === "US") return "Federal";
-  return getStateNameByCode(stateCode) || stateCode;
 }
 
 function getReportSummary(report: ReportListItem) {

@@ -1,9 +1,13 @@
 import fs from "fs/promises";
 import path from "path";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "./database";
-import { reports } from "@shared/schema";
+import {
+  reports,
+  jurisdictions,
+  reportJurisdictionAssignments,
+} from "@shared/schema";
 import type {
   ResearchReportListItem,
   ResearchReportPageData,
@@ -143,10 +147,98 @@ export async function getResearchReportBySlug(
 
   const derivedUpdatedAt = metadata.updatedDate || stats.mtime.toISOString();
 
+  const sources = await addResearchSourceMetadata(page.sources);
+
   return {
     ...page,
+    sources,
     updatedAt: derivedUpdatedAt,
   };
+}
+
+async function addResearchSourceMetadata(
+  sources: ResearchReportSource[],
+): Promise<ResearchReportSource[]> {
+  const reportIds = Array.from(new Set(sources.map((source) => source.reportId)));
+  if (!reportIds.length) return sources;
+
+  const [reportRows, subjectRows, jurisdictionRows] = await Promise.all([
+    db
+      .select({
+        id: reports.id,
+        reportTitle: reports.reportTitle,
+        auditOrganization: reports.auditOrganization,
+        publicationYear: reports.publicationYear,
+        publicationMonth: reports.publicationMonth,
+        publicationDay: reports.publicationDay,
+        sourceJurisdictionCode: reports.sourceJurisdictionCode,
+        jurisdictionScopeType: reports.jurisdictionScopeType,
+      })
+      .from(reports)
+      .where(inArray(reports.id, reportIds)),
+    db
+      .select({
+        reportId: reportJurisdictionAssignments.reportId,
+        code: jurisdictions.code,
+        name: jurisdictions.name,
+        slug: jurisdictions.slug,
+        kind: jurisdictions.kind,
+      })
+      .from(reportJurisdictionAssignments)
+      .innerJoin(
+        jurisdictions,
+        eq(reportJurisdictionAssignments.jurisdictionCode, jurisdictions.code),
+      )
+      .where(and(
+        inArray(reportJurisdictionAssignments.reportId, reportIds),
+        eq(reportJurisdictionAssignments.reviewStatus, "reviewed"),
+        isNull(reportJurisdictionAssignments.retiredAt),
+        inArray(reportJurisdictionAssignments.relationship, [
+          "primary_subject",
+          "included_in_scope",
+        ]),
+      )),
+    db
+      .select({
+        code: jurisdictions.code,
+        name: jurisdictions.name,
+        slug: jurisdictions.slug,
+        kind: jurisdictions.kind,
+      })
+      .from(jurisdictions),
+  ]);
+
+  const jurisdictionsByCode = new Map(
+    jurisdictionRows.map((row) => [row.code, { ...row, kind: row.kind as any }]),
+  );
+  const subjectsByReport = new Map<number, any[]>();
+  for (const row of subjectRows) {
+    const entries = subjectsByReport.get(row.reportId) || [];
+    entries.push({ code: row.code, name: row.name, slug: row.slug, kind: row.kind });
+    subjectsByReport.set(row.reportId, entries);
+  }
+  const reportById = new Map(reportRows.map((row) => [row.id, row]));
+
+  return sources.map((source) => {
+    const report = reportById.get(source.reportId);
+    if (!report) return source;
+    const publicationLabel = [
+      report.publicationYear,
+      report.publicationMonth ? String(report.publicationMonth).padStart(2, "0") : undefined,
+      report.publicationDay ? String(report.publicationDay).padStart(2, "0") : undefined,
+    ].filter(Boolean).join("-");
+    return {
+      ...source,
+      reportTitle: report.reportTitle,
+      auditOrganization: report.auditOrganization,
+      publicationLabel,
+      sourceJurisdiction: report.sourceJurisdictionCode
+        ? jurisdictionsByCode.get(report.sourceJurisdictionCode)
+        : undefined,
+      subjectJurisdictions: subjectsByReport.get(report.id) || [],
+      jurisdictionScopeType: report.jurisdictionScopeType as any,
+    };
+  });
 }
 
 async function readResearchDirectories(): Promise<ResearchReportPaths[]> {

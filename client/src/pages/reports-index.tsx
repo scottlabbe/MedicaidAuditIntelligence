@@ -9,12 +9,13 @@ import {
   ExternalLink,
   Search,
 } from "lucide-react";
-import { STATE_ENTRIES, getStateNameByCode } from "@shared/states";
+import { STATE_ENTRIES } from "@shared/states";
 import { apiClient } from "@/lib/api";
 import PageMeta from "@/components/seo/PageMeta";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EvidenceLedger } from "@/components/reports/evidence-ledger";
 import { useSsrData } from "@/lib/ssrData";
 import type {
   AgencySummary,
@@ -203,12 +204,28 @@ export default function ReportsIndex() {
 
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
                 <FilterSelect
-                  id="state-filter"
-                  label="Jurisdiction"
-                  value={parsed.filters.state || ""}
-                  onChange={(value) => updateFilters({ state: value || undefined })}
+                  id="jurisdiction-filter"
+                  label="Subject jurisdiction"
+                  value={parsed.filters.jurisdiction || ""}
+                  onChange={(value) => updateFilters({ jurisdiction: value || undefined })}
                 >
-                  <option value="">All jurisdictions</option>
+                  <option value="">All subject jurisdictions</option>
+                  {STATE_ENTRIES.map((state) => (
+                    <option key={state.code} value={state.code}>
+                      {state.name}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <FilterSelect
+                  id="source-jurisdiction-filter"
+                  label="Publishing authority"
+                  value={parsed.filters.sourceJurisdiction || ""}
+                  onChange={(value) =>
+                    updateFilters({ sourceJurisdiction: value || undefined })
+                  }
+                >
+                  <option value="">All publishing authorities</option>
                   <option value="US">Federal</option>
                   {STATE_ENTRIES.map((state) => (
                     <option key={state.code} value={state.code}>
@@ -319,7 +336,7 @@ export default function ReportsIndex() {
                 <option value="date_desc">Newest first</option>
                 <option value="date_asc">Oldest first</option>
                 <option value="title">Report title</option>
-                <option value="state">Jurisdiction</option>
+                <option value="jurisdiction">Subject jurisdiction</option>
               </FilterSelect>
             </div>
 
@@ -335,11 +352,7 @@ export default function ReportsIndex() {
             ) : isLoading ? (
               <ReportLedgerSkeleton />
             ) : data?.items.length ? (
-              <div className="border-b border-border">
-                {data.items.map((report) => (
-                  <ReportLedgerItem key={report.id} report={report} />
-                ))}
-              </div>
+              <EvidenceLedger reports={data.items} />
             ) : (
               <div className="border-b border-border py-10">
                 <h2 className="text-xl font-semibold text-foreground">
@@ -395,138 +408,6 @@ export default function ReportsIndex() {
         </div>
       </div>
     </>
-  );
-}
-
-function ReportLedgerItem({ report }: { report: ReportListItem }) {
-  const reportHref = `/reports/${report.id}`;
-  const summary = getReportSummary(report);
-
-  return (
-    <article className="grid border-t border-border py-6 first:border-t-0 lg:grid-cols-[118px_150px_minmax(0,1fr)_128px] lg:gap-5 lg:py-7">
-      <dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-b border-border pb-4 lg:block lg:border-b-0 lg:pb-0">
-        <LedgerField label="Published" value={formatPublicationDate(report)} mono />
-        <LedgerField
-          label="Jurisdiction"
-          value={getJurisdictionLabel(report.state)}
-        />
-      </dl>
-
-      <dl className="border-b border-border py-4 lg:border-b-0 lg:py-0">
-        <LedgerField label="Publishing agency" value={report.auditOrganization} />
-        <LedgerField label="Report ID" value={`REPORT ${report.id}`} mono />
-      </dl>
-
-      <div className="py-5 lg:py-0">
-        <h2 className="text-xl font-semibold leading-7 tracking-[-0.01em] text-foreground">
-          <Link
-            href={reportHref}
-            className="decoration-primary/50 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {report.reportTitle}
-          </Link>
-        </h2>
-        {summary && (
-          <p className="mt-3 font-serif text-base leading-7 text-muted-foreground">
-            {summary}
-          </p>
-        )}
-        {(typeof report.findingCount === "number" ||
-          typeof report.recommendationCount === "number") && (
-          <dl className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-border pt-3">
-            {typeof report.findingCount === "number" && (
-              <InlineMetric label="Findings" value={report.findingCount} />
-            )}
-            {typeof report.recommendationCount === "number" && (
-              <InlineMetric
-                label="Recommendations"
-                value={report.recommendationCount}
-              />
-            )}
-          </dl>
-        )}
-        <Link
-          href={reportHref}
-          className="mt-4 inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Open evidence record
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
-      </div>
-
-      <dl className="border-t border-border pt-4 lg:border-t-0 lg:pt-0">
-        {typeof report.totalFinancialImpact === "number" &&
-          report.totalFinancialImpact > 0 && (
-            <LedgerField
-              label="Financial impact"
-              value={formatCurrency(report.totalFinancialImpact)}
-              mono
-              emphasis
-            />
-          )}
-        <div className="mt-4 border-t border-border pt-4 first:mt-0 first:border-t-0 first:pt-0">
-          <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            Source status
-          </dt>
-          <dd className="mt-2">
-            {report.originalReportSourceUrl ? (
-              <a
-                href={report.originalReportSourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-start gap-1.5 text-sm font-semibold leading-5 text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                Original source
-                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              </a>
-            ) : (
-              <span className="text-sm font-semibold text-muted-foreground">
-                Library record
-              </span>
-            )}
-          </dd>
-        </div>
-      </dl>
-    </article>
-  );
-}
-
-function LedgerField({
-  label,
-  value,
-  mono = false,
-  emphasis = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  emphasis?: boolean;
-}) {
-  return (
-    <div className="mb-4 last:mb-0">
-      <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-        {label}
-      </dt>
-      <dd
-        className={`mt-1.5 break-words text-sm leading-5 ${
-          mono ? "font-mono" : "font-semibold"
-        } ${emphasis ? "text-primary" : "text-foreground"}`}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-function InlineMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <dt className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-        {label}
-      </dt>
-      <dd className="font-mono text-sm font-semibold text-foreground">{value}</dd>
-    </div>
   );
 }
 
@@ -612,7 +493,20 @@ function parseReportsLocation(location: string): {
   const filters: SearchFilters = {};
 
   if (params.get("query")) filters.query = params.get("query") || undefined;
-  if (params.get("state")) filters.state = params.get("state") || undefined;
+  if (params.get("jurisdiction")) {
+    filters.jurisdiction = params.get("jurisdiction") || undefined;
+  }
+  if (params.get("sourceJurisdiction")) {
+    filters.sourceJurisdiction = params.get("sourceJurisdiction") || undefined;
+  }
+  const legacyState = params.get("state");
+  if (legacyState && !filters.jurisdiction && !filters.sourceJurisdiction) {
+    if (legacyState.toUpperCase() === "US") {
+      filters.sourceJurisdiction = "US";
+    } else {
+      filters.jurisdiction = legacyState.toUpperCase();
+    }
+  }
   if (params.get("agency")) filters.agency = params.get("agency") || undefined;
   if (Number.isInteger(year) && year > 0) filters.year = year;
   if (params.get("theme")) filters.theme = params.get("theme") || undefined;
@@ -645,48 +539,6 @@ function countActiveFilters(filters: SearchFilters) {
   return Object.entries(filters).filter(
     ([key, value]) => key !== "sortBy" && value !== undefined && value !== "",
   ).length;
-}
-
-function getReportSummary(report: ReportListItem) {
-  const summary =
-    report.overallConclusion ||
-    report.llmInsight ||
-    report.potentialObjectiveSummary ||
-    report.auditScope;
-  if (!summary) return undefined;
-  return summary.length > 280 ? `${summary.slice(0, 277).trim()}…` : summary;
-}
-
-function formatPublicationDate(report: ReportListItem) {
-  if (!report.publicationMonth) return String(report.publicationYear);
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: report.publicationDay ? "numeric" : undefined,
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(
-    new Date(
-      Date.UTC(
-        report.publicationYear,
-        report.publicationMonth - 1,
-        report.publicationDay || 1,
-      ),
-    ),
-  );
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value);
-}
-
-function getJurisdictionLabel(stateCode: string) {
-  if (stateCode === "US") return "Federal";
-  return getStateNameByCode(stateCode) || stateCode;
 }
 
 function buildItemList(data: SearchResponse, page: number) {

@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, useRoute } from "wouter";
-import { getStateNameByCode } from "@shared/states";
 import { apiClient } from "@/lib/api";
 import PageMeta from "@/components/seo/PageMeta";
 import { Button } from "@/components/ui/button";
@@ -27,10 +26,25 @@ export default function AgencyDetail() {
     queryFn: () => apiClient.getAgencyBySlug(slug),
   });
 
-  const jurisdictions = useMemo(() => {
+  const subjectJurisdictions = useMemo(() => {
     if (!data) return [];
     return Array.from(
-      new Set(data.reports.map((report) => jurisdictionName(report.state))),
+      new Set(
+        data.reports.flatMap((report) =>
+          report.subjectJurisdictions.map((jurisdiction) => jurisdiction.name),
+        ),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [data]);
+
+  const sourceAuthorities = useMemo(() => {
+    if (!data) return [];
+    return Array.from(
+      new Set(
+        data.reports
+          .map((report) => report.sourceJurisdiction?.name)
+          .filter((name): name is string => Boolean(name)),
+      ),
     ).sort((a, b) => a.localeCompare(b));
   }, [data]);
 
@@ -115,7 +129,8 @@ export default function AgencyDetail() {
           <div className="py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-10">
             <AgencyContext
               data={data}
-              jurisdictions={jurisdictions}
+              subjectJurisdictions={subjectJurisdictions}
+              sourceAuthorities={sourceAuthorities}
               coveragePeriod={coveragePeriod}
               loading={isLoading}
             />
@@ -164,12 +179,14 @@ export default function AgencyDetail() {
 
 function AgencyContext({
   data,
-  jurisdictions,
+  subjectJurisdictions,
+  sourceAuthorities,
   coveragePeriod,
   loading,
 }: {
   data?: AgencyLandingPageData;
-  jurisdictions: string[];
+  subjectJurisdictions: string[];
+  sourceAuthorities: string[];
   coveragePeriod?: string;
   loading: boolean;
 }) {
@@ -196,12 +213,22 @@ function AgencyContext({
           mono
         />
         <ContextField
-          label="Jurisdictions in these reports"
+          label="Source authority"
           value={
             loading
               ? "Loading…"
-              : jurisdictions.length
-                ? jurisdictions.join(", ")
+              : sourceAuthorities.length
+                ? sourceAuthorities.join(", ")
+                : "Not available"
+          }
+        />
+        <ContextField
+          label="Subject jurisdictions"
+          value={
+            loading
+              ? "Loading…"
+              : subjectJurisdictions.length
+                ? subjectJurisdictions.join(", ")
                 : "Not available"
           }
         />
@@ -283,9 +310,4 @@ function AgencyNotFound() {
       </Link>
     </div>
   );
-}
-
-function jurisdictionName(code: string) {
-  if (code === "US") return "Federal";
-  return getStateNameByCode(code) || code;
 }

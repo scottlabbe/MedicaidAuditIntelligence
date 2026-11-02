@@ -222,14 +222,14 @@ function TooltipContent({
       <div className="mt-2">
         {scope === "federal" ? (
           <Link
-            href={`/explore?agency=${encodeURIComponent("HHS OIG")}`}
+            href="/federal"
             className="text-xs text-foreground underline underline-offset-4"
           >
             View all federal
           </Link>
         ) : (
           <Link
-            href={`/explore?state=${encodeURIComponent(keyStr)}`}
+            href={`/reports?jurisdiction=${encodeURIComponent(keyStr)}`}
             className="text-xs text-foreground underline underline-offset-4"
           >
             View all in {keyStr}

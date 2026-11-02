@@ -1,8 +1,5 @@
 import { storage } from "./storage";
-import {
-  getStateEntryByCode,
-  getStateEntryBySlug,
-} from "@shared/states";
+import { getStateEntryBySlug } from "@shared/states";
 import {
   getResearchReportBySlug,
   listResearchReports,
@@ -42,6 +39,7 @@ export interface ResolvedHtmlRoute {
     | "research_index"
     | "research"
     | "state"
+    | "federal"
     | "not_found"
     | "redirect";
   status: number;
@@ -128,6 +126,23 @@ function formatIsoDate(value?: string): string | undefined {
   });
 }
 
+function reportSubjectLabel(report: {
+  jurisdictionScopeType?: string;
+  subjectJurisdictions?: Array<{ name: string }>;
+}): string {
+  if (report.jurisdictionScopeType === "national") return "National scope";
+  const subjects = report.subjectJurisdictions || [];
+  if (!subjects.length) return "Subject not available";
+  if (subjects.length <= 2) return subjects.map((subject) => subject.name).join(", ");
+  return `${subjects.length} jurisdictions`;
+}
+
+function reportSourceLabel(report: {
+  sourceJurisdiction?: { name: string };
+}): string {
+  return report.sourceJurisdiction?.name || "Source authority not available";
+}
+
 function getOrganizationJsonLd() {
   return {
     "@context": "https://schema.org",
@@ -197,7 +212,7 @@ function getNotFoundRoute(): ResolvedHtmlRoute {
         <h1>Page not found</h1>
         <p>The URL you requested does not exist or is no longer available.</p>
       </header>
-      <p><a href="/">Return to the homepage</a> or <a href="/explore">browse reports</a>.</p>
+      <p><a href="/">Return to the homepage</a> or <a href="/reports">browse reports</a>.</p>
     `),
   };
 }
@@ -220,7 +235,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
         listResearchReports(),
       ]);
     totalReports = stats.totalReports;
-    statesWithReports = stats.statesWithReports;
+    statesWithReports = stats.statesWithSubjectCoverage;
     latestReports = latest.items;
     states = stateSummaries;
     topics = topicSummaries;
@@ -249,7 +264,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
             "Search and analyze Medicaid audit reports across states with structured findings, recommendations, and trends.",
           potentialAction: {
             "@type": "SearchAction",
-            target: `${SITE_URL}/explore?query={search_term_string}`,
+            target: `${SITE_URL}/reports?query={search_term_string}`,
             "query-input": "required name=search_term_string",
           },
         },
@@ -268,7 +283,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
           latestReports.map((report: any) => ({
             href: `/reports/${report.id}`,
             label: report.reportTitle,
-            meta: `${report.state} • ${report.auditOrganization} • ${report.publicationYear}`,
+            meta: `${reportSubjectLabel(report)} • ${reportSourceLabel(report)} • ${report.publicationYear}`,
           })),
         )}
       </section>
@@ -299,6 +314,9 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
       home: {
         stats: {
           totalReports,
+          statesWithSubjectCoverage: statesWithReports,
+          jurisdictionsWithSubjectCoverage: statesWithReports,
+          federalSourceReportCount: 0,
           statesWithReports,
           criticalFindings: 0,
           recentReports: latestReports,
@@ -307,120 +325,6 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
         states,
         topics,
         researchReports,
-      },
-    },
-  };
-}
-
-async function getExploreRoute(url: URL): Promise<ResolvedHtmlRoute> {
-  const params = url.searchParams;
-  const stateCode = params.get("state");
-  const query = params.get("query");
-  const year = params.get("year");
-  const stateEntry = getStateEntryByCode(stateCode);
-  const paramKeys = Array.from(params.keys());
-  const onlyStateFilter = Boolean(stateEntry) && paramKeys.length === 1 && paramKeys[0] === "state";
-
-  if (onlyStateFilter && stateEntry) {
-    return {
-      routeType: "redirect",
-      status: 301,
-      redirectTo: `/states/${stateEntry.slug}`,
-      snapshotHtml: "",
-    };
-  }
-
-  const hasFilters = paramKeys.length > 0;
-
-  let title = `Explore Medicaid Audit Reports | ${SITE_NAME}`;
-  let description =
-    "Search and filter Medicaid audit reports by state, agency, year, and topic. Browse findings, recommendations, and financial impacts.";
-
-  if (stateEntry) {
-    title = `Medicaid Audit Reports in ${stateEntry.name} | ${SITE_NAME}`;
-    description = `Browse Medicaid audit reports for ${stateEntry.name}. Find audit findings, recommendations, and oversight insights.`;
-  } else if (query) {
-    title = `"${truncate(query, 40)}" - Medicaid Audit Search | ${SITE_NAME}`;
-    description = `Search results for "${truncate(query, 80)}" in Medicaid audit reports. Find related findings, recommendations, and analysis.`;
-  }
-
-  if (year) {
-    title = title.replace(` | ${SITE_NAME}`, ` (${year}) | ${SITE_NAME}`);
-  }
-
-  let states: any[] = [];
-  let featuredReports: any[] = [];
-
-  try {
-    const [stateSummaries, featured] = await Promise.all([
-      storage.getIndexableStates(12),
-      storage.getFeaturedReports(6),
-    ]);
-    states = stateSummaries;
-    featuredReports = featured;
-  } catch {
-    // Serve page without the optional snapshot data.
-  }
-
-  return {
-    routeType: "explore",
-    status: 200,
-    seoMeta: {
-      title,
-      description,
-      canonicalUrl: `${SITE_URL}/explore`,
-      ogType: "website",
-      robots: hasFilters ? "noindex, follow" : "index, follow",
-      jsonLd: [
-        {
-          "@context": "https://schema.org",
-          "@type": "CollectionPage",
-          name: "Explore Medicaid Audit Reports",
-          url: `${SITE_URL}/explore`,
-          description,
-          isPartOf: {
-            "@type": "WebSite",
-            name: SITE_NAME,
-            url: SITE_URL,
-          },
-        },
-      ],
-    },
-    snapshotHtml: renderPageShell(`
-      <header>
-        <h1>Explore Medicaid audit reports</h1>
-        <p>${escapeHtml(
-          hasFilters
-            ? "Filtered search views help users refine results, but the main explore page remains the canonical entry point for search engines."
-            : "Browse Medicaid audit reports by state, agency, publication date, and topic. Use the explore page to compare audit findings and move into full report detail pages.",
-        )}</p>
-      </header>
-      <section>
-        <h2>State landing pages</h2>
-        ${renderLinkList(
-          states.map((state: any) => ({
-            href: `/states/${state.slug}`,
-            label: `${state.name} Medicaid audits`,
-            meta: `${state.reportCount} reports`,
-          })),
-        )}
-      </section>
-      <section>
-        <h2>Recent featured reports</h2>
-        ${renderLinkList(
-          featuredReports.map((report: any) => ({
-            href: `/reports/${report.id}`,
-            label: report.reportTitle,
-            meta: `${report.state} • ${report.publicationYear}`,
-          })),
-        )}
-      </section>
-    `),
-    initialRouteData: {
-      routeType: "explore",
-      explore: {
-        states,
-        featuredReports,
       },
     },
   };
@@ -436,7 +340,18 @@ function getReportFilters(url: URL): SearchFilters {
     filters.query = url.searchParams.get("query") || undefined;
   }
   if (url.searchParams.get("state")) {
-    filters.state = url.searchParams.get("state") || undefined;
+    const legacyState = url.searchParams.get("state") || undefined;
+    if (legacyState?.toUpperCase() === "US") {
+      filters.sourceJurisdiction = "US";
+    } else {
+      filters.jurisdiction = legacyState?.toUpperCase();
+    }
+  }
+  if (url.searchParams.get("jurisdiction")) {
+    filters.jurisdiction = url.searchParams.get("jurisdiction")?.toUpperCase();
+  }
+  if (url.searchParams.get("sourceJurisdiction")) {
+    filters.sourceJurisdiction = url.searchParams.get("sourceJurisdiction")?.toUpperCase();
   }
   if (url.searchParams.get("agency")) {
     filters.agency = url.searchParams.get("agency") || undefined;
@@ -452,7 +367,8 @@ function getReportFilters(url: URL): SearchFilters {
     sortBy === "date_desc" ||
     sortBy === "date_asc" ||
     sortBy === "title" ||
-    sortBy === "state"
+    sortBy === "state" ||
+    sortBy === "jurisdiction"
   ) {
     filters.sortBy = sortBy;
   }
@@ -510,7 +426,7 @@ async function getReportsIndexRoute(
           reportResults.items.map((report) => ({
             href: `/reports/${report.id}`,
             label: report.reportTitle,
-            meta: `${report.state} • ${report.auditOrganization} • ${report.publicationYear}`,
+            meta: `${reportSubjectLabel(report)} • ${reportSourceLabel(report)} • ${report.publicationYear}`,
           })),
         )}
       </section>
@@ -525,13 +441,13 @@ async function getReportsIndexRoute(
 async function getStatesIndexRoute(): Promise<ResolvedHtmlRoute> {
   const states = await storage.getIndexableStates(60);
   const description =
-    "Browse Medicaid audit report coverage by state, including state-level findings, recommendations, and original source documents.";
+    "Browse Medicaid audit evidence by reviewed subject jurisdiction and reach the separate Federal publishing-authority register.";
 
   return {
     routeType: "states_index",
     status: 200,
     seoMeta: {
-      title: `State Medicaid Audit Report Pages | ${SITE_NAME}`,
+      title: `Medicaid Audit Jurisdictions | ${SITE_NAME}`,
       description,
       canonicalUrl: `${SITE_URL}/states`,
       ogType: "website",
@@ -540,7 +456,7 @@ async function getStatesIndexRoute(): Promise<ResolvedHtmlRoute> {
         {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: "State Medicaid Audit Report Pages",
+          name: "Medicaid Audit Jurisdictions",
           url: `${SITE_URL}/states`,
           description,
           isPartOf: {
@@ -554,9 +470,10 @@ async function getStatesIndexRoute(): Promise<ResolvedHtmlRoute> {
     snapshotHtml: renderPageShell(`
       <section>
         <header>
-          <h1>State Medicaid audit report pages</h1>
+          <h1>Medicaid audit evidence by jurisdiction</h1>
           <p>${escapeHtml(description)}</p>
         </header>
+        <p><a href="/federal">Browse Federal-source audit reports</a>.</p>
         ${renderLinkList(
           states.map((state) => ({
             href: `/states/${state.slug}`,
@@ -646,7 +563,7 @@ async function getAgencyRoute(slug: string): Promise<ResolvedHtmlRoute> {
           agency.reports.map((report) => ({
             href: `/reports/${report.id}`,
             label: report.reportTitle,
-            meta: `${report.state} • ${report.publicationYear}`,
+            meta: `${reportSubjectLabel(report)} • ${report.publicationYear}`,
           })),
         )}
       </section>
@@ -781,7 +698,13 @@ async function getTopicRoute(slug: string): Promise<ResolvedHtmlRoute> {
 }
 
 async function getDashboardRoute(): Promise<ResolvedHtmlRoute> {
-  let stats: { totalReports: number; statesWithReports: number } | undefined;
+  let stats:
+    | {
+        totalReports: number;
+        statesWithSubjectCoverage: number;
+        federalSourceReportCount: number;
+      }
+    | undefined;
   let states: any[] = [];
   let mapData: any;
 
@@ -812,7 +735,7 @@ async function getDashboardRoute(): Promise<ResolvedHtmlRoute> {
         <h1>Medicaid audit dashboard</h1>
         <p>${escapeHtml(
           stats
-            ? `Review ${stats.totalReports} audit reports across ${stats.statesWithReports} states, monitor critical findings, and navigate into state and report-level detail pages.`
+            ? `Review ${stats.totalReports} audit reports across ${stats.statesWithSubjectCoverage} state jurisdictions, including ${stats.federalSourceReportCount} Federal-source reports.`
             : "Review Medicaid audit coverage, state-level findings, and report volume trends across the dataset.",
         )}</p>
       </header>
@@ -826,7 +749,7 @@ async function getDashboardRoute(): Promise<ResolvedHtmlRoute> {
           })),
         )}
       </section>
-      <p><a href="/explore">Explore reports</a> or return to the <a href="/">homepage</a>.</p>
+      <p><a href="/reports">Explore reports</a> or return to the <a href="/">homepage</a>.</p>
     `),
     initialRouteData:
       stats && mapData
@@ -861,7 +784,7 @@ function getAboutRoute(): ResolvedHtmlRoute {
         <h2>How the site works</h2>
         <p>Audit reports are collected from public oversight sources, normalized into a common schema, and published with links back to the original documents.</p>
       </section>
-      <p><a href="/explore">Explore the report library</a>.</p>
+      <p><a href="/reports">Explore the report library</a>.</p>
     `),
   };
 }
@@ -872,7 +795,7 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
     return getNotFoundRoute();
   }
 
-  const stateEntry = getStateEntryByCode(report.state);
+  const primarySubject = report.subjectJurisdictions[0];
   const description = truncate(
     report.overallConclusion ||
       report.llmInsight ||
@@ -895,9 +818,9 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
 
   const breadcrumbItems = [
     { name: "Home", url: SITE_URL },
-    { name: "Explore", url: `${SITE_URL}/explore` },
-    ...(stateEntry
-      ? [{ name: stateEntry.name, url: `${SITE_URL}/states/${stateEntry.slug}` }]
+    { name: "Reports", url: `${SITE_URL}/reports` },
+    ...(primarySubject
+      ? [{ name: primarySubject.name, url: `${SITE_URL}/states/${primarySubject.slug}` }]
       : []),
     { name: report.reportTitle, url: `${SITE_URL}/reports/${report.id}` },
   ];
@@ -926,10 +849,13 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
             "@type": "GovernmentService",
             name: "Medicaid",
           },
-          spatialCoverage: {
-            "@type": "Place",
-            name: stateEntry?.name || report.state,
-          },
+          spatialCoverage:
+            report.jurisdictionScopeType === "national"
+              ? { "@type": "Place", name: "United States" }
+              : report.subjectJurisdictions.map((jurisdiction) => ({
+                  "@type": "Place",
+                  name: jurisdiction.name,
+                })),
           publisher: {
             "@type": "Organization",
             name: SITE_NAME,
@@ -942,7 +868,8 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
     snapshotHtml: renderPageShell(`
       <article>
         <header>
-          <p>${escapeHtml(report.auditOrganization)} • ${escapeHtml(publishedLabel)}${stateEntry ? ` • <a href="/states/${stateEntry.slug}">${escapeHtml(stateEntry.name)}</a>` : ""}</p>
+          <p>${escapeHtml(reportSourceLabel(report))} • ${escapeHtml(report.auditOrganization)} • ${escapeHtml(publishedLabel)}</p>
+          <p>Examines: ${escapeHtml(reportSubjectLabel(report))}</p>
           <h1>${escapeHtml(report.reportTitle)}</h1>
           <p>${escapeHtml(description)}</p>
         </header>
@@ -962,7 +889,7 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
           </section>
         ` : ""}
         ${report.originalReportSourceUrl ? `<p><a href="${escapeHtml(report.originalReportSourceUrl)}">View the original audit report PDF</a></p>` : ""}
-        <p><a href="/explore">Browse more reports</a>${stateEntry ? ` or <a href="/states/${stateEntry.slug}">see all ${escapeHtml(stateEntry.name)} reports</a>` : ""}.</p>
+        <p><a href="/reports">Browse more reports</a>${primarySubject ? ` or <a href="/states/${primarySubject.slug}">see all ${escapeHtml(primarySubject.name)} reports</a>` : ""}.</p>
       </article>
     `),
     initialRouteData: {
@@ -1014,7 +941,7 @@ async function getResearchRoute(slug: string): Promise<ResolvedHtmlRoute> {
           </header>
           ${report.introHtml ? `<section>${report.introHtml}</section>` : ""}
           ${renderResearchSections(report.sections)}
-          <p><a href="/research">Browse all research reports</a> or <a href="/explore">explore the audit report library</a>.</p>
+          <p><a href="/research">Browse all research reports</a> or <a href="/reports">explore the audit report library</a>.</p>
         </article>
       `),
       initialRouteData: {
@@ -1133,8 +1060,8 @@ async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
       )
     : undefined;
   const description = latestDate
-    ? `Browse ${statePage.reportCount} Medicaid audit reports for ${statePage.name}. Review findings, recommendations, and the latest oversight activity published through ${latestDate}.`
-    : `Browse ${statePage.reportCount} Medicaid audit reports for ${statePage.name}. Review findings, recommendations, and oversight activity from public audit sources.`;
+    ? `Browse ${statePage.reportCount} Medicaid audit reports that examine ${statePage.name}. Review state and Federal-source evidence published through ${latestDate}.`
+    : `Browse ${statePage.reportCount} Medicaid audit reports that examine ${statePage.name}, including evidence from state and Federal publishers.`;
 
   return {
     routeType: "state",
@@ -1160,7 +1087,7 @@ async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
         },
         getBreadcrumbJsonLd([
           { name: "Home", url: SITE_URL },
-          { name: "Explore", url: `${SITE_URL}/explore` },
+          { name: "Jurisdictions", url: `${SITE_URL}/states` },
           {
             name: `${statePage.name} Medicaid Audit Reports`,
             url: `${SITE_URL}/states/${statePage.slug}`,
@@ -1177,7 +1104,7 @@ async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
         <p>${escapeHtml(
           latestDate
             ? `Latest report published ${latestDate}.`
-            : "This page groups recent Medicaid audit reports for the state.",
+            : "This page groups reports with a reviewed subject assignment to this jurisdiction.",
         )}</p>
         <section>
           <h2>Recent reports</h2>
@@ -1193,7 +1120,7 @@ async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
             })),
           )}
         </section>
-        <p><a href="/explore">Explore all reports</a> or <a href="/dashboard">view the dashboard</a>.</p>
+        <p><a href="/reports">Explore all reports</a> or <a href="/dashboard">view the dashboard</a>.</p>
       </section>
     `),
     initialRouteData: {
@@ -1205,10 +1132,62 @@ async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
         page: 1,
         pageSize: statePage.reports.length,
         filters: {
-          state: statePage.code,
+          jurisdiction: statePage.code,
           sortBy: "date_desc",
         },
       },
+    },
+  };
+}
+
+async function getFederalRoute(): Promise<ResolvedHtmlRoute> {
+  const federalPage = await storage.getFederalLandingPage(24);
+  const description = `Browse ${federalPage.reportCount} Medicaid audit reports published or commissioned by Federal oversight authorities.`;
+
+  return {
+    routeType: "federal",
+    status: 200,
+    seoMeta: {
+      title: `Federal Medicaid Audit Reports | ${SITE_NAME}`,
+      description,
+      canonicalUrl: `${SITE_URL}/federal`,
+      ogType: "website",
+      robots: "index, follow",
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Federal Medicaid Audit Reports",
+          url: `${SITE_URL}/federal`,
+          description,
+          isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+        },
+        getBreadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Jurisdictions", url: `${SITE_URL}/states` },
+          { name: "Federal", url: `${SITE_URL}/federal` },
+        ]),
+      ],
+    },
+    snapshotHtml: renderPageShell(`
+      <section>
+        <header>
+          <h1>Federal Medicaid audit evidence</h1>
+          <p>${escapeHtml(description)}</p>
+        </header>
+        ${renderLinkList(
+          federalPage.reports.map((report) => ({
+            href: `/reports/${report.id}`,
+            label: report.reportTitle,
+            meta: `${reportSubjectLabel(report)} • ${report.auditOrganization} • ${report.publicationYear}`,
+          })),
+        )}
+        <p><a href="/reports?sourceJurisdiction=US">Search all Federal-source reports</a>.</p>
+      </section>
+    `),
+    initialRouteData: {
+      routeType: "federal",
+      federalPage,
     },
   };
 }
@@ -1222,7 +1201,12 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
   }
 
   if (pathname === "/explore") {
-    return getExploreRoute(url);
+    return {
+      routeType: "redirect",
+      status: 301,
+      redirectTo: `/reports${url.search}`,
+      snapshotHtml: "",
+    };
   }
 
   if (pathname === "/reports") {
@@ -1245,6 +1229,10 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
 
   if (pathname === "/states") {
     return getStatesIndexRoute();
+  }
+
+  if (pathname === "/federal") {
+    return getFederalRoute();
   }
 
   if (pathname === "/agencies") {
@@ -1360,9 +1348,9 @@ export async function generateSitemap(): Promise<string> {
 
   urls.push(
     { loc: SITE_URL, changefreq: "weekly", priority: "1.0" },
-    { loc: `${SITE_URL}/explore`, changefreq: "daily", priority: "0.9" },
     { loc: `${SITE_URL}/reports`, changefreq: "daily", priority: "0.9" },
     { loc: `${SITE_URL}/states`, changefreq: "weekly", priority: "0.8" },
+    { loc: `${SITE_URL}/federal`, changefreq: "weekly", priority: "0.8" },
     { loc: `${SITE_URL}/agencies`, changefreq: "weekly", priority: "0.7" },
     { loc: `${SITE_URL}/topics`, changefreq: "weekly", priority: "0.7" },
     { loc: `${SITE_URL}/research`, changefreq: "weekly", priority: "0.7" },

@@ -26,8 +26,8 @@ export default function NotFound() {
             <Link href="/">
               <Button size="sm">Home</Button>
             </Link>
-            <Link href="/explore">
-              <Button variant="outline" size="sm">Explore Reports</Button>
+            <Link href="/reports">
+              <Button variant="outline" size="sm">Search Reports</Button>
             </Link>
           </div>
         </CardContent>

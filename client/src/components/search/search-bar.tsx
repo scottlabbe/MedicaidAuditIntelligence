@@ -26,7 +26,7 @@ export default function SearchBar({
       if (onSearch) {
         onSearch(query);
       } else {
-        setLocation(`/explore?q=${encodeURIComponent(query)}`);
+        setLocation(`/reports?query=${encodeURIComponent(query)}`);
       }
     }
   };

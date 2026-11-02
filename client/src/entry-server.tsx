@@ -4,7 +4,6 @@ import { QueryClient } from "@tanstack/react-query";
 import App, { type RouteComponents } from "./App";
 import { primeInitialRouteData } from "./lib/initialRouteData";
 import type { InitialRouteData } from "./lib/types";
-import Explore from "./pages/explore";
 import ReportsIndex from "./pages/reports-index";
 import StatesIndex from "./pages/states-index";
 import AgenciesIndex from "./pages/agencies-index";
@@ -17,10 +16,10 @@ import ResearchReportPage from "./pages/research-report";
 import Dashboard from "./pages/dashboard";
 import About from "./pages/about";
 import StateDetail from "./pages/state-detail";
+import Federal from "./pages/federal";
 import "./index.css";
 
 const routeComponents: RouteComponents = {
-  Explore,
   ReportsIndex,
   StatesIndex,
   AgenciesIndex,
@@ -33,6 +32,7 @@ const routeComponents: RouteComponents = {
   Dashboard,
   About,
   StateDetail,
+  Federal,
 };
 
 export interface ServerRenderResult {

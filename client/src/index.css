@@ -189,3 +189,44 @@
     @apply space-y-8 lg:space-y-12;
   }
 }
+
+.report-evidence-anchor:target {
+  background: hsl(var(--evidence-wash));
+  outline: 2px solid hsl(var(--interactive-green));
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .report-evidence-anchor:target {
+    animation: report-anchor-highlight 2.4s ease-out both;
+  }
+
+  @keyframes report-anchor-highlight {
+    0%,
+    62% {
+      background: hsl(var(--evidence-wash));
+    }
+    100% {
+      background: transparent;
+    }
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.65in;
+  }
+
+  body {
+    color: #111813;
+    background: #ffffff;
+  }
+
+  a {
+    color: #111813;
+  }
+
+  .report-evidence-anchor {
+    break-inside: avoid;
+  }
+}

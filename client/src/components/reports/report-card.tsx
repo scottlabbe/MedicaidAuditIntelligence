@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { ReportListItem } from "@/lib/types";
+import { formatSourceJurisdiction, formatSubjectJurisdictions } from "@/lib/jurisdictions";
 
 interface ReportCardProps {
   report: ReportListItem;
@@ -14,7 +15,7 @@ export default function ReportCard({ report }: ReportCardProps) {
   const { toast } = useToast();
 
   const handleCopyCitation = () => {
-    const citation = `${report.auditOrganization} (${report.publicationYear}). ${report.reportTitle}. State: ${report.state}.`;
+    const citation = `${report.auditOrganization} (${report.publicationYear}). ${report.reportTitle}. Examines: ${formatSubjectJurisdictions(report, false)}. Source authority: ${formatSourceJurisdiction(report)}.`;
     navigator.clipboard.writeText(citation);
     toast({
       title: "Citation copied",
@@ -28,7 +29,7 @@ export default function ReportCard({ report }: ReportCardProps) {
         <div className="flex items-start justify-between mb-4">
           <div className="flex space-x-2">
             <Badge variant="secondary" className="text-xs px-3 py-1 bg-orange-light text-orange-primary border-orange-primary/20">
-              {report.state}
+              {formatSubjectJurisdictions(report)}
             </Badge>
             <Badge variant="secondary" className="text-xs px-3 py-1 bg-transparent text-orange-primary border-orange-primary/20">
               {report.publicationYear}

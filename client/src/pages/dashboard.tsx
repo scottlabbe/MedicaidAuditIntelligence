@@ -1,20 +1,18 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, MapPin, Zap, TrendingUp, Calendar, Building } from "lucide-react";
+import { FileText, MapPin, Landmark, TrendingUp, ListChecks, Building } from "lucide-react";
 import { Link } from "wouter";
 import { apiClient } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/stats-card";
 import PageMeta from "@/components/seo/PageMeta";
 import type { DashboardStats, StateLatestResponse } from "@/lib/types";
+import { formatSourceJurisdiction, formatSubjectJurisdictions } from "@/lib/jurisdictions";
 
 const USMap = lazy(() => import("@/components/dashboard/USMap"));
 
 export default function Dashboard() {
-  const [scope, setScope] = useState<"state" | "federal">("state");
-  
   const { data: stats, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
     queryFn: async () => {
@@ -24,8 +22,8 @@ export default function Dashboard() {
   });
 
   const { data: mapData, isLoading: mapLoading, error: mapError } = useQuery<StateLatestResponse>({
-    queryKey: ["/api/reports/state-latest", scope],
-    queryFn: () => apiClient.getLatestReportsByState({ scope, limit: 3 }),
+    queryKey: ["/api/reports/state-latest", "state"],
+    queryFn: () => apiClient.getLatestReportsByState({ scope: "state", limit: 3 }),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -45,7 +43,7 @@ export default function Dashboard() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageMeta
         title="Medicaid Audit Dashboard - Statistics & Coverage Map"
-        description={`Interactive dashboard with Medicaid audit statistics, state coverage map, and trend analysis. Explore ${stats?.totalReports || ""}+ audit findings across ${stats?.statesWithReports || ""} states.`}
+        description={`Review ${stats?.totalReports || ""} Medicaid audit reports, subject-jurisdiction coverage, and Federal-source report volume.`}
         canonicalPath="/dashboard"
       />
       {/* Header */}
@@ -82,27 +80,27 @@ export default function Dashboard() {
               color="orange"
             />
             <StatsCard
-              title="States Covered"
-              value={stats?.statesWithReports || 0}
-              subtitle="Nationwide coverage"
-              trend="50 states"
+              title="State subject coverage"
+              value={stats?.statesWithSubjectCoverage || 0}
+              subtitle="Reviewed state and district assignments"
+              trend="Subjects"
               icon={MapPin}
               color="emerald"
             />
             <StatsCard
-              title="Critical Findings"
-              value={stats?.criticalFindings || 0}
-              subtitle="High-priority issues"
-              trend="High"
-              icon={Zap}
+              title="Federal-source reports"
+              value={stats?.federalSourceReportCount || 0}
+              subtitle="Published by Federal authorities"
+              trend="Source"
+              icon={Landmark}
               color="amber"
             />
             <StatsCard
-              title="Recent Reports"
-              value={stats?.recentReports?.length || 0}
-              subtitle="This month"
-              trend="New"
-              icon={Calendar}
+              title="Indexed findings"
+              value={stats?.criticalFindings || 0}
+              subtitle="Findings across visible reports"
+              trend="Evidence"
+              icon={ListChecks}
               color="rose"
             />
           </>
@@ -114,23 +112,7 @@ export default function Dashboard() {
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Report Map</h2>
-            <p className="text-muted-foreground">Hover over a state to see its latest reports</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={scope === "state" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setScope("state")}
-            >
-              State
-            </Button>
-            <Button
-              variant={scope === "federal" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setScope("federal")}
-            >
-              Federal
-            </Button>
+            <p className="text-muted-foreground">Select a state to review reports that examine its Medicaid program</p>
           </div>
         </div>
 
@@ -141,7 +123,7 @@ export default function Dashboard() {
             <div className="h-[520px] animate-pulse bg-muted/30 rounded-xl" />
           ) : (
             <Suspense fallback={<div className="h-[520px] animate-pulse bg-muted/30 rounded-xl" />}>
-              <USMap data={mapData} scope={scope} />
+              <USMap data={mapData} scope="state" />
             </Suspense>
           )}
         </div>
@@ -188,7 +170,7 @@ export default function Dashboard() {
                           {report.reportTitle}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {report.state} • {report.auditOrganization}
+                          {formatSubjectJurisdictions(report)} · {formatSourceJurisdiction(report)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {report.publicationYear}
@@ -227,21 +209,21 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Total States</span>
+                  <span className="text-sm font-medium">States with subject evidence</span>
                   <span className="text-sm text-muted-foreground">
-                    {stats?.statesWithReports || 0}/50
+                    {stats?.statesWithSubjectCoverage || 0}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Coverage Rate</span>
+                  <span className="text-sm font-medium">Subject jurisdictions</span>
                   <span className="text-sm text-muted-foreground">
-                    {stats?.statesWithReports ? Math.round((stats.statesWithReports / 50) * 100) : 0}%
+                    {stats?.jurisdictionsWithSubjectCoverage || 0}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Critical Issues</span>
-                  <span className="text-sm text-destructive font-medium">
-                    {stats?.criticalFindings || 0}
+                  <span className="text-sm font-medium">Federal-source reports</span>
+                  <span className="text-sm text-primary font-medium">
+                    {stats?.federalSourceReportCount || 0}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -256,42 +238,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Additional Insights */}
-      <div className="mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Insights</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-primary mb-2">
-                  {stats?.totalReports || 0}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Reports in database
-                </div>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-emerald-600 mb-2">
-                  {stats?.statesWithReports || 0}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  States with coverage
-                </div>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-amber-600 mb-2">
-                  {stats?.criticalFindings || 0}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Critical findings identified
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

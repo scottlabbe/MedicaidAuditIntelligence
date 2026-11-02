@@ -31,7 +31,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
       setLocation(value);
     } else {
       // Handle search query
-      setLocation(`/explore?query=${encodeURIComponent(value)}`);
+      setLocation(`/reports?query=${encodeURIComponent(value)}`);
     }
   };
 
@@ -44,9 +44,9 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
     },
     {
       icon: Search,
-      title: "Explore Reports",
+      title: "Search Reports",
       subtitle: "Search and filter all audit reports",
-      value: "/explore",
+      value: "/reports",
     },
     {
       icon: BarChart3,

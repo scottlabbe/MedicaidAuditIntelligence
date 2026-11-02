@@ -7,7 +7,7 @@ import CommandPalette from "@/components/ui/command-palette";
 
 const navigation = [
   { name: "Home", href: "/" },
-  { name: "Explore", href: "/explore" },
+  { name: "Reports", href: "/reports" },
   { name: "Dashboard", href: "/dashboard" },
 ];
 

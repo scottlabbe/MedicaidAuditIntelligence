@@ -5,8 +5,8 @@ import { preloadRouteHref } from "@/lib/routeLoaders";
 const PRIMARY_LINKS = [
   { href: "/", label: "Home" },
   { href: "/reports", label: "All Reports" },
-  { href: "/explore", label: "Explore Reports" },
-  { href: "/states", label: "States" },
+  { href: "/states", label: "Jurisdictions" },
+  { href: "/federal", label: "Federal Reports" },
   { href: "/agencies", label: "Agencies" },
   { href: "/topics", label: "Topics" },
   { href: "/research", label: "Research" },
@@ -27,7 +27,7 @@ export default function Footer() {
   });
 
   return (
-    <footer className="mt-0 border-t border-border bg-muted">
+    <footer className="mt-0 border-t border-border bg-muted print:hidden">
       <div className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-3">
@@ -56,7 +56,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-foreground mb-3">State Pages</p>
+            <p className="text-sm font-semibold text-foreground mb-3">Jurisdiction Pages</p>
             <nav className="space-y-2 text-sm">
               {FEATURED_STATES.map((state) => (
                 <Link

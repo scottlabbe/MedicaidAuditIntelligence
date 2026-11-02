@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
-import { getStateNameByCode } from "@shared/states";
 import { apiClient } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageMeta from "@/components/seo/PageMeta";
@@ -244,7 +243,7 @@ function SourceRegister({ sources }: { sources: ResearchReportSource[] }) {
 
       <div className="border-b border-border">
         {sources.map((source) => {
-          const details = parseSourceLabel(source);
+          const details = getSourceDetails(source);
           return (
             <article
               key={source.reportId}
@@ -256,11 +255,14 @@ function SourceRegister({ sources }: { sources: ResearchReportSource[] }) {
                   value={`REPORT ${source.reportId}`}
                   mono
                 />
-                {details.jurisdiction && (
+                {details.sourceAuthority && (
                   <SourceField
-                    label="Jurisdiction"
-                    value={details.jurisdiction}
+                    label="Source authority"
+                    value={details.sourceAuthority}
                   />
+                )}
+                {details.subjects && (
+                  <SourceField label="Examines" value={details.subjects} />
                 )}
               </dl>
 
@@ -329,7 +331,25 @@ function SourceField({
   );
 }
 
-function parseSourceLabel(source: ResearchReportSource) {
+function getSourceDetails(source: ResearchReportSource) {
+  if (source.reportTitle) {
+    const subjects =
+      source.jurisdictionScopeType === "national"
+        ? "National scope"
+        : source.subjectJurisdictions?.length
+          ? source.subjectJurisdictions.map((jurisdiction) => jurisdiction.name).join(", ")
+          : undefined;
+    return {
+      title: source.reportTitle,
+      sourceAuthority: source.sourceJurisdiction?.name,
+      subjects,
+      agency: source.auditOrganization,
+      date: source.publicationLabel
+        ? formatSourceDate(source.publicationLabel)
+        : undefined,
+    };
+  }
+
   const pattern =
     /^\[Report \d+\]\s+(.+?)\s+\(state=([^;]+);\s*organization=(.+?);\s*publication_date=([^)]+)\)/;
   const match = source.label.match(pattern);
@@ -337,27 +357,29 @@ function parseSourceLabel(source: ResearchReportSource) {
   if (!match) {
     return {
       title: source.label.replace(/^\[Report \d+\]\s*/, ""),
-      jurisdiction: undefined,
+      sourceAuthority: undefined,
+      subjects: undefined,
       agency: undefined,
       date: undefined,
     };
   }
 
-  const stateCode = match[2].trim();
   return {
     title: match[1].trim(),
-    jurisdiction:
-      stateCode === "US"
-        ? "Federal"
-        : getStateNameByCode(stateCode) || stateCode,
+    sourceAuthority: undefined,
+    subjects: undefined,
     agency: match[3].trim(),
-    date: new Date(`${match[4].trim()}T00:00:00Z`).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      timeZone: "UTC",
-    }),
+    date: formatSourceDate(match[4].trim()),
   };
+}
+
+function formatSourceDate(value: string) {
+  return new Date(`${value}T00:00:00Z`).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 function formatResearchDate(value: string) {

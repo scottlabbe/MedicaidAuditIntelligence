@@ -1,6 +1,7 @@
 import { queryClient } from "./queryClient";
 import type {
   IndexableStateSummary,
+  FederalLandingPageData,
   AgencyLandingPageData,
   AgencySummary,
   SearchFilters,
@@ -66,6 +67,10 @@ export class ApiClient {
 
   async getStates() {
     return this.request<IndexableStateSummary[]>("/states");
+  }
+
+  async getFederal() {
+    return this.request<FederalLandingPageData>("/federal");
   }
 
   async getAgencies() {

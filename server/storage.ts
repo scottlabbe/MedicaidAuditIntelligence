@@ -1,18 +1,9 @@
-import { eq, and, desc, asc, ilike, sql, or, inArray } from "drizzle-orm";
-
-// Federal agencies for filtering federal reports
-const FEDERAL_AGENCIES = [
-  "HHS OIG",
-  "Office of Inspector General, HHS", 
-  "GAO",
-  "Government Accountability Office",
-  "Centers for Medicare & Medicaid Services",
-  "CMS",
-  "Medicaid.gov"
-];
+import { eq, and, desc, asc, ilike, sql, or, inArray, isNull } from "drizzle-orm";
 import { db } from "./database";
 import {
   reports,
+  jurisdictions,
+  reportJurisdictionAssignments,
   objectives,
   findings,
   recommendations,
@@ -50,8 +41,10 @@ import type {
   TopicLandingPageData,
   TopicEvidence,
   TopicSlugResolution,
+  JurisdictionRef,
+  JurisdictionScopeType,
+  FederalLandingPageData,
 } from "../client/src/lib/types";
-import { getStateEntryByCode } from "@shared/states";
 import { getTopicGuideContent } from "@shared/topicGuides";
 
 function slugify(value: string): string {
@@ -93,6 +86,7 @@ export interface IStorage {
   getLatestReportsByState(limit: number, scope: 'state' | 'federal'): Promise<StateLatestResponse>;
   getIndexableStates(limit?: number): Promise<IndexableStateSummary[]>;
   getStateLandingPage(stateCode: string, limit?: number): Promise<StateLandingPageData | undefined>;
+  getFederalLandingPage(limit?: number): Promise<FederalLandingPageData>;
   getAgenciesWithCounts(limit?: number): Promise<AgencySummary[]>;
   getAgencyLandingPage(slug: string, limit?: number): Promise<AgencyLandingPageData | undefined>;
   getTopicsWithCounts(): Promise<TopicSummary[]>;
@@ -109,6 +103,120 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private async addJurisdictionMetadata<T extends {
+    id: number;
+    sourceJurisdictionCode?: string | null;
+    jurisdictionScopeType?: string | null;
+  }>(items: T[]): Promise<Array<T & {
+    sourceJurisdiction?: JurisdictionRef;
+    subjectJurisdictions: JurisdictionRef[];
+    jurisdictionScopeType: JurisdictionScopeType;
+  }>> {
+    if (items.length === 0) return [];
+
+    const reportIds = items.map((item) => item.id);
+    const sourceCodes = Array.from(
+      new Set(items.map((item) => item.sourceJurisdictionCode).filter(Boolean)),
+    ) as string[];
+
+    const [subjectRows, sourceRows] = await Promise.all([
+      db
+        .select({
+          reportId: reportJurisdictionAssignments.reportId,
+          code: jurisdictions.code,
+          name: jurisdictions.name,
+          slug: jurisdictions.slug,
+          kind: jurisdictions.kind,
+        })
+        .from(reportJurisdictionAssignments)
+        .innerJoin(
+          jurisdictions,
+          eq(reportJurisdictionAssignments.jurisdictionCode, jurisdictions.code),
+        )
+        .where(
+          and(
+            inArray(reportJurisdictionAssignments.reportId, reportIds),
+            eq(reportJurisdictionAssignments.reviewStatus, "reviewed"),
+            isNull(reportJurisdictionAssignments.retiredAt),
+            inArray(reportJurisdictionAssignments.relationship, [
+              "primary_subject",
+              "included_in_scope",
+            ]),
+          ),
+        )
+        .orderBy(asc(jurisdictions.name)),
+      sourceCodes.length
+        ? db
+            .select({
+              code: jurisdictions.code,
+              name: jurisdictions.name,
+              slug: jurisdictions.slug,
+              kind: jurisdictions.kind,
+            })
+            .from(jurisdictions)
+            .where(inArray(jurisdictions.code, sourceCodes))
+        : Promise.resolve([]),
+    ]);
+
+    const sourceByCode = new Map(
+      sourceRows.map((row) => [row.code, row as JurisdictionRef]),
+    );
+    const subjectsByReport = new Map<number, JurisdictionRef[]>();
+    for (const row of subjectRows) {
+      const entries = subjectsByReport.get(row.reportId) || [];
+      entries.push({
+        code: row.code,
+        name: row.name,
+        slug: row.slug,
+        kind: row.kind as JurisdictionRef["kind"],
+      });
+      subjectsByReport.set(row.reportId, entries);
+    }
+
+    return items.map((item) => ({
+      ...item,
+      sourceJurisdiction: item.sourceJurisdictionCode
+        ? sourceByCode.get(item.sourceJurisdictionCode)
+        : undefined,
+      subjectJurisdictions: subjectsByReport.get(item.id) || [],
+      jurisdictionScopeType: (item.jurisdictionScopeType || "unknown") as JurisdictionScopeType,
+    }));
+  }
+
+  private async toReportListItems(items: any[]): Promise<ReportListItem[]> {
+    const normalized = items.map((item) => ({
+      ...item,
+      publicationMonth: item.publicationMonth ?? undefined,
+      publicationDay: item.publicationDay ?? undefined,
+      overallConclusion: item.overallConclusion ?? undefined,
+      llmInsight: item.llmInsight ?? undefined,
+      potentialObjectiveSummary: item.potentialObjectiveSummary ?? undefined,
+      auditScope: item.auditScope ?? undefined,
+      originalReportSourceUrl: item.originalReportSourceUrl ?? undefined,
+      totalFinancialImpact: item.totalFinancialImpact ?? undefined,
+      findingCount:
+        item.findingCount === undefined ? undefined : Number(item.findingCount) || 0,
+      recommendationCount:
+        item.recommendationCount === undefined
+          ? undefined
+          : Number(item.recommendationCount) || 0,
+      originalFilename: item.originalFilename ?? undefined,
+      fileHash: item.fileHash ?? undefined,
+      featured: item.featured ?? undefined,
+      status: item.status ?? undefined,
+      createdAt: item.createdAt ?? undefined,
+      updatedAt: item.updatedAt ?? undefined,
+      keywords: [],
+      programs: [],
+      conclusionExcerpt: item.overallConclusion
+        ? item.overallConclusion.substring(0, 200) +
+          (item.overallConclusion.length > 200 ? "..." : "")
+        : undefined,
+    }));
+
+    return this.addJurisdictionMetadata(normalized) as Promise<ReportListItem[]>;
+  }
+
   async getReports(filters: SearchFilters = {}, page = 1, pageSize = 24): Promise<SearchResponse> {
     const offset = (page - 1) * pageSize;
     
@@ -118,6 +226,8 @@ export class DatabaseStorage implements IStorage {
         id: reports.id,
         reportTitle: reports.reportTitle,
         state: reports.state,
+        sourceJurisdictionCode: reports.sourceJurisdictionCode,
+        jurisdictionScopeType: reports.jurisdictionScopeType,
         auditOrganization: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
@@ -175,8 +285,26 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    if (filters.state) {
-      conditions.push(eq(reports.state, filters.state));
+    const subjectJurisdiction =
+      filters.jurisdiction ||
+      (filters.state && filters.state !== "US" ? filters.state : undefined);
+    const sourceJurisdiction =
+      filters.sourceJurisdiction || (filters.state === "US" ? "US" : undefined);
+
+    if (subjectJurisdiction) {
+      conditions.push(sql`EXISTS (
+        SELECT 1
+        FROM ${reportJurisdictionAssignments} jurisdiction_assignment
+        WHERE jurisdiction_assignment.report_id = ${reports.id}
+          AND jurisdiction_assignment.jurisdiction_code = ${subjectJurisdiction}
+          AND jurisdiction_assignment.review_status = 'reviewed'
+          AND jurisdiction_assignment.retired_at IS NULL
+          AND jurisdiction_assignment.relationship IN ('primary_subject', 'included_in_scope')
+      )`);
+    }
+
+    if (sourceJurisdiction) {
+      conditions.push(eq(reports.sourceJurisdictionCode, sourceJurisdiction));
     }
 
     if (filters.agency) {
@@ -247,7 +375,19 @@ export class DatabaseStorage implements IStorage {
         sortedQuery = query.orderBy(reports.reportTitle);
         break;
       case "state":
-        sortedQuery = query.orderBy(reports.state, desc(reports.publicationYear));
+      case "jurisdiction":
+        sortedQuery = query.orderBy(
+          sql`COALESCE((
+            SELECT MIN(j.name)
+            FROM report_jurisdiction_assignments a
+            JOIN jurisdictions j ON j.code = a.jurisdiction_code
+            WHERE a.report_id = ${reports.id}
+              AND a.review_status = 'reviewed'
+              AND a.retired_at IS NULL
+              AND a.relationship IN ('primary_subject', 'included_in_scope')
+          ), 'ZZZ')`,
+          desc(reports.publicationYear),
+        );
         break;
       case "date_desc":
       default:
@@ -269,30 +409,7 @@ export class DatabaseStorage implements IStorage {
     const total = totalResult[0]?.count || 0;
 
     // Return items with basic data (no complex relationships for now)
-    const enhancedItems: ReportListItem[] = items.map((item: any) => ({
-      ...item,
-      publicationMonth: item.publicationMonth ?? undefined,
-      publicationDay: item.publicationDay ?? undefined,
-      overallConclusion: item.overallConclusion ?? undefined,
-      llmInsight: item.llmInsight ?? undefined,
-      potentialObjectiveSummary: item.potentialObjectiveSummary ?? undefined,
-      auditScope: item.auditScope ?? undefined,
-      originalReportSourceUrl: item.originalReportSourceUrl ?? undefined,
-      totalFinancialImpact: item.totalFinancialImpact ?? undefined,
-      findingCount: Number(item.findingCount) || 0,
-      recommendationCount: Number(item.recommendationCount) || 0,
-      originalFilename: item.originalFilename ?? undefined,
-      fileHash: item.fileHash ?? undefined,
-      featured: item.featured ?? undefined,
-      status: item.status ?? undefined,
-      createdAt: item.createdAt ?? undefined,
-      updatedAt: item.updatedAt ?? undefined,
-      keywords: [],
-      programs: [],
-      conclusionExcerpt: item.overallConclusion ? 
-        item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
-        undefined,
-    }));
+    const enhancedItems = await this.toReportListItems(items);
 
     return {
       items: enhancedItems,
@@ -336,22 +453,10 @@ export class DatabaseStorage implements IStorage {
       console.warn("Could not fetch model name for report", reportId, ":", error);
     }
 
+    const [reportListItem] = await this.toReportListItems([report[0]]);
+
     return {
-      ...report[0],
-      publicationMonth: report[0].publicationMonth ?? undefined,
-      publicationDay: report[0].publicationDay ?? undefined,
-      overallConclusion: report[0].overallConclusion ?? undefined,
-      llmInsight: report[0].llmInsight ?? undefined,
-      potentialObjectiveSummary: report[0].potentialObjectiveSummary ?? undefined,
-      auditScope: report[0].auditScope ?? undefined,
-      originalReportSourceUrl: report[0].originalReportSourceUrl ?? undefined,
-      totalFinancialImpact: report[0].totalFinancialImpact ?? undefined,
-      originalFilename: report[0].originalFilename ?? undefined,
-      fileHash: report[0].fileHash ?? undefined,
-      featured: report[0].featured ?? undefined,
-      status: report[0].status ?? undefined,
-      createdAt: report[0].createdAt ?? undefined,
-      updatedAt: report[0].updatedAt ?? undefined,
+      ...reportListItem,
       modelName: modelName,
       objectives: objectivesList,
       findings: findingsList.map(f => ({
@@ -373,6 +478,8 @@ export class DatabaseStorage implements IStorage {
         id: reports.id,
         reportTitle: reports.reportTitle,
         state: reports.state,
+        sourceJurisdictionCode: reports.sourceJurisdictionCode,
+        jurisdictionScopeType: reports.jurisdictionScopeType,
         auditOrganization: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
@@ -395,28 +502,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(reports.publicationYear), desc(reports.publicationMonth))
       .limit(limit);
 
-    return items.map((item: any) => ({
-      ...item,
-      publicationMonth: item.publicationMonth ?? undefined,
-      publicationDay: item.publicationDay ?? undefined,
-      overallConclusion: item.overallConclusion ?? undefined,
-      llmInsight: item.llmInsight ?? undefined,
-      potentialObjectiveSummary: item.potentialObjectiveSummary ?? undefined,
-      auditScope: item.auditScope ?? undefined,
-      originalReportSourceUrl: item.originalReportSourceUrl ?? undefined,
-      totalFinancialImpact: item.totalFinancialImpact ?? undefined,
-      originalFilename: item.originalFilename ?? undefined,
-      fileHash: item.fileHash ?? undefined,
-      featured: item.featured ?? undefined,
-      status: item.status ?? undefined,
-      createdAt: item.createdAt ?? undefined,
-      updatedAt: item.updatedAt ?? undefined,
-      keywords: [],
-      programs: [],
-      conclusionExcerpt: item.overallConclusion ? 
-        item.overallConclusion.substring(0, 200) + (item.overallConclusion.length > 200 ? "..." : "") :
-        undefined,
-    }));
+    return this.toReportListItems(items);
   }
 
   async createReport(report: InsertReport): Promise<Report> {
@@ -428,7 +514,6 @@ export class DatabaseStorage implements IStorage {
     const safeLimit = Math.min(limit, 5);
     
     if (scope === 'federal') {
-      // Get federal reports
       const federalReports = await db
         .select({
           id: reports.id,
@@ -443,7 +528,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(reports.hidden, false),
-            inArray(reports.auditOrganization, FEDERAL_AGENCIES)
+            eq(reports.sourceJurisdictionCode, "US"),
           )
         )
         .orderBy(
@@ -463,56 +548,60 @@ export class DatabaseStorage implements IStorage {
             (r.publicationMonth || 1) - 1,
             r.publicationDay || 1
           ).toISOString(),
-          url: r.originalReportSourceUrl || `/report/${r.id}`,
+          url: `/reports/${r.id}`,
         }))
       };
 
       return { byKey, updatedAt: new Date().toISOString() };
     }
 
-    // Get state reports - using window function for latest N per state
     const stateReports = await db.execute(sql`
       WITH ranked AS (
         SELECT 
-          id,
-          report_title,
-          state,
-          audit_organization,
-          publication_year,
-          publication_month,
-          publication_day,
-          original_report_source_url,
+          reports.id,
+          reports.report_title,
+          assignment.jurisdiction_code,
+          reports.audit_organization,
+          reports.publication_year,
+          reports.publication_month,
+          reports.publication_day,
           ROW_NUMBER() OVER (
-            PARTITION BY state 
-            ORDER BY publication_year DESC, 
-                     COALESCE(publication_month, 1) DESC,
-                     COALESCE(publication_day, 1) DESC
+            PARTITION BY assignment.jurisdiction_code
+            ORDER BY reports.publication_year DESC,
+                     COALESCE(reports.publication_month, 1) DESC,
+                     COALESCE(reports.publication_day, 1) DESC,
+                     reports.id DESC
           ) as rn
         FROM reports
-        WHERE COALESCE(hidden, false) = false
-          AND state IS NOT NULL
-          AND state != ''
+        JOIN report_jurisdiction_assignments assignment
+          ON assignment.report_id = reports.id
+        JOIN jurisdictions jurisdiction
+          ON jurisdiction.code = assignment.jurisdiction_code
+        WHERE COALESCE(reports.hidden, false) = false
+          AND assignment.review_status = 'reviewed'
+          AND assignment.retired_at IS NULL
+          AND assignment.relationship IN ('primary_subject', 'included_in_scope')
+          AND jurisdiction.kind IN ('state', 'district', 'territory')
       )
       SELECT * FROM ranked WHERE rn <= ${safeLimit}
     `);
 
-    // Group by state
     const byKey: Record<string, any[]> = {};
     for (const row of stateReports.rows as any[]) {
-      const state = row.state;
+      const state = row.jurisdiction_code;
       if (!byKey[state]) byKey[state] = [];
       
       byKey[state].push({
         id: row.id,
         title: row.report_title,
-        state: row.state,
+        state,
         agency: row.audit_organization,
         publicationDate: new Date(
           row.publication_year,
           (row.publication_month || 1) - 1,
           row.publication_day || 1
         ).toISOString(),
-        url: row.original_report_source_url || `/report/${row.id}`,
+        url: `/reports/${row.id}`,
       });
     }
 
@@ -523,54 +612,63 @@ export class DatabaseStorage implements IStorage {
     const result = await db.execute(sql`
       WITH ranked AS (
         SELECT
-          id,
-          report_title,
-          state,
-          audit_organization,
-          publication_year,
-          publication_month,
-          publication_day,
-          overall_conclusion,
-          llm_insight,
-          potential_objective_summary,
-          audit_scope,
-          original_report_source_url,
-          original_filename,
-          file_hash,
-          featured,
-          status,
-          created_at,
-          updated_at,
-          COUNT(*) OVER (PARTITION BY state) AS report_count,
+          reports.id,
+          reports.report_title,
+          reports.state,
+          reports.source_jurisdiction_code,
+          reports.jurisdiction_scope_type,
+          reports.audit_organization,
+          reports.publication_year,
+          reports.publication_month,
+          reports.publication_day,
+          reports.overall_conclusion,
+          reports.llm_insight,
+          reports.potential_objective_summary,
+          reports.audit_scope,
+          reports.original_report_source_url,
+          reports.original_filename,
+          reports.file_hash,
+          reports.featured,
+          reports.status,
+          reports.created_at,
+          reports.updated_at,
+          jurisdiction.code AS jurisdiction_code,
+          jurisdiction.name AS jurisdiction_name,
+          jurisdiction.slug AS jurisdiction_slug,
+          COUNT(*) OVER (PARTITION BY jurisdiction.code) AS report_count,
           ROW_NUMBER() OVER (
-            PARTITION BY state
-            ORDER BY publication_year DESC,
-                     COALESCE(publication_month, 1) DESC,
-                     COALESCE(publication_day, 1) DESC,
-                     id DESC
+            PARTITION BY jurisdiction.code
+            ORDER BY reports.publication_year DESC,
+                     COALESCE(reports.publication_month, 1) DESC,
+                     COALESCE(reports.publication_day, 1) DESC,
+                     reports.id DESC
           ) AS rn
         FROM reports
+        JOIN report_jurisdiction_assignments assignment
+          ON assignment.report_id = reports.id
+        JOIN jurisdictions jurisdiction
+          ON jurisdiction.code = assignment.jurisdiction_code
         WHERE COALESCE(hidden, false) = false
-          AND state IS NOT NULL
-          AND state != ''
+          AND assignment.review_status = 'reviewed'
+          AND assignment.retired_at IS NULL
+          AND assignment.relationship IN ('primary_subject', 'included_in_scope')
+          AND jurisdiction.kind IN ('state', 'district', 'territory')
+          AND jurisdiction.active = true
       )
       SELECT *
       FROM ranked
       WHERE rn = 1
-      ORDER BY report_count DESC, state ASC
+      ORDER BY report_count DESC, jurisdiction_name ASC
       LIMIT ${limit}
     `);
 
-    return (result.rows as any[]).reduce<IndexableStateSummary[]>((items, row) => {
-      const stateEntry = getStateEntryByCode(row.state);
-      if (!stateEntry) {
-        return items;
-      }
-
-      const latestReport: ReportListItem = {
+    const rows = result.rows as any[];
+    const latestReports = await this.toReportListItems(rows.map((row) => ({
         id: row.id,
         reportTitle: row.report_title,
         state: row.state,
+        sourceJurisdictionCode: row.source_jurisdiction_code,
+        jurisdictionScopeType: row.jurisdiction_scope_type,
         auditOrganization: row.audit_organization,
         publicationYear: row.publication_year,
         publicationMonth: row.publication_month ?? undefined,
@@ -586,33 +684,37 @@ export class DatabaseStorage implements IStorage {
         status: row.status ?? undefined,
         createdAt: row.created_at ?? undefined,
         updatedAt: row.updated_at ?? undefined,
-        keywords: [],
-        programs: [],
-        conclusionExcerpt: row.overall_conclusion
-          ? row.overall_conclusion.substring(0, 200) + (row.overall_conclusion.length > 200 ? "..." : "")
-          : undefined,
-      };
+      })));
 
-      items.push({
-        code: stateEntry.code,
-        name: stateEntry.name,
-        slug: stateEntry.slug,
+    return rows.map((row, index) => ({
+        code: row.jurisdiction_code,
+        name: row.jurisdiction_name,
+        slug: row.jurisdiction_slug,
         reportCount: Number(row.report_count) || 0,
-        latestReport,
-      });
-
-      return items;
-    }, []);
+        latestReport: latestReports[index],
+      }));
   }
 
   async getStateLandingPage(stateCode: string, limit = 12): Promise<StateLandingPageData | undefined> {
-    const stateEntry = getStateEntryByCode(stateCode);
-    if (!stateEntry) {
-      return undefined;
-    }
+    const [jurisdiction] = await db
+      .select({
+        code: jurisdictions.code,
+        name: jurisdictions.name,
+        slug: jurisdictions.slug,
+      })
+      .from(jurisdictions)
+      .where(
+        and(
+          eq(jurisdictions.code, stateCode.toUpperCase()),
+          inArray(jurisdictions.kind, ["state", "district", "territory"]),
+          eq(jurisdictions.active, true),
+        ),
+      )
+      .limit(1);
+    if (!jurisdiction) return undefined;
 
     const results = await this.getReports(
-      { state: stateEntry.code, sortBy: "date_desc" },
+      { jurisdiction: jurisdiction.code, sortBy: "date_desc" },
       1,
       limit,
     );
@@ -622,9 +724,26 @@ export class DatabaseStorage implements IStorage {
     }
 
     return {
-      code: stateEntry.code,
-      name: stateEntry.name,
-      slug: stateEntry.slug,
+      code: jurisdiction.code,
+      name: jurisdiction.name,
+      slug: jurisdiction.slug,
+      reportCount: results.total,
+      latestReport: results.items[0],
+      reports: results.items,
+    };
+  }
+
+  async getFederalLandingPage(limit = 24): Promise<FederalLandingPageData> {
+    const results = await this.getReports(
+      { sourceJurisdiction: "US", sortBy: "date_desc" },
+      1,
+      limit,
+    );
+
+    return {
+      code: "US",
+      name: "Federal",
+      slug: "federal",
       reportCount: results.total,
       latestReport: results.items[0],
       reports: results.items,
@@ -638,6 +757,8 @@ export class DatabaseStorage implements IStorage {
           id,
           report_title,
           state,
+          source_jurisdiction_code,
+          jurisdiction_scope_type,
           audit_organization,
           publication_year,
           publication_month,
@@ -673,9 +794,32 @@ export class DatabaseStorage implements IStorage {
       LIMIT ${limit}
     `);
 
+    const rows = result.rows as any[];
+    const latestReports = await this.toReportListItems(rows.map((row) => ({
+      id: row.id,
+      reportTitle: row.report_title,
+      state: row.state,
+      sourceJurisdictionCode: row.source_jurisdiction_code,
+      jurisdictionScopeType: row.jurisdiction_scope_type,
+      auditOrganization: row.audit_organization,
+      publicationYear: row.publication_year,
+      publicationMonth: row.publication_month,
+      publicationDay: row.publication_day,
+      overallConclusion: row.overall_conclusion,
+      llmInsight: row.llm_insight,
+      potentialObjectiveSummary: row.potential_objective_summary,
+      auditScope: row.audit_scope,
+      originalReportSourceUrl: row.original_report_source_url,
+      originalFilename: row.original_filename,
+      fileHash: row.file_hash,
+      featured: row.featured,
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    })));
     const slugCounts = new Map<string, number>();
 
-    return (result.rows as any[]).map((row) => {
+    return rows.map((row, index) => {
       const baseSlug = slugify(row.audit_organization);
       const occurrence = (slugCounts.get(baseSlug) || 0) + 1;
       slugCounts.set(baseSlug, occurrence);
@@ -684,32 +828,7 @@ export class DatabaseStorage implements IStorage {
         slug: occurrence === 1 ? baseSlug : `${baseSlug}--${occurrence}`,
         name: row.audit_organization,
         reportCount: Number(row.report_count) || 0,
-        latestReport: {
-          id: row.id,
-          reportTitle: row.report_title,
-          state: row.state,
-          auditOrganization: row.audit_organization,
-          publicationYear: row.publication_year,
-          publicationMonth: row.publication_month ?? undefined,
-          publicationDay: row.publication_day ?? undefined,
-          overallConclusion: row.overall_conclusion ?? undefined,
-          llmInsight: row.llm_insight ?? undefined,
-          potentialObjectiveSummary: row.potential_objective_summary ?? undefined,
-          auditScope: row.audit_scope ?? undefined,
-          originalReportSourceUrl: row.original_report_source_url ?? undefined,
-          originalFilename: row.original_filename ?? undefined,
-          fileHash: row.file_hash ?? undefined,
-          featured: row.featured ?? undefined,
-          status: row.status ?? undefined,
-          createdAt: row.created_at ?? undefined,
-          updatedAt: row.updated_at ?? undefined,
-          keywords: [],
-          programs: [],
-          conclusionExcerpt: row.overall_conclusion
-            ? row.overall_conclusion.substring(0, 200) +
-              (row.overall_conclusion.length > 200 ? "..." : "")
-            : undefined,
-        },
+        latestReport: latestReports[index],
       };
     });
   }
@@ -900,7 +1019,9 @@ export class DatabaseStorage implements IStorage {
         id: reports.id,
         reportTitle: reports.reportTitle,
         agency: reports.auditOrganization,
-        jurisdiction: reports.state,
+        state: reports.state,
+        sourceJurisdictionCode: reports.sourceJurisdictionCode,
+        jurisdictionScopeType: reports.jurisdictionScopeType,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
         publicationDay: reports.publicationDay,
@@ -1000,6 +1121,24 @@ export class DatabaseStorage implements IStorage {
       });
     }
 
+    const jurisdictionMetadata = await this.addJurisdictionMetadata(
+      reportRows.map((report) => ({
+        id: report.id,
+        sourceJurisdictionCode: report.sourceJurisdictionCode,
+        jurisdictionScopeType: report.jurisdictionScopeType,
+      })),
+    );
+    const metadataByReport = new Map(
+      jurisdictionMetadata.map((metadata) => [metadata.id, metadata]),
+    );
+    const representedSubjectCodes = new Set(
+      jurisdictionMetadata.flatMap((metadata) =>
+        metadata.subjectJurisdictions
+          .filter((jurisdiction) => jurisdiction.kind !== "federal")
+          .map((jurisdiction) => jurisdiction.code),
+      ),
+    );
+
     return {
       slug: topic.slug,
       name: topic.name,
@@ -1008,13 +1147,9 @@ export class DatabaseStorage implements IStorage {
       definition: guide?.definition || topic.shortDescription,
       whyAuditorsCare: guide?.whyAuditorsCare || topic.scope,
       reportCount: Number(reportRows[0]?.totalCount) || 0,
-      stateCount: new Set(
-        reportRows
-          .map((report) => report.jurisdiction)
-          .filter((jurisdiction) => jurisdiction && jurisdiction !== "US"),
-      ).size,
-      hasFederalReports: reportRows.some(
-        (report) => report.jurisdiction === "US",
+      stateCount: representedSubjectCodes.size,
+      hasFederalReports: jurisdictionMetadata.some(
+        (report) => report.sourceJurisdiction?.code === "US",
       ),
       agencyCount: new Set(reportRows.map((report) => report.agency)).size,
       publicationYearStart:
@@ -1025,33 +1160,89 @@ export class DatabaseStorage implements IStorage {
         reportRows.length > 0
           ? Math.max(...reportRows.map((report) => report.publicationYear))
           : undefined,
-      reports: reportRows.map((report) => ({
-        id: report.id,
-        reportTitle: report.reportTitle,
-        agency: report.agency,
-        jurisdiction: report.jurisdiction,
-        publicationYear: report.publicationYear,
-        publicationMonth: report.publicationMonth ?? undefined,
-        publicationDay: report.publicationDay ?? undefined,
-        rationale: report.rationale,
-        evidence: evidenceByAssignment.get(report.assignmentId) || [],
-        reportPath: `/reports/${report.id}`,
-      })),
+      reports: reportRows.map((report) => {
+        const metadata = metadataByReport.get(report.id);
+        const subjectJurisdictions = metadata?.subjectJurisdictions || [];
+        const jurisdiction =
+          metadata?.jurisdictionScopeType === "national"
+            ? "National"
+            : subjectJurisdictions.length > 0
+              ? subjectJurisdictions.map((subject) => subject.name).join(", ")
+              : "Not assigned";
+        return {
+          id: report.id,
+          reportTitle: report.reportTitle,
+          agency: report.agency,
+          jurisdiction,
+          sourceJurisdiction: metadata?.sourceJurisdiction,
+          subjectJurisdictions,
+          jurisdictionScopeType: metadata?.jurisdictionScopeType || "unknown",
+          publicationYear: report.publicationYear,
+          publicationMonth: report.publicationMonth ?? undefined,
+          publicationDay: report.publicationDay ?? undefined,
+          rationale: report.rationale,
+          evidence: evidenceByAssignment.get(report.assignmentId) || [],
+          reportPath: `/reports/${report.id}`,
+        };
+      }),
     };
   }
 
   async getDashboardStats(): Promise<DashboardStats> {
-    const [totalReportsResult, statesResult, findingsResult, recentReportsResult] = await Promise.all([
+    const [
+      totalReportsResult,
+      statesResult,
+      jurisdictionsResult,
+      federalResult,
+      findingsResult,
+      recentReportsResult,
+    ] = await Promise.all([
       db.select({ count: sql<number>`count(*)` }).from(reports).where(eq(reports.hidden, false)),
-      db.select({ count: sql<number>`count(distinct state)` }).from(reports).where(eq(reports.hidden, false)),
-      db.select({ count: sql<number>`count(*)` }).from(findings),
+      db
+        .select({ count: sql<number>`count(distinct ${reportJurisdictionAssignments.jurisdictionCode})` })
+        .from(reportJurisdictionAssignments)
+        .innerJoin(reports, eq(reports.id, reportJurisdictionAssignments.reportId))
+        .innerJoin(jurisdictions, eq(jurisdictions.code, reportJurisdictionAssignments.jurisdictionCode))
+        .where(and(
+          eq(reports.hidden, false),
+          eq(reportJurisdictionAssignments.reviewStatus, "reviewed"),
+          isNull(reportJurisdictionAssignments.retiredAt),
+          inArray(reportJurisdictionAssignments.relationship, ["primary_subject", "included_in_scope"]),
+          inArray(jurisdictions.kind, ["state", "district"]),
+        )),
+      db
+        .select({ count: sql<number>`count(distinct ${reportJurisdictionAssignments.jurisdictionCode})` })
+        .from(reportJurisdictionAssignments)
+        .innerJoin(reports, eq(reports.id, reportJurisdictionAssignments.reportId))
+        .innerJoin(jurisdictions, eq(jurisdictions.code, reportJurisdictionAssignments.jurisdictionCode))
+        .where(and(
+          eq(reports.hidden, false),
+          eq(reportJurisdictionAssignments.reviewStatus, "reviewed"),
+          isNull(reportJurisdictionAssignments.retiredAt),
+          inArray(reportJurisdictionAssignments.relationship, ["primary_subject", "included_in_scope"]),
+          inArray(jurisdictions.kind, ["state", "district", "territory"]),
+        )),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(reports)
+        .where(and(eq(reports.hidden, false), eq(reports.sourceJurisdictionCode, "US"))),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(findings)
+        .innerJoin(reports, eq(reports.id, findings.reportId))
+        .where(eq(reports.hidden, false)),
       this.getFeaturedReports(4),
     ]);
 
+    const statesWithSubjectCoverage = Number(statesResult[0]?.count) || 0;
+
     return {
-      totalReports: totalReportsResult[0]?.count || 0,
-      statesWithReports: statesResult[0]?.count || 0,
-      criticalFindings: findingsResult[0]?.count || 0,
+      totalReports: Number(totalReportsResult[0]?.count) || 0,
+      statesWithSubjectCoverage,
+      jurisdictionsWithSubjectCoverage: Number(jurisdictionsResult[0]?.count) || 0,
+      federalSourceReportCount: Number(federalResult[0]?.count) || 0,
+      statesWithReports: statesWithSubjectCoverage,
+      criticalFindings: Number(findingsResult[0]?.count) || 0,
       recentReports: recentReportsResult,
     };
   }

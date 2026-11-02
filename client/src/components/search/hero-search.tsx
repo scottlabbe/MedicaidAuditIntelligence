@@ -13,8 +13,8 @@ export default function HeroSearch() {
     const trimmedQuery = query.trim();
     setLocation(
       trimmedQuery
-        ? `/explore?query=${encodeURIComponent(trimmedQuery)}`
-        : "/explore",
+        ? `/reports?query=${encodeURIComponent(trimmedQuery)}`
+        : "/reports",
     );
   };
 

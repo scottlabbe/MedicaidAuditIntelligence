@@ -22,14 +22,14 @@ export default function KeywordSection() {
   });
 
   const handleKeywordClick = (keyword: string) => {
-    setLocation(`/explore?query=${encodeURIComponent(keyword)}`);
+    setLocation(`/reports?query=${encodeURIComponent(keyword)}`);
   };
 
   return (
     <section className="mb-12">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-foreground">Popular Keywords</h2>
-        <Link href="/explore">
+        <Link href="/reports">
           <Button variant="outline" className="flex items-center space-x-2 border text-secondary hover:bg-surface-2 focus-ring">
             <span>View all keywords</span>
             <ArrowRight className="w-4 h-4" />

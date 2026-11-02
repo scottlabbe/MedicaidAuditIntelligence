@@ -105,7 +105,8 @@ export default function TopicDetail() {
 
             <CoverageLedger data={data} />
             <p className="mt-3 text-xs leading-5 text-muted-foreground">
-              State coverage reflects each report’s recorded jurisdiction.
+              Subject coverage uses reviewed report-to-jurisdiction assignments;
+              Federal source presence is counted separately.
             </p>
           </aside>
 
@@ -134,7 +135,8 @@ export default function TopicDetail() {
               </h2>
               <CoverageLedger data={data} />
               <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                State coverage reflects each report’s recorded jurisdiction.
+                Subject coverage uses reviewed report-to-jurisdiction assignments;
+                Federal source presence is counted separately.
               </p>
             </section>
 
@@ -447,7 +449,7 @@ function CoverageLedger({ data }: { data: TopicLandingPageData }) {
     <dl className="grid grid-cols-2 border-y border-border sm:grid-cols-4 lg:block lg:divide-y lg:divide-border">
       <CoverageField label="Reports" value={String(data.reportCount)} />
       <CoverageField
-        label="States represented"
+        label="Subject jurisdictions"
         value={formatStateCoverage(data.stateCount, data.hasFederalReports)}
       />
       <CoverageField label="Publishing agencies" value={String(data.agencyCount)} />

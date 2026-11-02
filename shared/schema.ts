@@ -22,6 +22,22 @@ import { z } from "zod";
 export const severityEnum = pgEnum("severity", ["info", "low", "medium", "high"]);
 
 // Core tables
+export const jurisdictions = pgTable("jurisdictions", {
+  code: varchar("code", { length: 2 }).primaryKey(),
+  name: varchar("name", { length: 120 }).notNull().unique(),
+  slug: varchar("slug", { length: 140 }).notNull().unique(),
+  kind: varchar("kind", { length: 20 }).notNull(),
+  isMedicaidJurisdiction: boolean("is_medicaid_jurisdiction").notNull().default(true),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  check(
+    "ck_jurisdictions_kind",
+    sql`${table.kind} IN ('federal', 'state', 'district', 'territory')`,
+  ),
+]);
+
 export const reports = pgTable("reports", {
   id: integer("id").primaryKey(),
   sourceUid: uuid("source_uid").notNull().unique(),
@@ -35,6 +51,23 @@ export const reports = pgTable("reports", {
   potentialObjectiveSummary: text("potential_objective_summary"),
   originalReportSourceUrl: varchar("original_report_source_url"),
   state: varchar("state").notNull(),
+  jurisdictionContractVersion: varchar("jurisdiction_contract_version", { length: 40 }),
+  sourceJurisdictionCode: varchar("source_jurisdiction_code", { length: 2 })
+    .references(() => jurisdictions.code, { onDelete: "restrict" }),
+  sourceJurisdictionMethod: varchar("source_jurisdiction_method", { length: 40 }),
+  sourceJurisdictionEvidence: text("source_jurisdiction_evidence"),
+  sourceJurisdictionReviewStatus: varchar("source_jurisdiction_review_status", { length: 20 })
+    .notNull()
+    .default("unresolved"),
+  sourceJurisdictionReviewedAt: timestamp("source_jurisdiction_reviewed_at", { withTimezone: true }),
+  sourceJurisdictionReviewedBy: varchar("source_jurisdiction_reviewed_by", { length: 120 }),
+  jurisdictionScopeType: varchar("jurisdiction_scope_type", { length: 24 })
+    .notNull()
+    .default("unknown"),
+  jurisdictionReviewStatus: varchar("jurisdiction_review_status", { length: 24 })
+    .notNull()
+    .default("unresolved"),
+  jurisdictionRevalidationPayload: jsonb("jurisdiction_revalidation_payload"),
   totalFinancialImpact: integer("total_financial_impact"),
   auditPeriodStartDate: varchar("audit_period_start_date"),
   auditPeriodEndDate: varchar("audit_period_end_date"), 
@@ -52,6 +85,42 @@ export const reports = pgTable("reports", {
   auditScope: text("audit_scope"),
   hidden: boolean("hidden").default(false),
 });
+
+export const reportJurisdictionAssignments = pgTable(
+  "report_jurisdiction_assignments",
+  {
+    id: uuid("id").primaryKey(),
+    reportId: integer("report_id")
+      .notNull()
+      .references(() => reports.id, { onDelete: "restrict" }),
+    jurisdictionCode: varchar("jurisdiction_code", { length: 2 })
+      .notNull()
+      .references(() => jurisdictions.code, { onDelete: "restrict" }),
+    relationship: varchar("relationship", { length: 24 }).notNull(),
+    evidenceSource: varchar("evidence_source", { length: 24 }).notNull(),
+    evidenceSnapshot: text("evidence_snapshot").notNull(),
+    evidenceSha256: varchar("evidence_sha256", { length: 64 }).notNull(),
+    assignmentMethod: varchar("assignment_method", { length: 24 }).notNull(),
+    reviewStatus: varchar("review_status", { length: 20 }).notNull().default("provisional"),
+    sourceAssignmentUid: uuid("source_assignment_uid"),
+    sourceContentSha256: varchar("source_content_sha256", { length: 64 }),
+    ruleId: varchar("rule_id", { length: 120 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: varchar("reviewed_by", { length: 120 }),
+    retiredAt: timestamp("retired_at", { withTimezone: true }),
+    retirementReason: text("retirement_reason"),
+    replacedByAssignmentId: uuid("replaced_by_assignment_id"),
+  },
+  (table) => [
+    uniqueIndex("uq_report_jurisdiction_assignment_active")
+      .on(table.reportId, table.jurisdictionCode)
+      .where(sql`${table.retiredAt} is null`),
+    index("ix_report_jurisdiction_code_reviewed")
+      .on(table.jurisdictionCode, table.reportId)
+      .where(sql`${table.retiredAt} is null and ${table.reviewStatus} = 'reviewed'`),
+  ],
+);
 
 export const objectives = pgTable("objectives", {
   id: integer("id").primaryKey(),

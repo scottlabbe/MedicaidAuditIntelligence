@@ -7,7 +7,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Link } from "wouter";
-import { getStateNameByCode } from "@shared/states";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +23,11 @@ import type {
 } from "@/lib/types";
 import { preloadRouteHref } from "@/lib/routeLoaders";
 import { useSsrData } from "@/lib/ssrData";
+import {
+  formatScopeType,
+  formatSourceJurisdiction,
+  formatSubjectJurisdictions,
+} from "@/lib/jurisdictions";
 
 const LATEST_REPORT_COUNT = 4;
 const LATEST_REPORT_QUERY = [
@@ -122,7 +126,7 @@ export default function Home() {
     <>
       <PageMeta
         title="Medicaid Audit Intelligence - Find Medicaid Audit Evidence"
-        description={`Find and verify evidence from ${stats?.totalReports || 100}+ Medicaid audit reports across ${stats?.statesWithReports || 40} states, with direct links to original public sources.`}
+        description={`Find and verify evidence from ${stats?.totalReports || 100}+ Medicaid audit reports across ${stats?.statesWithSubjectCoverage || 40} state jurisdictions, with direct links to original public sources.`}
         canonicalPath="/"
         jsonLd={[
           {
@@ -146,7 +150,7 @@ export default function Home() {
             potentialAction: {
               "@type": "SearchAction",
               target:
-                "https://www.medicaidintelligence.com/explore?query={search_term_string}",
+                "https://www.medicaidintelligence.com/reports?query={search_term_string}",
               "query-input": "required name=search_term_string",
             },
           },
@@ -458,9 +462,11 @@ function EvidenceDocket({
       <div className="grid md:grid-cols-[minmax(190px,0.72fr)_minmax(0,2.28fr)]">
         <dl className="border-b border-border bg-secondary p-5 md:border-b-0 md:border-r md:p-6">
           <DocketField
-            label="Jurisdiction"
-            value={getJurisdictionLabel(report.state)}
+            label="Source authority"
+            value={formatSourceJurisdiction(report)}
           />
+          <DocketField label="Examines" value={formatSubjectJurisdictions(report)} />
+          <DocketField label="Scope" value={formatScopeType(report.jurisdictionScopeType)} />
           <DocketField label="Publishing agency" value={report.auditOrganization} />
           <DocketField label="Published" value={formatPublicationDate(report)} />
           <DocketField label="Report ID" value={`REPORT ${report.id}`} mono />
@@ -605,7 +611,7 @@ function BrowseEvidence({
       intro: "Publishing auditors and oversight offices.",
       examples: agencies.map((report) => ({
         label: report.auditOrganization,
-        href: `/explore?agency=${encodeURIComponent(report.auditOrganization)}`,
+        href: `/reports?agency=${encodeURIComponent(report.auditOrganization)}`,
       })),
     },
     {
@@ -623,7 +629,7 @@ function BrowseEvidence({
       intro: "Audit evidence by publication period.",
       examples: years.map((year) => ({
         label: String(year),
-        href: `/explore?year=${year}`,
+        href: `/reports?year=${year}`,
       })),
     },
   ];
@@ -746,9 +752,4 @@ function formatCurrency(value: number) {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
-}
-
-function getJurisdictionLabel(stateCode: string) {
-  if (stateCode === "US") return "Federal";
-  return getStateNameByCode(stateCode) || stateCode;
 }

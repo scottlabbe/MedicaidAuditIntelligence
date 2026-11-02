@@ -5,7 +5,6 @@ type RouteModule = { default: ComponentType<any> };
 type RouteLoader = () => Promise<RouteModule>;
 
 const loaders = {
-  explore: () => import("@/pages/explore"),
   reportsIndex: () => import("@/pages/reports-index"),
   statesIndex: () => import("@/pages/states-index"),
   agenciesIndex: () => import("@/pages/agencies-index"),
@@ -16,12 +15,12 @@ const loaders = {
   researchReport: () => import("@/pages/research-report"),
   reportDetail: () => import("@/pages/report-detail"),
   stateDetail: () => import("@/pages/state-detail"),
+  federal: () => import("@/pages/federal"),
   dashboard: () => import("@/pages/dashboard"),
   about: () => import("@/pages/about"),
 } satisfies Record<string, RouteLoader>;
 
 export const lazyRoutes = {
-  Explore: lazy(loaders.explore),
   ReportsIndex: lazy(loaders.reportsIndex),
   StatesIndex: lazy(loaders.statesIndex),
   AgenciesIndex: lazy(loaders.agenciesIndex),
@@ -32,6 +31,7 @@ export const lazyRoutes = {
   ResearchReportPage: lazy(loaders.researchReport),
   ReportDetail: lazy(loaders.reportDetail),
   StateDetail: lazy(loaders.stateDetail),
+  Federal: lazy(loaders.federal),
   Dashboard: lazy(loaders.dashboard),
   About: lazy(loaders.about),
 };
@@ -43,7 +43,7 @@ function stripQueryAndHash(pathname: string): string {
 function getLoaderForPath(pathname: string): RouteLoader | null {
   const path = stripQueryAndHash(pathname);
 
-  if (path === "/explore") return loaders.explore;
+  if (path === "/explore") return loaders.reportsIndex;
   if (path === "/reports" || /^\/reports\/page\/\d+$/.test(path)) return loaders.reportsIndex;
   if (path === "/states") return loaders.statesIndex;
   if (path === "/agencies") return loaders.agenciesIndex;
@@ -54,6 +54,7 @@ function getLoaderForPath(pathname: string): RouteLoader | null {
   if (/^\/research\/[a-z0-9-]+$/.test(path)) return loaders.researchReport;
   if (/^\/reports\/\d+$/.test(path)) return loaders.reportDetail;
   if (/^\/states\/[a-z0-9-]+$/.test(path)) return loaders.stateDetail;
+  if (path === "/federal") return loaders.federal;
   if (path === "/dashboard") return loaders.dashboard;
   if (path === "/about") return loaders.about;
 

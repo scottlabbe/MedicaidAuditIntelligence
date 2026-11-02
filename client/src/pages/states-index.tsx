@@ -39,8 +39,8 @@ export default function StatesIndex() {
   return (
     <>
       <PageMeta
-        title="State Medicaid Audit Report Pages"
-        description="Browse Medicaid audit report coverage by state, including state-level findings, recommendations, and original source documents."
+        title="Medicaid Audit Jurisdictions"
+        description="Browse Medicaid audit evidence by subject jurisdiction and reach the separate Federal publishing-authority register."
         canonicalPath="/states"
         jsonLd={states.length ? buildItemList(states) : undefined}
       />
@@ -51,11 +51,11 @@ export default function StatesIndex() {
             Jurisdiction register
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.025em] text-foreground sm:text-5xl">
-            Medicaid audit evidence by state
+            Medicaid audit evidence by jurisdiction
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
-            Find reports associated with a Medicaid jurisdiction. Only states
-            with indexed evidence are listed.
+            Find reports by the Medicaid jurisdiction they examine, or browse
+            reports published by Federal oversight authorities.
           </p>
 
           <div className="mt-7 max-w-2xl">
@@ -79,6 +79,30 @@ export default function StatesIndex() {
           </div>
         </header>
 
+        <section className="border-b border-border py-7" aria-labelledby="federal-register-heading">
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Publishing authority
+          </p>
+          <div className="mt-3 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <h2 id="federal-register-heading" className="text-xl font-semibold text-foreground">
+                Federal audit reports
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Reports published or commissioned by Federal authorities, including
+                single-state, multi-jurisdiction, and national work.
+              </p>
+            </div>
+            <Link
+              href="/federal"
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Browse Federal evidence
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </section>
+
         <section className="pt-8" aria-labelledby="state-register-heading">
           <div className="flex items-end justify-between gap-4 border-b border-border pb-4">
             <div>
@@ -86,7 +110,7 @@ export default function StatesIndex() {
                 id="state-register-heading"
                 className="font-mono text-xs font-normal uppercase tracking-[0.12em] text-muted-foreground"
               >
-                State coverage register
+                Subject jurisdiction register
               </h2>
               <p className="mt-1 text-lg font-semibold text-foreground" role="status">
                 {isLoading

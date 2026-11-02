@@ -78,11 +78,13 @@ function requireHMAC(req: Request, res: Response, next: Function) {
 const searchFiltersSchema = z.object({
   query: z.string().optional(),
   state: z.string().length(2).optional(),
+  jurisdiction: z.string().length(2).optional(),
+  sourceJurisdiction: z.string().length(2).optional(),
   agency: z.string().optional(),
   year: z.coerce.number().int().min(2000).max(new Date().getFullYear() + 1).optional(),
   theme: z.string().optional(),
   sourceStatus: z.enum(["available", "record"]).optional(),
-  sortBy: z.enum(["date_desc", "date_asc", "title", "state"]).optional(),
+  sortBy: z.enum(["date_desc", "date_asc", "title", "state", "jurisdiction"]).optional(),
 });
 
 const paginationSchema = z.object({
@@ -304,6 +306,14 @@ Sitemap: ${siteUrl}/sitemap.xml`
   app.get("/api/reports", rateLimit, async (req, res) => {
     try {
       const filters = searchFiltersSchema.parse(req.query);
+      if (filters.state && !filters.jurisdiction && !filters.sourceJurisdiction) {
+        if (filters.state.toUpperCase() === "US") {
+          filters.sourceJurisdiction = "US";
+        } else {
+          filters.jurisdiction = filters.state.toUpperCase();
+        }
+      }
+      delete filters.state;
       const pagination = paginationSchema.parse(req.query);
       
       const result = await storage.getReports(filters, pagination.page, pagination.pageSize);
@@ -376,6 +386,17 @@ Sitemap: ${siteUrl}/sitemap.xml`
       res.json(states);
     } catch (error) {
       console.error("Error fetching state index:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/federal", rateLimit, async (_req, res) => {
+    try {
+      const federal = await storage.getFederalLandingPage(24);
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(federal);
+    } catch (error) {
+      console.error("Error fetching federal report index:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

@@ -148,6 +148,13 @@ export function primeInitialRouteData(
     );
   }
 
+  if (
+    initialRouteData.routeType === "federal" &&
+    initialRouteData.federalPage
+  ) {
+    client.setQueryData(["/api/federal"], initialRouteData.federalPage);
+  }
+
   if (typeof window !== "undefined") {
     delete window.__INITIAL_ROUTE_DATA__;
   }

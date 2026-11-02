@@ -14,7 +14,7 @@ import { preloadRouteHref } from "@/lib/routeLoaders";
 
 const NAV = [
   { href: "/reports", label: "Reports" },
-  { href: "/states", label: "States" },
+  { href: "/states", label: "Jurisdictions" },
   { href: "/agencies", label: "Agencies" },
   { href: "/topics", label: "Topics" },
   { href: "/research", label: "Research" },
@@ -31,7 +31,7 @@ export default function SiteHeader() {
   });
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/25 bg-primary text-primary-foreground">
+    <header className="sticky top-0 z-50 border-b border-white/25 bg-primary text-primary-foreground print:hidden">
       <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-5 sm:px-8">
         <Link
           href="/"
@@ -49,7 +49,8 @@ export default function SiteHeader() {
           aria-label="Primary navigation"
         >
           {NAV.map(({ href, label }) => {
-            const active = location.startsWith(href);
+            const active =
+              location.startsWith(href) || (href === "/states" && location.startsWith("/federal"));
             return (
               <Link
                 key={href}
@@ -88,7 +89,8 @@ export default function SiteHeader() {
             </SheetHeader>
             <nav className="border-t border-border" aria-label="Mobile navigation">
               {NAV.map(({ href, label }) => {
-                const active = location.startsWith(href);
+                const active =
+                  location.startsWith(href) || (href === "/states" && location.startsWith("/federal"));
                 return (
                   <Link
                     key={href}

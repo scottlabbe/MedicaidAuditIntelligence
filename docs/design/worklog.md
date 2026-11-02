@@ -2,6 +2,39 @@
 
 Use this file to preserve the skill's plan, critique, and revision history. Add entries newest first.
 
+## 2026-10-29 — Report evidence record mockup
+
+**User job**
+
+Confirm the identity and provenance of one public audit report, understand its conclusion and scope, review every finding and recommendation, and cite or link directly to the record or an individual evidence item.
+
+**Selected direction — Citable evidence record**
+
+- Reuse institutional green `#12372A`, interactive green `#176B4D`, evidence wash `#E8F1EC`, ink `#111813`, secondary ink `#4B5650`, paper `#FFFFFF`, Public Sans, Source Serif 4, IBM Plex Mono, two-pixel radii, and ruled grouping.
+- Lead with a reusable record header: evidence-record eyebrow, one official-title `h1`, jurisdiction/agency/date/identifier grid, original-source action, and citation/permalink controls.
+- Keep the page open and linear. Conclusion and scope appear once; every finding and recommendation is visible in a ruled ordered list with a database-stable identifier and URL fragment.
+- Use a non-sticky right rail for section navigation, citation, taxonomy topics when backed by data, and a plain-language provenance statement.
+- The one new motion pattern is a brief evidence-wash fade on a directly linked finding or recommendation. It is limited to target confirmation, introduces no new visual token, and is disabled under `prefers-reduced-motion`.
+
+**Pre-build critique**
+
+- What felt generic: repeating a four-cell metadata grid with four metric tiles risked turning the page into a dashboard and restating the same facts.
+- What changed: the metadata grid identifies the record once, while the at-a-glance strip only includes backed counts and the largest amount attached to one finding. No amounts are inferred from finding prose or added across findings.
+- Why it is specific to Medicaid audit evidence: the title and provenance precede narrative, source material uses the serif face, structured audit data uses monospace, and finding rows behave as citable schedule entries rather than cards.
+- Rejected alternatives: tabs were rejected because they weaken print, find-in-page, and continuous review; boxed prose and AI badges were rejected because they compete with the original source; a sticky rail was rejected because it depends on viewport height.
+
+**Rendered review**
+
+- Reviewed real report `REPORT-0206`, a South Carolina Medicaid/CHIP collections audit, at `1440 × 1100`, `390 × 844`, and `720 × 900` as a 200%-zoom layout equivalent.
+- Desktop: the record identity, original source, and two backed counts are visible before the narrative. The `760px` reading column preserves a sustained serif measure and keeps the reference rail subordinate.
+- Mobile: the metadata grid, actions, and evidence rows return to one-column document order. Long agency, title, finding, and recommendation text wraps naturally.
+- Zoom and overflow: document width matched viewport width at all three reviewed sizes; no horizontal page scroll appeared.
+- Keyboard and interaction review: the original-source link, copy actions, finding links, section anchors, and rail links follow normal document order. Focus computed to a two-pixel dark edge with a two-pixel yellow outer ring. Copy permalink displayed inline `Copied` feedback without a modal.
+- Accessibility and semantics: the page uses one `h1`, ordered `h2` sections, definition-list metadata, ordered evidence lists, labeled navigation, semantic links/buttons, and at least 44px interactive targets.
+- Print direction: site navigation and footer are hidden; the citation and original source URL remain in the document; evidence rows avoid page breaks when practical.
+- Post-render correction: when only finding and recommendation counts are available, the summary strip now renders two equal columns rather than leaving an empty third tile.
+- Verification completed: `npm run check` and `npm run build`.
+
 ## 2026-06-27 — Typographic site wordmark
 
 **User job**
@@ -504,3 +537,37 @@ Understand why a Medicaid audit topic matters, see the evidence and recommended 
 **Decision**
 
 Keep the field-guide structure and desktop coverage rail. On mobile, prioritize explanatory content over navigation and move coverage into the document flow. Keep evidence ordering transparent and avoid severity language until severity is captured as a reviewed data field.
+
+## 2026-10-28 — Jurisdiction evidence model public cutover
+
+**User jobs**
+
+- Distinguish the authority that published or commissioned a report from the jurisdictions the report examines.
+- Find state, district, territory, Federal-source, multi-jurisdiction, and nationwide evidence without relying on the frozen legacy `reports.state` field.
+- Verify jurisdiction scope and provenance from the report register, Federal page, state pages, report detail, research citations, and dashboard.
+
+**Design direction**
+
+- Keep the approved evidence-docket signature and make `Source authority`, `Scope`, and `Examines` first-class fields rather than badges.
+- Treat `/reports` as the canonical search surface. Preserve `/explore` as a redirect/compatibility path instead of maintaining two visually and semantically divergent report explorers.
+- Give Federal-source evidence its own `/federal` authority page and keep geographic state, district, and territory pages focused on reviewed subject assignments.
+- Extend jurisdiction controls to the five Medicaid territories using the existing select, typography, rule, radius, focus, and color patterns.
+
+**Pre-build critique**
+
+- A combined `Jurisdiction` label was rejected because it preserves the exact ambiguity the data migration resolves: a Federal publisher can examine one state, several states, or a national program.
+- Federal was not added to the state map. That would imply Federal is another geographic unit and would make corpus coverage look like a jurisdiction performance measure.
+- New jurisdiction badges and colors were rejected because they would add visual taxonomy without improving source verification. The existing ruled definition-list pattern supports clearer labels and longer multi-jurisdiction values.
+- A second report-search experience at `/explore` was rejected because duplicate filters would drift. Existing URLs remain compatible through redirect and legacy `state=XX` translation.
+- No new color, typeface, radius, shadow, or animation token was needed.
+
+**Rendered review**
+
+- Reviewed `/reports?sourceJurisdiction=US`, `/federal`, and `/reports/42` at `1440 × 900` and `390 × 844` using real representative records 42, 46, 159, and 167 from the jurisdiction handoff.
+- The desktop report register keeps source, scope, subjects, title, evidence summary, financial impact, and source status comparable without compressing the main reading column. The Federal context rail remains secondary to the evidence register.
+- At mobile width, the search action stacks, filters collapse behind one native button, dockets retain their semantic reading order, the 14 reviewed subjects on report 42 wrap naturally, and document width equals viewport width (`390px`) with no horizontal overflow.
+- The independent filter interaction was exercised: Federal source plus Wisconsin subject returned report 46 and multi-jurisdiction report 42, demonstrating that subject membership is no longer inferred from the publisher or frozen legacy state.
+- The five territories appear in both subject and publishing-authority controls. The report detail exposes all reviewed subjects as state-page links and labels the Federal publisher separately.
+- The temporary SSR fixture produced no browser console warnings after hydration. It was removed after review and did not alter application data access.
+- Reduced-motion review: the cutover adds no animation. Keyboard review: native selects, the mobile filter disclosure, report links, state links, source links, and Federal search action retain visible approved focus treatment and document order.
+- Verification completed: `npm run check` and `npm run build`.

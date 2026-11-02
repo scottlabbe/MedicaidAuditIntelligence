@@ -16,13 +16,13 @@ import { SsrDataProvider } from "@/lib/ssrData";
 import type { InitialRouteData } from "@/lib/types";
 
 const {
-  Explore,
   ReportDetail,
   ResearchIndexPage,
   ResearchReportPage,
   Dashboard,
   About,
   StateDetail,
+  Federal,
   ReportsIndex,
   StatesIndex,
   AgenciesIndex,
@@ -32,7 +32,6 @@ const {
 } = lazyRoutes;
 
 export interface RouteComponents {
-  Explore: ComponentType<any>;
   ReportsIndex: ComponentType<any>;
   StatesIndex: ComponentType<any>;
   AgenciesIndex: ComponentType<any>;
@@ -45,10 +44,10 @@ export interface RouteComponents {
   Dashboard: ComponentType<any>;
   About: ComponentType<any>;
   StateDetail: ComponentType<any>;
+  Federal: ComponentType<any>;
 }
 
 const defaultRouteComponents: RouteComponents = {
-  Explore,
   ReportsIndex,
   StatesIndex,
   AgenciesIndex,
@@ -61,6 +60,7 @@ const defaultRouteComponents: RouteComponents = {
   Dashboard,
   About,
   StateDetail,
+  Federal,
 };
 
 interface AppProps {
@@ -77,7 +77,6 @@ function AppRoutes({
   routeComponents?: RouteComponents;
 }) {
   const {
-    Explore,
     ReportsIndex,
     StatesIndex,
     AgenciesIndex,
@@ -90,6 +89,7 @@ function AppRoutes({
     Dashboard,
     About,
     StateDetail,
+    Federal,
   } = routeComponents;
 
   return (
@@ -100,7 +100,7 @@ function AppRoutes({
           <Suspense fallback={<RouteFallback />}>
             <Switch>
               <Route path="/" component={Home} />
-              <Route path="/explore" component={Explore} />
+              <Route path="/explore" component={ReportsIndex} />
               <Route path="/reports" component={ReportsIndex} />
               <Route path="/reports/page/:page" component={ReportsIndex} />
               <Route path="/agencies" component={AgenciesIndex} />
@@ -112,6 +112,7 @@ function AppRoutes({
               <Route path="/reports/:id" component={ReportDetail} />
               <Route path="/states" component={StatesIndex} />
               <Route path="/states/:slug" component={StateDetail} />
+              <Route path="/federal" component={Federal} />
               <Route path="/dashboard" component={Dashboard} />
               <Route path="/about" component={About} />
               <Route component={NotFound} />

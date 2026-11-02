@@ -1,19 +1,14 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, Link } from "wouter";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { Link, useRoute } from "wouter";
+import { ArrowLeft } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import ReportDetailTabs from "@/components/reports/report-detail-tabs";
+import { ReportRecord } from "@/components/reports/report-record";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ReportWithDetails } from "@/lib/types";
-import { getStateEntryByCode } from "@shared/states";
-
-const AI_RESEARCH_AGENT_ARTICLE_URL =
-  "https://scottlabbe.me/articles/building-an-ai-research-agent/";
 
 export default function ReportDetail() {
   const [, params] = useRoute("/reports/:id");
@@ -23,15 +18,26 @@ export default function ReportDetail() {
     queryKey: ["/api/reports", reportId],
     enabled: !!reportId,
     queryFn: () => apiClient.getReportById(reportId!),
-  }) as { data: ReportWithDetails | undefined; isLoading: boolean; error: Error | null };
+  }) as {
+    data: ReportWithDetails | undefined;
+    isLoading: boolean;
+    error: Error | null;
+  };
 
   const reportJsonLd = useMemo(() => {
     if (!report) return undefined;
     const dateStr = [
       report.publicationYear,
-      report.publicationMonth ? String(report.publicationMonth).padStart(2, "0") : null,
-      report.publicationDay ? String(report.publicationDay).padStart(2, "0") : null,
-    ].filter(Boolean).join("-");
+      report.publicationMonth
+        ? String(report.publicationMonth).padStart(2, "0")
+        : null,
+      report.publicationDay
+        ? String(report.publicationDay).padStart(2, "0")
+        : null,
+    ]
+      .filter(Boolean)
+      .join("-");
+
     return {
       "@context": "https://schema.org",
       "@type": "Report",
@@ -44,11 +50,14 @@ export default function ReportDetail() {
       dateModified: report.updatedAt,
       description: report.overallConclusion?.substring(0, 155) || "",
       about: { "@type": "GovernmentService", name: "Medicaid" },
-      spatialCoverage: {
-        "@type": "Place",
-        name: getStateEntryByCode(report.state)?.name || report.state,
-      },
-      ...(report.originalReportSourceUrl
+      spatialCoverage:
+        report.jurisdictionScopeType === "national"
+          ? { "@type": "Place", name: "United States" }
+          : report.subjectJurisdictions.map((jurisdiction) => ({
+              "@type": "Place",
+              name: jurisdiction.name,
+            })),
+      ...(report.originalReportSourceUrl?.startsWith("http")
         ? { isBasedOn: report.originalReportSourceUrl }
         : {}),
       publisher: {
@@ -59,42 +68,26 @@ export default function ReportDetail() {
     };
   }, [report]);
 
-  const formatDate = (report: ReportWithDetails) => {
-    if (report.publicationDay && report.publicationMonth && report.publicationYear) {
-      return new Date(report.publicationYear, report.publicationMonth - 1, report.publicationDay).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    }
-    
-    if (report.publicationMonth) {
-      return `${new Date(0, report.publicationMonth - 1).toLocaleDateString("en-US", { month: "long" })} ${report.publicationYear}`;
-    }
-    
-    return report.publicationYear?.toString() || 'Unknown';
-  };
-
-  const stateEntry = report ? getStateEntryByCode(report.state) : undefined;
-
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8 sm:py-14">
         <PageMeta
           title={reportId ? `Audit Report ${reportId}` : "Audit Report"}
-          description="View detailed Medicaid audit report with findings, recommendations, and analysis."
+          description="View detailed Medicaid audit report findings, recommendations, and original source evidence."
           canonicalPath={reportId ? `/reports/${reportId}` : undefined}
           ogType="article"
         />
-        <Card className="p-8 text-center">
+        <Card className="rounded-sm border-border p-8 text-center shadow-none">
           <CardContent>
-            <p className="text-destructive">Error loading report: {error.message}</p>
-            <Link href="/explore">
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Explore
-              </Button>
-            </Link>
+            <p className="text-destructive">
+              Error loading report: {error.message}
+            </p>
+            <Button asChild variant="outline" className="mt-4 rounded-sm">
+              <Link href="/reports">
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Back to reports
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -102,45 +95,26 @@ export default function ReportDetail() {
   }
 
   if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          <Skeleton className="h-8 w-32" />
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex space-x-2">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-6 w-24" />
-                </div>
-                <Skeleton className="h-8 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <ReportRecordSkeleton />;
   }
 
   if (!report) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8 sm:py-14">
         <PageMeta
           title="Report not found"
           description="The requested audit report could not be found."
           robots="noindex, follow"
         />
-        <Card className="p-8 text-center">
+        <Card className="rounded-sm border-border p-8 text-center shadow-none">
           <CardContent>
             <p className="text-muted-foreground">Report not found</p>
-            <Link href="/explore">
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Explore
-              </Button>
-            </Link>
+            <Button asChild variant="outline" className="mt-4 rounded-sm">
+              <Link href="/reports">
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Back to reports
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -148,76 +122,51 @@ export default function ReportDetail() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
-      {report && (
-        <PageMeta
-          title={report.reportTitle}
-          description={
-            (report.overallConclusion || report.llmInsight || "View detailed Medicaid audit report with findings, recommendations, and analysis.").substring(0, 155)
-          }
-          canonicalPath={`/reports/${reportId}`}
-          ogType="article"
-          jsonLd={reportJsonLd}
-        />
-      )}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-        {/* Breadcrumb */}
-        <div className="mb-6">
-          <Link href="/explore">
-            <Button variant="ghost" size="sm" className="mb-4 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Explore
-            </Button>
-          </Link>
-        </div>
+    <>
+      <PageMeta
+        title={report.reportTitle}
+        description={(
+          report.overallConclusion ||
+          report.llmInsight ||
+          "View this Medicaid audit report's findings, recommendations, and original source."
+        ).substring(0, 155)}
+        canonicalPath={`/reports/${reportId}`}
+        ogType="article"
+        jsonLd={reportJsonLd}
+      />
+      <ReportRecord report={report} />
+    </>
+  );
+}
 
-        {/* Report Detail */}
-        <Card className="bg-card border shadow-sm overflow-hidden">
-          {/* Header */}
-          <div className="border-b p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-3">
-                  {stateEntry ? (
-                    <Link href={`/states/${stateEntry.slug}`}>
-                      <Badge variant="secondary" className="text-xs cursor-pointer hover:bg-secondary/80">
-                        {stateEntry.name}
-                      </Badge>
-                    </Link>
-                  ) : (
-                    <Badge variant="secondary" className="text-xs">
-                      {report.state}
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className="text-xs">
-                    {report.auditOrganization}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    Published {formatDate(report)}
-                  </span>
-                </div>
-                
-                <h1 className="text-3xl font-bold text-black mb-3 leading-tight">
-                  {report.reportTitle}
-                </h1>
-                <a
-                  href={AI_RESEARCH_AGENT_ARTICLE_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-primary underline decoration-primary/40 underline-offset-4"
-                >
-                  Learn how the AI-generated research projects were created
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </div>
+function ReportRecordSkeleton() {
+  return (
+    <div
+      className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8 sm:py-14"
+      aria-hidden="true"
+    >
+      <Skeleton className="h-5 w-56" />
+      <div className="mt-6 border-t-4 border-primary pt-6">
+        <Skeleton className="h-4 w-52" />
+        <Skeleton className="mt-4 h-12 w-full max-w-4xl" />
+        <Skeleton className="mt-3 h-12 w-4/5 max-w-3xl" />
+        <div className="mt-8 grid border-y border-border sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="border-b border-border p-4 sm:p-5">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-3 h-5 w-32" />
             </div>
-            
-
-          </div>
-
-          {/* Tabs Content */}
-          <ReportDetailTabs report={report} />
-        </Card>
+          ))}
+        </div>
+      </div>
+      <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,760px)_minmax(220px,1fr)]">
+        <div className="space-y-10">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-52 w-full" />
+        </div>
+        <Skeleton className="h-80 w-full" />
       </div>
     </div>
   );

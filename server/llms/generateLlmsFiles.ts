@@ -1,9 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
-import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "../database";
-import { reports } from "@shared/schema";
+import { storage } from "../storage";
+import type { ReportListItem } from "../../client/src/lib/types";
 
 const DEFAULT_AUDIT_LIMIT = 20;
 const DEFAULT_RESEARCH_LIMIT = 5;
@@ -24,19 +23,7 @@ const researchMetadataSchema = z.object({
   updatedDate: z.string().optional(),
 });
 
-type AuditReportRow = {
-  id: number;
-  reportTitle: string;
-  auditOrganization: string;
-  state: string;
-  potentialObjectiveSummary: string | null;
-  overallConclusion: string | null;
-  llmInsight: string | null;
-  originalReportSourceUrl: string | null;
-  publicationYear: number;
-  publicationMonth: number | null;
-  publicationDay: number | null;
-};
+type AuditReportRow = ReportListItem;
 
 type ResearchReportEntry = {
   slug: string;
@@ -108,29 +95,8 @@ function readExecutiveSummary(markdown: string): string | undefined {
 }
 
 async function getLatestAuditReports(limit: number): Promise<AuditReportRow[]> {
-  return db
-    .select({
-      id: reports.id,
-      reportTitle: reports.reportTitle,
-      auditOrganization: reports.auditOrganization,
-      state: reports.state,
-      potentialObjectiveSummary: reports.potentialObjectiveSummary,
-      overallConclusion: reports.overallConclusion,
-      llmInsight: reports.llmInsight,
-      originalReportSourceUrl: reports.originalReportSourceUrl,
-      publicationYear: reports.publicationYear,
-      publicationMonth: reports.publicationMonth,
-      publicationDay: reports.publicationDay,
-    })
-    .from(reports)
-    .where(eq(reports.hidden, false))
-    .orderBy(
-      desc(reports.publicationYear),
-      desc(reports.publicationMonth),
-      desc(reports.publicationDay),
-      desc(reports.id),
-    )
-    .limit(limit);
+  const result = await storage.getReports({ sortBy: "date_desc" }, 1, limit);
+  return result.items;
 }
 
 async function getLatestResearchReports(
@@ -301,7 +267,17 @@ function buildLlmsFull(args: {
         `- original_report_source_url: ${formatValue(report.originalReportSourceUrl)}`,
       );
       lines.push(`- audit_organization: ${formatValue(report.auditOrganization)}`);
-      lines.push(`- state: ${formatValue(report.state)}`);
+      lines.push(
+        `- source_jurisdiction: ${formatValue(report.sourceJurisdiction?.name)}`,
+      );
+      lines.push(`- jurisdiction_scope: ${report.jurisdictionScopeType}`);
+      lines.push(
+        `- subject_jurisdictions: ${
+          report.subjectJurisdictions.length
+            ? report.subjectJurisdictions.map((jurisdiction) => jurisdiction.name).join(", ")
+            : "none"
+        }`,
+      );
       lines.push(`- publication_year: ${formatValue(report.publicationYear)}`);
       lines.push(`- publication_month: ${formatValue(report.publicationMonth)}`);
       lines.push(`- publication_day: ${formatValue(report.publicationDay)}`);
