@@ -17,6 +17,7 @@ import {
 } from "@/lib/publishers";
 import { cn } from "@/lib/utils";
 import { reportPath } from "@shared/reportSlugs";
+import { normalizePublicSourceUrl } from "@shared/sourceUrls";
 
 const SITE_URL = "https://www.medicaidintelligence.com";
 
@@ -227,9 +228,7 @@ export function RecordHeader({
   citation: string;
   permalink: string;
 }) {
-  const sourceUrl = isWebUrl(report.originalReportSourceUrl)
-    ? report.originalReportSourceUrl
-    : undefined;
+  const sourceUrl = normalizePublicSourceUrl(report.originalReportSourceUrl);
   const fields = [
     report.subjectJurisdictions.length > 0 && {
       label: "Jurisdiction",
@@ -269,7 +268,7 @@ export function RecordHeader({
     },
     {
       label: "Source record",
-      content: report.originalReportSourceUrl
+      content: sourceUrl
         ? "Original document linked"
         : "Metadata record",
     },
@@ -618,8 +617,4 @@ function hasText(value?: string): value is string {
   return !["none", "null", "n/a", "not available"].includes(
     value.trim().toLocaleLowerCase(),
   );
-}
-
-function isWebUrl(value?: string): value is string {
-  return Boolean(value && /^https?:\/\//i.test(value));
 }

@@ -24,7 +24,9 @@
     "reports:slugs:test": "node --import tsx --test shared/reportSlugs.test.ts",
     "reports:slugs:review": "node --env-file=.env --import tsx scripts/generate-report-slug-review.ts",
     "reports:slugs:apply": "node --env-file=.env --import tsx scripts/apply-report-slugs.ts",
-    "reports:public:test": "node --env-file=.env --import tsx --test server/reportSlugs.test.ts"
+    "reports:duplicates:review": "node --env-file=.env --import tsx scripts/generate-report-duplicate-review.ts",
+    "reports:public:test": "node --env-file=.env --import tsx --test server/reportSlugs.test.ts",
+    "seo:integrity:test": "node --env-file=.env --import tsx --test server/seoIntegrity.test.ts shared/sourceUrls.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

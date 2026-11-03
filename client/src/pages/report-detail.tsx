@@ -10,6 +10,7 @@ import { ReportRecord } from "@/components/reports/report-record";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ReportWithDetails } from "@/lib/types";
 import { reportPath } from "@shared/reportSlugs";
+import { normalizePublicSourceUrl } from "@shared/sourceUrls";
 import { getPublisherName } from "@/lib/publishers";
 
 export default function ReportDetail() {
@@ -39,6 +40,7 @@ export default function ReportDetail() {
     ]
       .filter(Boolean)
       .join("-");
+    const sourceUrl = normalizePublicSourceUrl(report.originalReportSourceUrl);
 
     return {
       "@context": "https://schema.org",
@@ -58,9 +60,7 @@ export default function ReportDetail() {
               "@type": "Place",
               name: jurisdiction.name,
             })),
-      ...(report.originalReportSourceUrl?.startsWith("http")
-        ? { isBasedOn: report.originalReportSourceUrl }
-        : {}),
+      ...(sourceUrl ? { isBasedOn: sourceUrl } : {}),
       publisher: {
         "@type": "Organization",
         name: getPublisherName(report),

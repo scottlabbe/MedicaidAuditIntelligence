@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Response } from "express";
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
@@ -37,6 +37,35 @@ function injectSsrHtml(
 }
 
 const viteLogger = createLogger();
+
+export function renderSsrFailureHtml(): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Temporarily unavailable | Medicaid Audit Intelligence</title>
+  </head>
+  <body>
+    <main>
+      <h1>Temporarily unavailable</h1>
+      <p>Medicaid Audit Intelligence could not load this page. Please try again shortly.</p>
+    </main>
+  </body>
+</html>`;
+}
+
+function sendSsrFailure(res: Response): void {
+  res
+    .status(503)
+    .set({
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Retry-After": "60",
+    })
+    .send(renderSsrFailureHtml());
+}
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -113,13 +142,19 @@ export async function setupVite(app: Express, server: Server) {
         res.status(resolvedRoute.status);
       } catch (e) {
         console.warn("SSR failed for", url, e);
+        sendSsrFailure(res);
+        return;
       }
 
       const page = await vite.transformIndexHtml(url, template);
       res.set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
-      next(e);
+      if (res.headersSent) {
+        next(e);
+        return;
+      }
+      sendSsrFailure(res);
     }
   });
 }
@@ -189,8 +224,8 @@ export function serveStatic(app: Express) {
         .set({ "Content-Type": "text/html", "Cache-Control": cacheControl })
         .send(html);
     } catch (e) {
-      console.warn("SSR failed, serving base HTML:", e);
-      res.status(200).set({ "Content-Type": "text/html" }).send(indexHtmlTemplate);
+      console.warn("SSR failed:", e);
+      sendSsrFailure(res);
     }
   });
 }

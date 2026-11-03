@@ -8,6 +8,7 @@ import {
   formatSubjectJurisdictions,
 } from "@/lib/jurisdictions";
 import { reportPath } from "@shared/reportSlugs";
+import { normalizePublicSourceUrl } from "@shared/sourceUrls";
 import { getPublisherName } from "@/lib/publishers";
 
 export function EvidenceLedger({ reports }: { reports: ReportListItem[] }) {
@@ -23,6 +24,7 @@ export function EvidenceLedger({ reports }: { reports: ReportListItem[] }) {
 export function EvidenceDocket({ report }: { report: ReportListItem }) {
   const reportHref = reportPath(report);
   const summary = getReportSummary(report);
+  const sourceUrl = normalizePublicSourceUrl(report.originalReportSourceUrl);
 
   return (
     <article className="grid border-t border-border py-6 first:border-t-0 lg:grid-cols-[118px_190px_minmax(0,1fr)_128px] lg:gap-5 lg:py-7">
@@ -46,7 +48,7 @@ export function EvidenceDocket({ report }: { report: ReportListItem }) {
         <LedgerField label="Publishing agency" value={getPublisherName(report)} />
         <LedgerField
           label="Source record"
-          value={report.originalReportSourceUrl ? "Original document linked" : "Metadata record"}
+          value={sourceUrl ? "Original document linked" : "Metadata record"}
         />
       </dl>
 
@@ -108,9 +110,9 @@ export function EvidenceDocket({ report }: { report: ReportListItem }) {
             Source status
           </dt>
           <dd className="mt-2">
-            {report.originalReportSourceUrl ? (
+            {sourceUrl ? (
               <a
-                href={report.originalReportSourceUrl}
+                href={sourceUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-start gap-1.5 text-sm font-semibold leading-5 text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

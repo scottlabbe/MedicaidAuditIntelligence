@@ -23,6 +23,7 @@ import type {
 } from "@/lib/types";
 import { preloadRouteHref } from "@/lib/routeLoaders";
 import { reportPath } from "@shared/reportSlugs";
+import { normalizePublicSourceUrl } from "@shared/sourceUrls";
 import { useSsrData } from "@/lib/ssrData";
 import { getPublisherName } from "@/lib/publishers";
 import {
@@ -454,6 +455,7 @@ function EvidenceDocket({
 }) {
   const reportHref = reportPath(report);
   const summary = getReportSummary(report);
+  const sourceUrl = normalizePublicSourceUrl(report.originalReportSourceUrl);
   const financialImpact =
     details?.totalFinancialImpact ?? report.totalFinancialImpact;
 
@@ -475,7 +477,7 @@ function EvidenceDocket({
           <div className="mt-6 border-t border-primary/25 pt-4">
             <span className="flex items-center gap-2 text-sm font-semibold text-primary">
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-              {report.originalReportSourceUrl
+              {sourceUrl
                 ? "Original source available"
                 : "Library record available"}
             </span>
@@ -522,9 +524,9 @@ function EvidenceDocket({
               Open evidence record
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            {report.originalReportSourceUrl && (
+            {sourceUrl && (
               <a
-                href={report.originalReportSourceUrl}
+                href={sourceUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex min-h-11 items-center justify-center gap-2 border border-border px-5 py-2.5 text-sm font-semibold text-foreground underline decoration-border underline-offset-4 hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

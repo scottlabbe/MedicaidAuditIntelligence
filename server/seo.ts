@@ -10,6 +10,7 @@ import {
 import { resolveAgencySlugAlias } from "./agencyAliases";
 import type { SearchFilters } from "../client/src/lib/types";
 import { reportPath } from "@shared/reportSlugs";
+import { normalizePublicSourceUrl } from "@shared/sourceUrls";
 
 const SITE_URL =
   process.env.SITE_URL || "https://www.medicaidintelligence.com";
@@ -388,6 +389,10 @@ async function getReportsIndexRoute(
   const safePage = Math.max(1, page);
   const filters = getReportFilters(url);
   const reportResults = await storage.getReports(filters, safePage, 24);
+  const totalPages = Math.max(1, Math.ceil(Number(reportResults.total) / 24));
+  if (safePage > totalPages) {
+    return getNotFoundRoute();
+  }
   const canonicalUrl =
     safePage === 1 ? `${SITE_URL}/reports` : `${SITE_URL}/reports/page/${safePage}`;
   const title =
@@ -810,6 +815,9 @@ async function getReportRoute(slug: string, search = ""): Promise<ResolvedHtmlRo
   }
 
   const canonicalPath = reportPath(report);
+  const publicSourceUrl = normalizePublicSourceUrl(
+    report.originalReportSourceUrl,
+  );
 
   const primarySubject = report.subjectJurisdictions[0];
   const description = truncate(
@@ -908,7 +916,7 @@ async function getReportRoute(slug: string, search = ""): Promise<ResolvedHtmlRo
             </ol>
           </section>
         ` : ""}
-        ${report.originalReportSourceUrl ? `<p><a href="${escapeHtml(report.originalReportSourceUrl)}">View the original audit report PDF</a></p>` : ""}
+        ${publicSourceUrl ? `<p><a href="${escapeHtml(publicSourceUrl)}">View the original audit report PDF</a></p>` : ""}
         <p><a href="/reports">Browse more reports</a>${primarySubject ? ` or <a href="/states/${primarySubject.slug}">see all ${escapeHtml(primarySubject.name)} reports</a>` : ""}.</p>
       </article>
     `),
@@ -1236,6 +1244,9 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
   const reportPageMatch = pathname.match(/^\/reports\/page\/(\d+)$/);
   if (reportPageMatch) {
     const page = Number(reportPageMatch[1]);
+    if (!Number.isSafeInteger(page) || page < 1) {
+      return getNotFoundRoute();
+    }
     if (page === 1) {
       return {
         routeType: "redirect",

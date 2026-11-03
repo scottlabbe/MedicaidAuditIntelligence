@@ -53,6 +53,7 @@ import {
   isValidReportSlug,
   reportPath,
 } from "@shared/reportSlugs";
+import { PUBLIC_SOURCE_URL_PATTERN } from "@shared/sourceUrls";
 
 function metadataEvidenceLabel(fieldName: string): string {
   const labels: Record<string, string> = {
@@ -393,11 +394,11 @@ export class DatabaseStorage implements IStorage {
 
     if (filters.sourceStatus === "available") {
       conditions.push(
-        sql`${reports.originalReportSourceUrl} is not null and ${reports.originalReportSourceUrl} <> ''`,
+        sql`BTRIM(${reports.originalReportSourceUrl}) ~* ${PUBLIC_SOURCE_URL_PATTERN}`,
       );
     } else if (filters.sourceStatus === "record") {
       conditions.push(
-        sql`${reports.originalReportSourceUrl} is null or ${reports.originalReportSourceUrl} = ''`,
+        sql`${reports.originalReportSourceUrl} is null or not (BTRIM(${reports.originalReportSourceUrl}) ~* ${PUBLIC_SOURCE_URL_PATTERN})`,
       );
     }
 

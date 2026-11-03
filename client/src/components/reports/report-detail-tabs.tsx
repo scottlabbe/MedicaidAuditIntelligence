@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { ReportWithDetails } from "@/lib/types";
+import { normalizePublicSourceUrl } from "@shared/sourceUrls";
 
 interface ReportDetailTabsProps {
   report: ReportWithDetails;
@@ -29,10 +30,8 @@ export default function ReportDetailTabs({ report }: ReportDetailTabsProps) {
     "potential_objective_summary",
   );
   const aiInsight = get<string>(report, "llmInsight", "llm_insight");
-  const originalReportSourceUrl = get<string>(
-    report,
-    "originalReportSourceUrl",
-    "original_report_source_url",
+  const originalReportSourceUrl = normalizePublicSourceUrl(
+    get<string>(report, "originalReportSourceUrl", "original_report_source_url"),
   );
   const modelName = get<string>(report, "modelName", "model_name");
 
