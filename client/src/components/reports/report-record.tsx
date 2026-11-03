@@ -10,7 +10,13 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import type { ReportWithDetails } from "@/lib/types";
 import { jurisdictionHref } from "@/lib/jurisdictions";
+import {
+  getPublisherHref,
+  getPublisherName,
+  hasDistinctAuditOrganization,
+} from "@/lib/publishers";
 import { cn } from "@/lib/utils";
+import { reportPath } from "@shared/reportSlugs";
 
 const SITE_URL = "https://www.medicaidintelligence.com";
 
@@ -18,7 +24,7 @@ type CopyState = "idle" | "copied" | "failed";
 
 export function ReportRecord({ report }: { report: ReportWithDetails }) {
   const citation = createCitation(report);
-  const permalink = `${SITE_URL}/reports/${report.id}`;
+  const permalink = `${SITE_URL}${reportPath(report)}`;
   const topics = Array.from(
     new Set([...report.keywords, ...report.programs].filter(hasText)),
   );
@@ -241,16 +247,20 @@ export function RecordHeader({
         </span>
       ),
     },
-    hasText(report.auditOrganization) && {
+    {
       label: "Publishing agency",
-      content: (
+      content: getPublisherHref(report) ? (
         <Link
-          href={`/agencies/${slugify(report.auditOrganization)}`}
+          href={getPublisherHref(report)!}
           className="text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {report.auditOrganization}
+          {getPublisherName(report)}
         </Link>
-      ),
+      ) : getPublisherName(report),
+    },
+    hasDistinctAuditOrganization(report) && {
+      label: "Audit organization",
+      content: report.auditOrganization,
     },
     {
       label: "Publication date",
@@ -258,9 +268,10 @@ export function RecordHeader({
       mono: true,
     },
     {
-      label: "Report identifier",
-      content: `REPORT-${String(report.id).padStart(4, "0")}`,
-      mono: true,
+      label: "Source record",
+      content: report.originalReportSourceUrl
+        ? "Original document linked"
+        : "Metadata record",
     },
   ].filter(Boolean) as Array<{
     label: string;
@@ -368,8 +379,8 @@ function ReportBreadcrumb({ report }: { report: ReportWithDetails }) {
           </Link>
         </li>
         <li aria-hidden="true">/</li>
-        <li className="font-mono" aria-current="page">
-          REPORT-{String(report.id).padStart(4, "0")}
+        <li className="max-w-[28rem] truncate" aria-current="page">
+          {report.reportTitle}
         </li>
       </ol>
     </nav>
@@ -571,7 +582,7 @@ function CopyButton({
 }
 
 function createCitation(report: ReportWithDetails) {
-  return `${report.auditOrganization}. (${report.publicationYear}). ${report.reportTitle}. ${SITE_URL}/reports/${report.id}`;
+  return `${getPublisherName(report)}. (${report.publicationYear}). ${report.reportTitle}. ${SITE_URL}${reportPath(report)}`;
 }
 
 function formatPublicationDate(report: ReportWithDetails) {
@@ -600,15 +611,6 @@ function formatCurrency(value: number) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-function slugify(value: string) {
-  return value
-    .toLocaleLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }
 
 function hasText(value?: string): value is string {

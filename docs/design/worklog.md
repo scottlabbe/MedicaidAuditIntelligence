@@ -2,6 +2,37 @@
 
 Use this file to preserve the skill's plan, critique, and revision history. Add entries newest first.
 
+## 2026-11-02 — Canonical publisher attribution
+
+**User job**
+
+Identify the organization that published each Medicaid audit while retaining the audit performer as distinct provenance when the two organizations differ.
+
+**Selected direction — Publisher-first evidence docket**
+
+- Keep the existing Public Audit Ledger palette, Public Sans, Source Serif 4, IBM Plex Mono, ruled grouping, two-pixel radii, and evidence-docket layout.
+- Populate every publisher-labeled field, agency register entry, agency link, citation, and filter option from the canonical publisher joined through `reports.publisher_key`.
+- Keep the established `/agencies` routes and `agency` query parameter, but use the stable publisher key as their canonical value.
+- Retain `audit_organization` as a separate “Audit organization” evidence field only where it adds provenance, especially when it differs from the canonical publisher.
+- Introduce no new color, typeface, radius, shadow, animation, or component pattern.
+
+**Pre-build critique**
+
+- What felt generic: adding publisher badges, status pills, or a second card treatment would make a data-contract correction look like a promoted feature and compete with the evidence docket.
+- What changed: the distinction is encoded through field labels, information order, stable links, and exact filter values within the existing docket and register structures.
+- Why it is specific to Medicaid audit evidence: a commissioned audit may be performed by a private firm but published by a state oversight office, so publisher and auditor must remain independently inspectable rather than being visually collapsed.
+- Rejected alternatives: new `/publishers` routes were rejected to preserve indexed links and established navigation; browser-side name normalization was rejected because canonical identity belongs to the database contract.
+
+**Rendered review**
+
+- Reviewed real report 179, the agency register, the Illinois publisher page, an HHS OIG-filtered report register, the homepage, the managed-care research report, and the About page at `1440 × 1100`, `1440 × 1000`, and `390 × 844`.
+- Attribution review: report 179 presents Illinois Office of the Auditor General as the linked publishing agency and Sikich CPA LLC as the separately labeled audit organization. The citation uses the canonical publisher.
+- Register and filter review: the agency register exposes 33 unique canonical publisher-key links, groups naming variants, and the report filter selects `hhs-oig` while rendering the canonical HHS OIG display name.
+- Compatibility review: the legacy `sikich-cpa-llc` route redirects to `/agencies/illinois-auditor-general`, and exact legacy name filters continue to return the expected report.
+- Responsive review: every tested page matched document width to viewport width at mobile and desktop sizes; long publisher names wrapped naturally without introducing horizontal scrolling.
+- Accessibility and semantics: publisher links retain visible focus styles, the publisher and audit organization remain distinct definition-list fields, and no new motion or interaction pattern was introduced.
+- Browser review found no console errors. Verification completed with `npm run check`, `npm run build`, publisher integration tests, jurisdiction integration tests, and report-slug route/unit tests.
+
 ## 2026-10-29 — Report evidence record mockup
 
 **User job**

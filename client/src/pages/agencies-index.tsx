@@ -81,8 +81,8 @@ export default function AgenciesIndex() {
         </header>
 
         <aside className="mt-6 border-l-4 border-primary bg-secondary px-5 py-4 text-sm leading-6 text-foreground">
-          Agency names follow indexed source metadata. Similarly named offices may
-          appear as separate publisher records.
+          Agency names follow the canonical publisher registry. Naming variants
+          are grouped under one stable publisher identity.
         </aside>
 
         <section className="pt-8" aria-labelledby="agency-register-heading">

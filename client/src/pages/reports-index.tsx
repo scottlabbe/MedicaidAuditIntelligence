@@ -10,6 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import { STATE_ENTRIES } from "@shared/states";
+import { reportPath } from "@shared/reportSlugs";
 import { apiClient } from "@/lib/api";
 import PageMeta from "@/components/seo/PageMeta";
 import { Button } from "@/components/ui/button";
@@ -122,7 +123,11 @@ export default function ReportsIndex() {
         description="Browse Medicaid audit reports with publishing agency, jurisdiction, financial impact, findings, recommendations, and original public sources."
         canonicalPath={canonicalPath}
         robots={activeFilterCount > 0 ? "noindex, follow" : "index, follow"}
-        jsonLd={data ? [buildDataset(), buildItemList(data, parsed.page)] : buildDataset()}
+        jsonLd={
+          data
+            ? [buildCollectionPage(canonicalPath), buildItemList(data, parsed.page)]
+            : buildCollectionPage(canonicalPath)
+        }
       />
 
       <div className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8 sm:py-14">
@@ -272,7 +277,7 @@ export default function ReportsIndex() {
                 >
                   <option value="">All agencies</option>
                   {agencies.map((agency) => (
-                    <option key={agency.slug} value={agency.name}>
+                    <option key={agency.slug} value={agency.slug}>
                       {agency.name}
                     </option>
                   ))}
@@ -549,24 +554,24 @@ function buildItemList(data: SearchResponse, page: number) {
     itemListElement: data.items.map((report, index) => ({
       "@type": "ListItem",
       position: offset + index + 1,
-      url: `https://www.medicaidintelligence.com/reports/${report.id}`,
+      url: `https://www.medicaidintelligence.com${reportPath(report)}`,
       name: report.reportTitle,
     })),
   };
 }
 
-function buildDataset() {
+function buildCollectionPage(canonicalPath: string) {
   return {
     "@context": "https://schema.org",
-    "@type": "Dataset",
-    name: "Medicaid Audit Intelligence Report Database",
+    "@type": "CollectionPage",
+    name: "Medicaid Audit Reports",
     description:
-      "Searchable corpus of Medicaid audit reports with structured findings, recommendations, state coverage, audit agencies, and source document links.",
-    url: "https://www.medicaidintelligence.com/reports",
-    creator: {
-      "@type": "Organization",
+      "Browse Medicaid audit reports with publishing agency, jurisdiction, financial impact, findings, recommendations, and original public sources.",
+    url: `https://www.medicaidintelligence.com${canonicalPath}`,
+    isPartOf: {
+      "@type": "WebSite",
       name: "Medicaid Audit Intelligence",
+      url: "https://www.medicaidintelligence.com",
     },
-    isAccessibleForFree: true,
   };
 }

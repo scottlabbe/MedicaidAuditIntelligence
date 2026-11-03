@@ -3,6 +3,7 @@ import path from "path";
 import { z } from "zod";
 import { storage } from "../storage";
 import type { ReportListItem } from "../../client/src/lib/types";
+import { reportPath } from "@shared/reportSlugs";
 
 const DEFAULT_AUDIT_LIMIT = 20;
 const DEFAULT_RESEARCH_LIMIT = 5;
@@ -259,13 +260,14 @@ function buildLlmsFull(args: {
   } else {
     for (let index = 0; index < auditReports.length; index += 1) {
       const report = auditReports[index];
-      const canonicalUrl = toAbsoluteUrl(siteUrl, `/reports/${report.id}`);
+      const canonicalUrl = toAbsoluteUrl(siteUrl, reportPath(report));
       lines.push(`### ${index + 1}. ${report.reportTitle}`);
-      lines.push(`- id: ${report.id}`);
       lines.push(`- canonical_url: ${canonicalUrl}`);
       lines.push(
         `- original_report_source_url: ${formatValue(report.originalReportSourceUrl)}`,
       );
+      lines.push(`- publisher_key: ${formatValue(report.publisherKey)}`);
+      lines.push(`- publisher_name: ${formatValue(report.publisherName)}`);
       lines.push(`- audit_organization: ${formatValue(report.auditOrganization)}`);
       lines.push(
         `- source_jurisdiction: ${formatValue(report.sourceJurisdiction?.name)}`,

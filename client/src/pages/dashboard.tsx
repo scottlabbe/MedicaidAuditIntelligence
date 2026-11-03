@@ -9,6 +9,7 @@ import StatsCard from "@/components/dashboard/stats-card";
 import PageMeta from "@/components/seo/PageMeta";
 import type { DashboardStats, StateLatestResponse } from "@/lib/types";
 import { formatSourceJurisdiction, formatSubjectJurisdictions } from "@/lib/jurisdictions";
+import { reportPath } from "@shared/reportSlugs";
 
 const USMap = lazy(() => import("@/components/dashboard/USMap"));
 
@@ -160,7 +161,7 @@ export default function Dashboard() {
             ) : stats?.recentReports?.length ? (
               <div className="space-y-4">
                 {stats.recentReports.slice(0, 5).map((report) => (
-                  <Link key={report.id} href={`/reports/${report.id}`}>
+                  <Link key={report.id} href={reportPath(report)}>
                     <div className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                         <FileText className="w-5 h-5 text-primary" />

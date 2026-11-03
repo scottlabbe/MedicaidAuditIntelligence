@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { ReportListItem } from "@/lib/types";
 import { formatSourceJurisdiction, formatSubjectJurisdictions } from "@/lib/jurisdictions";
+import { reportPath } from "@shared/reportSlugs";
+import { getPublisherName } from "@/lib/publishers";
 
 interface ReportCardProps {
   report: ReportListItem;
@@ -15,7 +17,7 @@ export default function ReportCard({ report }: ReportCardProps) {
   const { toast } = useToast();
 
   const handleCopyCitation = () => {
-    const citation = `${report.auditOrganization} (${report.publicationYear}). ${report.reportTitle}. Examines: ${formatSubjectJurisdictions(report, false)}. Source authority: ${formatSourceJurisdiction(report)}.`;
+    const citation = `${getPublisherName(report)} (${report.publicationYear}). ${report.reportTitle}. Examines: ${formatSubjectJurisdictions(report, false)}. Source authority: ${formatSourceJurisdiction(report)}.`;
     navigator.clipboard.writeText(citation);
     toast({
       title: "Citation copied",
@@ -49,7 +51,7 @@ export default function ReportCard({ report }: ReportCardProps) {
         <div className="space-y-2 mb-4">
           <div className="flex items-center text-sm text-black">
             <Building className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="truncate">{report.auditOrganization}</span>
+            <span className="truncate">{getPublisherName(report)}</span>
           </div>
           
           <div className="flex items-center text-sm text-black">
@@ -80,7 +82,7 @@ export default function ReportCard({ report }: ReportCardProps) {
           <span className="text-xs">Cite</span>
         </Button>
         
-        <Link href={`/reports/${report.id}`}>
+        <Link href={reportPath(report)}>
           <Button size="sm" className="flex items-center space-x-1 bg-orange-primary hover:bg-orange-dark focus-ring text-white">
             <span>View Summary</span>
             <ExternalLink className="w-3 h-3" />

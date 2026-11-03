@@ -250,11 +250,6 @@ function SourceRegister({ sources }: { sources: ResearchReportSource[] }) {
               className="grid border-b border-border py-6 last:border-b-0 md:grid-cols-[110px_minmax(0,1fr)_145px] md:gap-6"
             >
               <dl className="grid grid-cols-2 gap-4 md:block">
-                <SourceField
-                  label="Report ID"
-                  value={`REPORT ${source.reportId}`}
-                  mono
-                />
                 {details.sourceAuthority && (
                   <SourceField
                     label="Source authority"
@@ -343,7 +338,7 @@ function getSourceDetails(source: ResearchReportSource) {
       title: source.reportTitle,
       sourceAuthority: source.sourceJurisdiction?.name,
       subjects,
-      agency: source.auditOrganization,
+      agency: source.publisherName || "Publisher pending",
       date: source.publicationLabel
         ? formatSourceDate(source.publicationLabel)
         : undefined,

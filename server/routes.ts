@@ -512,7 +512,28 @@ Sitemap: ${siteUrl}/sitemap.xml`
     }
   });
 
-  // Get single report by ID
+  // Get a public report by its canonical slug.
+  app.get("/api/reports/by-slug/:slug", rateLimit, async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        return res.status(400).json({ error: "Invalid report slug" });
+      }
+
+      const report = await storage.getReportBySlug(slug);
+      if (!report) {
+        return res.status(404).json({ error: "Report not found" });
+      }
+
+      res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
+      res.json(report);
+    } catch (error) {
+      console.error("Error fetching report by slug:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Legacy/internal lookup by database ID.
   app.get("/api/reports/:id", rateLimit, async (req, res) => {
     try {
       const reportId = req.params.id;

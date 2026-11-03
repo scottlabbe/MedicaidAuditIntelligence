@@ -38,11 +38,26 @@ export const jurisdictions = pgTable("jurisdictions", {
   ),
 ]);
 
+// Existing canonical publisher registry. This declaration mirrors the live
+// database; schema changes are managed outside this application-only update.
+export const publishers = pgTable("publishers", {
+  key: varchar("key", { length: 120 }).primaryKey(),
+  displayName: varchar("display_name", { length: 255 }).notNull().unique(),
+  jurisdictionCode: varchar("jurisdiction_code", { length: 2 })
+    .references(() => jurisdictions.code, { onDelete: "restrict" }),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const reports = pgTable("reports", {
   id: integer("id").primaryKey(),
+  slug: varchar("slug", { length: 120 }),
   sourceUid: uuid("source_uid").notNull().unique(),
   reportTitle: varchar("report_title").notNull(),
   auditOrganization: varchar("audit_organization").notNull(),
+  publisherKey: varchar("publisher_key", { length: 120 })
+    .references(() => publishers.key, { onDelete: "restrict" }),
   publicationYear: integer("publication_year").notNull(),
   publicationMonth: integer("publication_month"),
   publicationDay: integer("publication_day"),
@@ -84,7 +99,37 @@ export const reports = pgTable("reports", {
   updatedAt: timestamp("updated_at").defaultNow(),
   auditScope: text("audit_scope"),
   hidden: boolean("hidden").default(false),
-});
+}, (table) => [
+  uniqueIndex("uq_reports_slug")
+    .on(table.slug)
+    .where(sql`${table.slug} is not null`),
+  check(
+    "ck_reports_slug_format",
+    sql`${table.slug} is null or ${table.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`,
+  ),
+]);
+
+export const reportSlugAliases = pgTable("report_slug_aliases", {
+  aliasSlug: varchar("alias_slug", { length: 120 }).primaryKey(),
+  reportId: integer("report_id")
+    .notNull()
+    .references(() => reports.id, { onDelete: "restrict" }),
+  redirectStatus: integer("redirect_status").notNull().default(301),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  retiredAt: timestamp("retired_at", { withTimezone: true }),
+}, (table) => [
+  check(
+    "ck_report_slug_alias_redirect",
+    sql`${table.redirectStatus} IN (301, 308)`,
+  ),
+  check(
+    "ck_report_slug_alias_format",
+    sql`${table.aliasSlug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`,
+  ),
+  index("ix_report_slug_alias_report_active")
+    .on(table.reportId)
+    .where(sql`${table.retiredAt} is null`),
+]);
 
 export const reportJurisdictionAssignments = pgTable(
   "report_jurisdiction_assignments",

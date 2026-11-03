@@ -7,6 +7,8 @@ import {
   formatSourceJurisdiction,
   formatSubjectJurisdictions,
 } from "@/lib/jurisdictions";
+import { reportPath } from "@shared/reportSlugs";
+import { getPublisherName } from "@/lib/publishers";
 
 export function EvidenceLedger({ reports }: { reports: ReportListItem[] }) {
   return (
@@ -19,7 +21,7 @@ export function EvidenceLedger({ reports }: { reports: ReportListItem[] }) {
 }
 
 export function EvidenceDocket({ report }: { report: ReportListItem }) {
-  const reportHref = `/reports/${report.id}`;
+  const reportHref = reportPath(report);
   const summary = getReportSummary(report);
 
   return (
@@ -41,8 +43,11 @@ export function EvidenceDocket({ report }: { report: ReportListItem }) {
           label="Source authority"
           value={formatSourceJurisdiction(report)}
         />
-        <LedgerField label="Publishing agency" value={report.auditOrganization} />
-        <LedgerField label="Report ID" value={`REPORT ${report.id}`} mono />
+        <LedgerField label="Publishing agency" value={getPublisherName(report)} />
+        <LedgerField
+          label="Source record"
+          value={report.originalReportSourceUrl ? "Original document linked" : "Metadata record"}
+        />
       </dl>
 
       <div className="py-5 lg:py-0">

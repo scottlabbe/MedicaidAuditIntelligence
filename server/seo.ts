@@ -9,6 +9,7 @@ import {
 } from "./researchReports";
 import { resolveAgencySlugAlias } from "./agencyAliases";
 import type { SearchFilters } from "../client/src/lib/types";
+import { reportPath } from "@shared/reportSlugs";
 
 const SITE_URL =
   process.env.SITE_URL || "https://www.medicaidintelligence.com";
@@ -141,6 +142,10 @@ function reportSourceLabel(report: {
   sourceJurisdiction?: { name: string };
 }): string {
   return report.sourceJurisdiction?.name || "Source authority not available";
+}
+
+function reportPublisherLabel(report: { publisherName?: string }): string {
+  return report.publisherName || "Publisher pending";
 }
 
 function getOrganizationJsonLd() {
@@ -281,7 +286,7 @@ async function getHomeRoute(): Promise<ResolvedHtmlRoute> {
         <h2>Latest evidence</h2>
         ${renderLinkList(
           latestReports.map((report: any) => ({
-            href: `/reports/${report.id}`,
+            href: reportPath(report),
             label: report.reportTitle,
             meta: `${reportSubjectLabel(report)} • ${reportSourceLabel(report)} • ${report.publicationYear}`,
           })),
@@ -424,7 +429,7 @@ async function getReportsIndexRoute(
         </header>
         ${renderLinkList(
           reportResults.items.map((report) => ({
-            href: `/reports/${report.id}`,
+            href: reportPath(report),
             label: report.reportTitle,
             meta: `${reportSubjectLabel(report)} • ${reportSourceLabel(report)} • ${report.publicationYear}`,
           })),
@@ -561,7 +566,7 @@ async function getAgencyRoute(slug: string): Promise<ResolvedHtmlRoute> {
         <p>${escapeHtml(description)}</p>
         ${renderLinkList(
           agency.reports.map((report) => ({
-            href: `/reports/${report.id}`,
+            href: reportPath(report),
             label: report.reportTitle,
             meta: `${reportSubjectLabel(report)} • ${report.publicationYear}`,
           })),
@@ -789,11 +794,22 @@ function getAboutRoute(): ResolvedHtmlRoute {
   };
 }
 
-async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
-  const report = await storage.getReportById(id);
+async function getReportRoute(slug: string, search = ""): Promise<ResolvedHtmlRoute> {
+  const report = await storage.getReportBySlug(slug);
   if (!report) {
+    const canonicalSlug = await storage.resolveReportSlugAlias(slug);
+    if (canonicalSlug) {
+      return {
+        routeType: "redirect",
+        status: 301,
+        redirectTo: `/reports/${canonicalSlug}${search}`,
+        snapshotHtml: "",
+      };
+    }
     return getNotFoundRoute();
   }
+
+  const canonicalPath = reportPath(report);
 
   const primarySubject = report.subjectJurisdictions[0];
   const description = truncate(
@@ -822,7 +838,7 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
     ...(primarySubject
       ? [{ name: primarySubject.name, url: `${SITE_URL}/states/${primarySubject.slug}` }]
       : []),
-    { name: report.reportTitle, url: `${SITE_URL}/reports/${report.id}` },
+    { name: report.reportTitle, url: `${SITE_URL}${canonicalPath}` },
   ];
 
   return {
@@ -831,7 +847,7 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
     seoMeta: {
       title: `${report.reportTitle} | ${SITE_NAME}`,
       description,
-      canonicalUrl: `${SITE_URL}/reports/${report.id}`,
+      canonicalUrl: `${SITE_URL}${canonicalPath}`,
       ogType: "article",
       robots: "index, follow",
       jsonLd: [
@@ -839,6 +855,8 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
           "@context": "https://schema.org",
           "@type": "Report",
           name: report.reportTitle,
+          url: `${SITE_URL}${canonicalPath}`,
+          mainEntityOfPage: `${SITE_URL}${canonicalPath}`,
           author: {
             "@type": "Organization",
             name: report.auditOrganization,
@@ -858,8 +876,10 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
                 })),
           publisher: {
             "@type": "Organization",
-            name: SITE_NAME,
-            url: SITE_URL,
+            name: reportPublisherLabel(report),
+            ...(report.publisherKey
+              ? { url: `${SITE_URL}/agencies/${report.publisherKey}` }
+              : {}),
           },
         },
         getBreadcrumbJsonLd(breadcrumbItems),
@@ -868,7 +888,7 @@ async function getReportRoute(id: string): Promise<ResolvedHtmlRoute> {
     snapshotHtml: renderPageShell(`
       <article>
         <header>
-          <p>${escapeHtml(reportSourceLabel(report))} • ${escapeHtml(report.auditOrganization)} • ${escapeHtml(publishedLabel)}</p>
+          <p>${escapeHtml(reportSourceLabel(report))} • ${escapeHtml(reportPublisherLabel(report))} • ${escapeHtml(publishedLabel)}</p>
           <p>Examines: ${escapeHtml(reportSubjectLabel(report))}</p>
           <h1>${escapeHtml(report.reportTitle)}</h1>
           <p>${escapeHtml(description)}</p>
@@ -1110,9 +1130,9 @@ async function getStateRoute(slug: string): Promise<ResolvedHtmlRoute> {
           <h2>Recent reports</h2>
           ${renderLinkList(
             statePage.reports.map((report) => ({
-              href: `/reports/${report.id}`,
+              href: reportPath(report),
               label: report.reportTitle,
-              meta: `${report.auditOrganization} • ${formatHumanDate(
+              meta: `${reportPublisherLabel(report)} • ${formatHumanDate(
                 report.publicationYear,
                 report.publicationMonth,
                 report.publicationDay,
@@ -1177,9 +1197,9 @@ async function getFederalRoute(): Promise<ResolvedHtmlRoute> {
         </header>
         ${renderLinkList(
           federalPage.reports.map((report) => ({
-            href: `/reports/${report.id}`,
+            href: reportPath(report),
             label: report.reportTitle,
-            meta: `${reportSubjectLabel(report)} • ${report.auditOrganization} • ${report.publicationYear}`,
+            meta: `${reportSubjectLabel(report)} • ${reportPublisherLabel(report)} • ${report.publicationYear}`,
           })),
         )}
         <p><a href="/reports?sourceJurisdiction=US">Search all Federal-source reports</a>.</p>
@@ -1274,9 +1294,21 @@ export async function resolveHtmlRoute(urlPath: string): Promise<ResolvedHtmlRou
     return getNotFoundRoute();
   }
 
-  const reportMatch = pathname.match(/^\/reports\/(\d+)$/);
+  const legacyReportMatch = pathname.match(/^\/reports?\/(\d+)$/);
+  if (legacyReportMatch) {
+    const report = await storage.getReportById(legacyReportMatch[1]);
+    if (!report?.slug) return getNotFoundRoute();
+    return {
+      routeType: "redirect",
+      status: 301,
+      redirectTo: `${reportPath(report)}${url.search}`,
+      snapshotHtml: "",
+    };
+  }
+
+  const reportMatch = pathname.match(/^\/reports\/([a-z0-9-]+)$/);
   if (reportMatch) {
-    return getReportRoute(reportMatch[1]);
+    return getReportRoute(reportMatch[1], url.search);
   }
 
   if (pathname.startsWith("/reports/")) {
@@ -1411,7 +1443,7 @@ export async function generateSitemap(): Promise<string> {
         ? new Date(report.updatedAt).toISOString().split("T")[0]
         : undefined;
       urls.push({
-        loc: `${SITE_URL}/reports/${report.id}`,
+        loc: `${SITE_URL}${reportPath(report)}`,
         lastmod,
         changefreq: "monthly",
         priority: "0.8",

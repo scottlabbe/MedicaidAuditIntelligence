@@ -10,7 +10,7 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
-    "llms:generate": "tsx server/llms/generateLlmsFiles.ts",
+    "llms:generate": "node --env-file=.env --import tsx server/llms/generateLlmsFiles.ts",
     "observatory:context": "node --env-file=.env --import tsx scripts/observatory/build-context.ts",
     "observatory:inventory": "node --env-file=.env --import tsx scripts/observatory/inventory-corpus.ts",
     "observatory:queue": "node --env-file=.env --import tsx scripts/observatory/queue-candidates.ts",
@@ -19,7 +19,12 @@
     "topic:import": "node --env-file=.env --import tsx server/topicImport/cli.ts",
     "topic:import:test": "node --import tsx --test server/topicImport/*.test.ts",
     "topic:public:test": "node --env-file=.env --import tsx --test server/publicTopics.test.ts",
-    "jurisdiction:public:test": "node --env-file=.env --import tsx --test server/publicJurisdictions.test.ts"
+    "jurisdiction:public:test": "node --env-file=.env --import tsx --test server/publicJurisdictions.test.ts",
+    "publishers:public:test": "node --env-file=.env --import tsx --test server/publishers.test.ts",
+    "reports:slugs:test": "node --import tsx --test shared/reportSlugs.test.ts",
+    "reports:slugs:review": "node --env-file=.env --import tsx scripts/generate-report-slug-review.ts",
+    "reports:slugs:apply": "node --env-file=.env --import tsx scripts/apply-report-slugs.ts",
+    "reports:public:test": "node --env-file=.env --import tsx --test server/reportSlugs.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -9,15 +9,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ReportRecord } from "@/components/reports/report-record";
 import PageMeta from "@/components/seo/PageMeta";
 import type { ReportWithDetails } from "@/lib/types";
+import { reportPath } from "@shared/reportSlugs";
+import { getPublisherName } from "@/lib/publishers";
 
 export default function ReportDetail() {
-  const [, params] = useRoute("/reports/:id");
-  const reportId = params?.id;
+  const [, params] = useRoute("/reports/:slug");
+  const reportSlug = params?.slug;
 
   const { data: report, isLoading, error } = useQuery({
-    queryKey: ["/api/reports", reportId],
-    enabled: !!reportId,
-    queryFn: () => apiClient.getReportById(reportId!),
+    queryKey: ["/api/reports/by-slug", reportSlug],
+    enabled: !!reportSlug,
+    queryFn: () => apiClient.getReportBySlug(reportSlug!),
   }) as {
     data: ReportWithDetails | undefined;
     isLoading: boolean;
@@ -42,9 +44,8 @@ export default function ReportDetail() {
       "@context": "https://schema.org",
       "@type": "Report",
       name: report.reportTitle,
-      url: `https://www.medicaidintelligence.com/reports/${report.id}`,
-      mainEntityOfPage: `https://www.medicaidintelligence.com/reports/${report.id}`,
-      identifier: `report-${report.id}`,
+      url: `https://www.medicaidintelligence.com${reportPath(report)}`,
+      mainEntityOfPage: `https://www.medicaidintelligence.com${reportPath(report)}`,
       author: { "@type": "Organization", name: report.auditOrganization },
       datePublished: dateStr,
       dateModified: report.updatedAt,
@@ -62,8 +63,12 @@ export default function ReportDetail() {
         : {}),
       publisher: {
         "@type": "Organization",
-        name: "Medicaid Audit Intelligence",
-        url: "https://www.medicaidintelligence.com",
+        name: getPublisherName(report),
+        ...(report.publisherKey
+          ? {
+              url: `https://www.medicaidintelligence.com/agencies/${report.publisherKey}`,
+            }
+          : {}),
       },
     };
   }, [report]);
@@ -72,9 +77,8 @@ export default function ReportDetail() {
     return (
       <div className="mx-auto max-w-[1120px] px-5 py-10 sm:px-8 sm:py-14">
         <PageMeta
-          title={reportId ? `Audit Report ${reportId}` : "Audit Report"}
+          title="Audit Report"
           description="View detailed Medicaid audit report findings, recommendations, and original source evidence."
-          canonicalPath={reportId ? `/reports/${reportId}` : undefined}
           ogType="article"
         />
         <Card className="rounded-sm border-border p-8 text-center shadow-none">
@@ -130,7 +134,7 @@ export default function ReportDetail() {
           report.llmInsight ||
           "View this Medicaid audit report's findings, recommendations, and original source."
         ).substring(0, 155)}
-        canonicalPath={`/reports/${reportId}`}
+        canonicalPath={reportPath(report)}
         ogType="article"
         jsonLd={reportJsonLd}
       />

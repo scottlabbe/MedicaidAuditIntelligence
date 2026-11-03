@@ -37,11 +37,6 @@ function normalizePathname(pathname: string): string {
     return pathname.replace(/\/+$/, "");
   }
 
-  const legacyReportMatch = pathname.match(/^\/report\/(\d+)$/);
-  if (legacyReportMatch) {
-    return `/reports/${legacyReportMatch[1]}`;
-  }
-
   return pathname;
 }
 

@@ -57,6 +57,10 @@ export class ApiClient {
     return this.request(`/reports/${id}`);
   }
 
+  async getReportBySlug(slug: string) {
+    return this.request(`/reports/by-slug/${slug}`);
+  }
+
   async getResearchReportBySlug(slug: string) {
     return this.request<ResearchReportPageData>(`/research-reports/${slug}`);
   }

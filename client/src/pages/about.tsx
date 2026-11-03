@@ -32,7 +32,7 @@ const workflow = [
   {
     title: "Structure the record",
     description:
-      "Dates and field formats are standardized for retrieval. Publishing-agency names remain tied to the identity stored with the indexed source.",
+      "Dates and field formats are standardized for retrieval. Publisher names use the canonical public registry, while the audit organization remains available as source evidence.",
   },
   {
     title: "Publish with provenance",

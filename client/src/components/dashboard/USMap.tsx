@@ -208,7 +208,7 @@ function TooltipContent({
         {items.slice(0, 3).map((r) => (
           <li key={r.id} className="text-sm">
             <Link
-              href={`/reports/${r.id}`}
+              href={r.url}
               className="font-medium text-foreground hover:underline line-clamp-2 cursor-pointer"
             >
               {r.title}

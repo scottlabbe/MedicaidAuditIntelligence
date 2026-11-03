@@ -1,10 +1,11 @@
 import fs from "fs/promises";
 import path from "path";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "./database";
 import {
   reports,
+  publishers,
   jurisdictions,
   reportJurisdictionAssignments,
 } from "@shared/schema";
@@ -14,6 +15,7 @@ import type {
   ResearchReportSection,
   ResearchReportSource,
 } from "../client/src/lib/types";
+import { reportPath } from "@shared/reportSlugs";
 
 const REPORTS_ROOT = path.resolve(import.meta.dirname, "..", "reports");
 
@@ -148,9 +150,12 @@ export async function getResearchReportBySlug(
   const derivedUpdatedAt = metadata.updatedDate || stats.mtime.toISOString();
 
   const sources = await addResearchSourceMetadata(page.sources);
+  const sections = rewriteResearchSectionLinks(page.sections, sources);
 
   return {
     ...page,
+    introHtml: rewriteReportLinksInHtml(page.introHtml, sources),
+    sections,
     sources,
     updatedAt: derivedUpdatedAt,
   };
@@ -166,7 +171,11 @@ async function addResearchSourceMetadata(
     db
       .select({
         id: reports.id,
+        slug: reports.slug,
         reportTitle: reports.reportTitle,
+        publisherKey: reports.publisherKey,
+        publisherName: publishers.displayName,
+        publisherJurisdictionCode: publishers.jurisdictionCode,
         auditOrganization: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
@@ -175,6 +184,7 @@ async function addResearchSourceMetadata(
         jurisdictionScopeType: reports.jurisdictionScopeType,
       })
       .from(reports)
+      .leftJoin(publishers, eq(reports.publisherKey, publishers.key))
       .where(inArray(reports.id, reportIds)),
     db
       .select({
@@ -229,7 +239,12 @@ async function addResearchSourceMetadata(
     ].filter(Boolean).join("-");
     return {
       ...source,
+      resolvedHref: reportPath(report),
       reportTitle: report.reportTitle,
+      publisherKey: report.publisherKey ?? undefined,
+      publisherName: report.publisherName ?? undefined,
+      publisherJurisdictionCode:
+        report.publisherJurisdictionCode ?? undefined,
       auditOrganization: report.auditOrganization,
       publicationLabel,
       sourceJurisdiction: report.sourceJurisdictionCode
@@ -239,6 +254,34 @@ async function addResearchSourceMetadata(
       jurisdictionScopeType: report.jurisdictionScopeType as any,
     };
   });
+}
+
+function rewriteReportLinksInHtml(
+  html: string | undefined,
+  sources: ResearchReportSource[],
+): string | undefined {
+  if (!html) return html;
+
+  return sources.reduce(
+    (rewritten, source) => rewritten.replaceAll(
+      `href="/reports/${source.reportId}"`,
+      `href="${source.resolvedHref}"`,
+    ),
+    html,
+  );
+}
+
+function rewriteResearchSectionLinks(
+  sections: ResearchReportSection[],
+  sources: ResearchReportSource[],
+): ResearchReportSection[] {
+  return sections.map((section) => ({
+    ...section,
+    contentHtml: rewriteReportLinksInHtml(section.contentHtml, sources) || "",
+    children: section.children
+      ? rewriteResearchSectionLinks(section.children, sources)
+      : undefined,
+  }));
 }
 
 async function readResearchDirectories(): Promise<ResearchReportPaths[]> {
@@ -334,7 +377,11 @@ async function getMissingReportIds(reportIds: number[]): Promise<number[]> {
   const rows = await db
     .select({ id: reports.id })
     .from(reports)
-    .where(and(inArray(reports.id, uniqueIds), eq(reports.hidden, false)));
+    .where(and(
+      inArray(reports.id, uniqueIds),
+      eq(reports.hidden, false),
+      isNotNull(reports.slug),
+    ));
 
   const existingIds = new Set(rows.map((row) => row.id));
   return uniqueIds.filter((id) => !existingIds.has(id));

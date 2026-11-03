@@ -36,11 +36,15 @@ export interface JurisdictionRef {
 
 export interface ReportListItem {
   id: number;
+  slug?: string;
   reportTitle: string;
   state: string;
   sourceJurisdiction?: JurisdictionRef;
   subjectJurisdictions: JurisdictionRef[];
   jurisdictionScopeType: JurisdictionScopeType;
+  publisherKey?: string;
+  publisherName?: string;
+  publisherJurisdictionCode?: string;
   auditOrganization: string;
   publicationYear: number;
   publicationMonth?: number;
@@ -130,6 +134,7 @@ export interface IndexableStateSummary {
 export interface AgencySummary {
   slug: string;
   name: string;
+  jurisdictionCode?: string;
   reportCount: number;
   latestReport?: ReportListItem;
 }
@@ -218,6 +223,9 @@ export interface ResearchReportSource {
   label: string;
   resolvedHref: string;
   reportTitle?: string;
+  publisherKey?: string;
+  publisherName?: string;
+  publisherJurisdictionCode?: string;
   auditOrganization?: string;
   publicationLabel?: string;
   sourceJurisdiction?: JurisdictionRef;

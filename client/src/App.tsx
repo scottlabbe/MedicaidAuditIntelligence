@@ -109,7 +109,7 @@ function AppRoutes({
               <Route path="/topics/:slug" component={TopicDetail} />
               <Route path="/research" component={ResearchIndexPage} />
               <Route path="/research/:slug" component={ResearchReportPage} />
-              <Route path="/reports/:id" component={ReportDetail} />
+              <Route path="/reports/:slug" component={ReportDetail} />
               <Route path="/states" component={StatesIndex} />
               <Route path="/states/:slug" component={StateDetail} />
               <Route path="/federal" component={Federal} />

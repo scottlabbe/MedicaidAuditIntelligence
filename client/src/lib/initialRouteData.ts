@@ -96,7 +96,7 @@ export function primeInitialRouteData(
 
   if (initialRouteData.routeType === "report" && initialRouteData.report) {
     client.setQueryData(
-      ["/api/reports", String(initialRouteData.report.id)],
+      ["/api/reports/by-slug", initialRouteData.report.slug],
       initialRouteData.report,
     );
   }

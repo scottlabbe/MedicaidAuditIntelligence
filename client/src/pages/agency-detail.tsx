@@ -101,8 +101,8 @@ export default function AgencyDetail() {
             {title}
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
-            Reports attributed to this exact publisher identity in the indexed
-            source metadata.
+            Reports attributed to this canonical publisher identity in the
+            public audit registry.
           </p>
         </header>
 
@@ -247,7 +247,7 @@ function AgencyContext({
       {data && (
         <div className="mt-6 border-t border-border pt-5">
           <Link
-            href={`/reports?agency=${encodeURIComponent(data.name)}`}
+            href={`/reports?agency=${encodeURIComponent(data.slug)}`}
             className="inline-flex min-h-11 items-center gap-2 font-semibold text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Search this publisher

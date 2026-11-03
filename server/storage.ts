@@ -1,7 +1,8 @@
-import { eq, and, desc, asc, ilike, sql, or, inArray, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, ilike, sql, or, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db } from "./database";
 import {
   reports,
+  publishers,
   jurisdictions,
   reportJurisdictionAssignments,
   objectives,
@@ -14,6 +15,7 @@ import {
   publicTopics,
   publicTopicDefinitions,
   publicTopicSlugAliases,
+  reportSlugAliases,
   reportTopicAssignments,
   reportTopicFindingEvidence,
   reportTopicRecommendationEvidence,
@@ -46,19 +48,16 @@ import type {
   FederalLandingPageData,
 } from "../client/src/lib/types";
 import { getTopicGuideContent } from "@shared/topicGuides";
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+import {
+  buildReportSlugCandidates,
+  isValidReportSlug,
+  reportPath,
+} from "@shared/reportSlugs";
 
 function metadataEvidenceLabel(fieldName: string): string {
   const labels: Record<string, string> = {
     report_title: "Report title",
-    audit_organization: "Publishing agency",
+    audit_organization: "Audit organization",
     audit_scope: "Audit scope",
     overall_conclusion: "Overall conclusion",
     potential_objective_summary: "Audit objective",
@@ -81,6 +80,8 @@ export interface IStorage {
   // Reports
   getReports(filters?: SearchFilters, page?: number, pageSize?: number): Promise<SearchResponse>;
   getReportById(id: string): Promise<ReportWithDetails | undefined>;
+  getReportBySlug(slug: string): Promise<ReportWithDetails | undefined>;
+  resolveReportSlugAlias(slug: string): Promise<string | undefined>;
   getFeaturedReports(limit?: number): Promise<ReportListItem[]>;
   createReport(report: InsertReport): Promise<Report>;
   getLatestReportsByState(limit: number, scope: 'state' | 'federal'): Promise<StateLatestResponse>;
@@ -103,6 +104,44 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private async addPublisherMetadata<T extends {
+    publisherKey?: string | null;
+  }>(items: T[]): Promise<Array<T & {
+    publisherKey?: string;
+    publisherName?: string;
+    publisherJurisdictionCode?: string;
+  }>> {
+    const publisherKeys = Array.from(
+      new Set(items.map((item) => item.publisherKey).filter(Boolean)),
+    ) as string[];
+
+    const publisherRows = publisherKeys.length
+      ? await db
+          .select({
+            key: publishers.key,
+            name: publishers.displayName,
+            jurisdictionCode: publishers.jurisdictionCode,
+          })
+          .from(publishers)
+          .where(inArray(publishers.key, publisherKeys))
+      : [];
+    const publisherByKey = new Map(
+      publisherRows.map((publisher) => [publisher.key, publisher]),
+    );
+
+    return items.map((item) => {
+      const publisher = item.publisherKey
+        ? publisherByKey.get(item.publisherKey)
+        : undefined;
+      return {
+        ...item,
+        publisherKey: item.publisherKey ?? undefined,
+        publisherName: publisher?.name,
+        publisherJurisdictionCode: publisher?.jurisdictionCode ?? undefined,
+      };
+    });
+  }
+
   private async addJurisdictionMetadata<T extends {
     id: number;
     sourceJurisdictionCode?: string | null;
@@ -214,7 +253,8 @@ export class DatabaseStorage implements IStorage {
         : undefined,
     }));
 
-    return this.addJurisdictionMetadata(normalized) as Promise<ReportListItem[]>;
+    const withPublishers = await this.addPublisherMetadata(normalized);
+    return this.addJurisdictionMetadata(withPublishers) as Promise<ReportListItem[]>;
   }
 
   async getReports(filters: SearchFilters = {}, page = 1, pageSize = 24): Promise<SearchResponse> {
@@ -224,10 +264,12 @@ export class DatabaseStorage implements IStorage {
     let query: any = db
       .select({
         id: reports.id,
+        slug: reports.slug,
         reportTitle: reports.reportTitle,
         state: reports.state,
         sourceJurisdictionCode: reports.sourceJurisdictionCode,
         jurisdictionScopeType: reports.jurisdictionScopeType,
+        publisherKey: reports.publisherKey,
         auditOrganization: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
@@ -266,6 +308,12 @@ export class DatabaseStorage implements IStorage {
         or(
           ilike(reports.reportTitle, searchTerm),
           ilike(reports.auditOrganization, searchTerm),
+          sql`EXISTS (
+            SELECT 1
+            FROM ${publishers} publisher
+            WHERE publisher.key = ${reports.publisherKey}
+              AND publisher.display_name ILIKE ${searchTerm}
+          )`,
           ilike(reports.overallConclusion, searchTerm),
           ilike(reports.potentialObjectiveSummary, searchTerm),
           ilike(reports.auditScope, searchTerm),
@@ -308,7 +356,17 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters.agency) {
-      conditions.push(ilike(reports.auditOrganization, `%${filters.agency}%`));
+      const legacyAgencyTerm = `%${filters.agency}%`;
+      conditions.push(or(
+        eq(reports.publisherKey, filters.agency),
+        ilike(reports.auditOrganization, legacyAgencyTerm),
+        sql`EXISTS (
+          SELECT 1
+          FROM ${publishers} publisher
+          WHERE publisher.key = ${reports.publisherKey}
+            AND publisher.display_name ILIKE ${legacyAgencyTerm}
+        )`,
+      ));
     }
 
     if (filters.year) {
@@ -345,6 +403,7 @@ export class DatabaseStorage implements IStorage {
 
     // Filter out hidden reports
     conditions.push(eq(reports.hidden, false));
+    conditions.push(isNotNull(reports.slug));
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
@@ -406,7 +465,7 @@ export class DatabaseStorage implements IStorage {
       totalQuery
     ]);
 
-    const total = totalResult[0]?.count || 0;
+    const total = Number(totalResult[0]?.count) || 0;
 
     // Return items with basic data (no complex relationships for now)
     const enhancedItems = await this.toReportListItems(items);
@@ -472,14 +531,41 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getReportBySlug(slug: string): Promise<ReportWithDetails | undefined> {
+    const match = await db
+      .select({ id: reports.id })
+      .from(reports)
+      .where(and(eq(reports.slug, slug), eq(reports.hidden, false)))
+      .limit(1);
+
+    return match[0] ? this.getReportById(String(match[0].id)) : undefined;
+  }
+
+  async resolveReportSlugAlias(slug: string): Promise<string | undefined> {
+    const match = await db
+      .select({ slug: reports.slug })
+      .from(reportSlugAliases)
+      .innerJoin(reports, eq(reportSlugAliases.reportId, reports.id))
+      .where(and(
+        eq(reportSlugAliases.aliasSlug, slug),
+        isNull(reportSlugAliases.retiredAt),
+        eq(reports.hidden, false),
+      ))
+      .limit(1);
+
+    return match[0]?.slug || undefined;
+  }
+
   async getFeaturedReports(limit = 6): Promise<ReportListItem[]> {
     const items = await db
       .select({
         id: reports.id,
+        slug: reports.slug,
         reportTitle: reports.reportTitle,
         state: reports.state,
         sourceJurisdictionCode: reports.sourceJurisdictionCode,
         jurisdictionScopeType: reports.jurisdictionScopeType,
+        publisherKey: reports.publisherKey,
         auditOrganization: reports.auditOrganization,
         publicationYear: reports.publicationYear,
         publicationMonth: reports.publicationMonth,
@@ -498,7 +584,11 @@ export class DatabaseStorage implements IStorage {
         updatedAt: reports.updatedAt,
       })
       .from(reports)
-      .where(and(eq(reports.featured, true), eq(reports.hidden, false)))
+      .where(and(
+        eq(reports.featured, true),
+        eq(reports.hidden, false),
+        isNotNull(reports.slug),
+      ))
       .orderBy(desc(reports.publicationYear), desc(reports.publicationMonth))
       .limit(limit);
 
@@ -506,7 +596,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createReport(report: InsertReport): Promise<Report> {
-    const result = await db.insert(reports).values(report as any).returning();
+    let slug = report.slug || undefined;
+    if (slug && !isValidReportSlug(slug)) {
+      throw new Error(`Invalid report slug: ${slug}`);
+    }
+
+    if (!slug) {
+      const candidates = buildReportSlugCandidates({
+        id: 0,
+        title: report.reportTitle,
+        publicationYear: report.publicationYear,
+        state: report.state,
+        sourceUid: report.sourceUid,
+      });
+
+      for (const candidate of candidates) {
+        const existing = await db
+          .select({ id: reports.id })
+          .from(reports)
+          .where(eq(reports.slug, candidate))
+          .limit(1);
+        if (!existing[0]) {
+          slug = candidate;
+          break;
+        }
+      }
+    }
+
+    if (!slug) {
+      throw new Error("Could not allocate a unique report slug");
+    }
+
+    const result = await db.insert(reports).values({ ...report, slug } as any).returning();
     return result[0];
   }
 
@@ -517,7 +638,9 @@ export class DatabaseStorage implements IStorage {
       const federalReports = await db
         .select({
           id: reports.id,
+          slug: reports.slug,
           reportTitle: reports.reportTitle,
+          publisherKey: reports.publisherKey,
           auditOrganization: reports.auditOrganization,
           publicationYear: reports.publicationYear,
           publicationMonth: reports.publicationMonth,
@@ -529,6 +652,7 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(reports.hidden, false),
             eq(reports.sourceJurisdictionCode, "US"),
+            isNotNull(reports.slug),
           )
         )
         .orderBy(
@@ -537,18 +661,19 @@ export class DatabaseStorage implements IStorage {
           desc(reports.publicationDay)
         )
         .limit(safeLimit);
+      const federalReportsWithPublishers = await this.addPublisherMetadata(federalReports);
 
       const byKey: Record<string, any[]> = {
-        FED: federalReports.map(r => ({
+        FED: federalReportsWithPublishers.map(r => ({
           id: r.id,
           title: r.reportTitle,
-          agency: r.auditOrganization,
+          agency: r.publisherName || "Publisher pending",
           publicationDate: new Date(
             r.publicationYear,
             (r.publicationMonth || 1) - 1,
             r.publicationDay || 1
           ).toISOString(),
-          url: `/reports/${r.id}`,
+          url: reportPath(r),
         }))
       };
 
@@ -559,9 +684,10 @@ export class DatabaseStorage implements IStorage {
       WITH ranked AS (
         SELECT 
           reports.id,
+          reports.slug,
           reports.report_title,
           assignment.jurisdiction_code,
-          reports.audit_organization,
+          publisher.display_name AS publisher_name,
           reports.publication_year,
           reports.publication_month,
           reports.publication_day,
@@ -577,7 +703,10 @@ export class DatabaseStorage implements IStorage {
           ON assignment.report_id = reports.id
         JOIN jurisdictions jurisdiction
           ON jurisdiction.code = assignment.jurisdiction_code
+        LEFT JOIN publishers publisher
+          ON publisher.key = reports.publisher_key
         WHERE COALESCE(reports.hidden, false) = false
+          AND reports.slug IS NOT NULL
           AND assignment.review_status = 'reviewed'
           AND assignment.retired_at IS NULL
           AND assignment.relationship IN ('primary_subject', 'included_in_scope')
@@ -595,13 +724,13 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         title: row.report_title,
         state,
-        agency: row.audit_organization,
+        agency: row.publisher_name || "Publisher pending",
         publicationDate: new Date(
           row.publication_year,
           (row.publication_month || 1) - 1,
           row.publication_day || 1
         ).toISOString(),
-        url: `/reports/${row.id}`,
+        url: reportPath({ id: row.id, slug: row.slug }),
       });
     }
 
@@ -613,10 +742,12 @@ export class DatabaseStorage implements IStorage {
       WITH ranked AS (
         SELECT
           reports.id,
+          reports.slug,
           reports.report_title,
           reports.state,
           reports.source_jurisdiction_code,
           reports.jurisdiction_scope_type,
+          reports.publisher_key,
           reports.audit_organization,
           reports.publication_year,
           reports.publication_month,
@@ -649,6 +780,7 @@ export class DatabaseStorage implements IStorage {
         JOIN jurisdictions jurisdiction
           ON jurisdiction.code = assignment.jurisdiction_code
         WHERE COALESCE(hidden, false) = false
+          AND reports.slug IS NOT NULL
           AND assignment.review_status = 'reviewed'
           AND assignment.retired_at IS NULL
           AND assignment.relationship IN ('primary_subject', 'included_in_scope')
@@ -665,10 +797,12 @@ export class DatabaseStorage implements IStorage {
     const rows = result.rows as any[];
     const latestReports = await this.toReportListItems(rows.map((row) => ({
         id: row.id,
+        slug: row.slug,
         reportTitle: row.report_title,
         state: row.state,
         sourceJurisdictionCode: row.source_jurisdiction_code,
         jurisdictionScopeType: row.jurisdiction_scope_type,
+        publisherKey: row.publisher_key,
         auditOrganization: row.audit_organization,
         publicationYear: row.publication_year,
         publicationMonth: row.publication_month ?? undefined,
@@ -754,53 +888,60 @@ export class DatabaseStorage implements IStorage {
     const result = await db.execute(sql`
       WITH ranked AS (
         SELECT
-          id,
-          report_title,
-          state,
-          source_jurisdiction_code,
-          jurisdiction_scope_type,
-          audit_organization,
-          publication_year,
-          publication_month,
-          publication_day,
-          overall_conclusion,
-          llm_insight,
-          potential_objective_summary,
-          audit_scope,
-          original_report_source_url,
-          original_filename,
-          file_hash,
-          featured,
-          status,
-          created_at,
-          updated_at,
-          COUNT(*) OVER (PARTITION BY audit_organization) AS report_count,
+          report.id,
+          report.slug,
+          report.report_title,
+          report.state,
+          report.source_jurisdiction_code,
+          report.jurisdiction_scope_type,
+          report.publisher_key,
+          publisher.display_name AS publisher_name,
+          publisher.jurisdiction_code AS publisher_jurisdiction_code,
+          report.audit_organization,
+          report.publication_year,
+          report.publication_month,
+          report.publication_day,
+          report.overall_conclusion,
+          report.llm_insight,
+          report.potential_objective_summary,
+          report.audit_scope,
+          report.original_report_source_url,
+          report.original_filename,
+          report.file_hash,
+          report.featured,
+          report.status,
+          report.created_at,
+          report.updated_at,
+          COUNT(*) OVER (PARTITION BY report.publisher_key) AS report_count,
           ROW_NUMBER() OVER (
-            PARTITION BY audit_organization
-            ORDER BY publication_year DESC,
-                     COALESCE(publication_month, 1) DESC,
-                     COALESCE(publication_day, 1) DESC,
-                     id DESC
+            PARTITION BY report.publisher_key
+            ORDER BY report.publication_year DESC,
+                     COALESCE(report.publication_month, 1) DESC,
+                     COALESCE(report.publication_day, 1) DESC,
+                     report.id DESC
           ) AS rn
-        FROM reports
-        WHERE COALESCE(hidden, false) = false
-          AND audit_organization IS NOT NULL
-          AND audit_organization != ''
+        FROM reports report
+        JOIN publishers publisher
+          ON publisher.key = report.publisher_key
+        WHERE COALESCE(report.hidden, false) = false
+          AND report.slug IS NOT NULL
       )
       SELECT *
       FROM ranked
       WHERE rn = 1
-      ORDER BY report_count DESC, audit_organization ASC
+      ORDER BY report_count DESC, publisher_name ASC
       LIMIT ${limit}
     `);
 
     const rows = result.rows as any[];
     const latestReports = await this.toReportListItems(rows.map((row) => ({
       id: row.id,
+      slug: row.slug,
       reportTitle: row.report_title,
       state: row.state,
       sourceJurisdictionCode: row.source_jurisdiction_code,
       jurisdictionScopeType: row.jurisdiction_scope_type,
+      publisherKey: row.publisher_key,
       auditOrganization: row.audit_organization,
       publicationYear: row.publication_year,
       publicationMonth: row.publication_month,
@@ -817,20 +958,14 @@ export class DatabaseStorage implements IStorage {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     })));
-    const slugCounts = new Map<string, number>();
 
-    return rows.map((row, index) => {
-      const baseSlug = slugify(row.audit_organization);
-      const occurrence = (slugCounts.get(baseSlug) || 0) + 1;
-      slugCounts.set(baseSlug, occurrence);
-
-      return {
-        slug: occurrence === 1 ? baseSlug : `${baseSlug}--${occurrence}`,
-        name: row.audit_organization,
+    return rows.map((row, index) => ({
+        slug: row.publisher_key,
+        name: row.publisher_name,
+        jurisdictionCode: row.publisher_jurisdiction_code || undefined,
         reportCount: Number(row.report_count) || 0,
         latestReport: latestReports[index],
-      };
-    });
+      }));
   }
 
   async getAgencyLandingPage(slug: string, limit = 24): Promise<AgencyLandingPageData | undefined> {
@@ -839,7 +974,7 @@ export class DatabaseStorage implements IStorage {
     if (!agency) return undefined;
 
     const results = await this.getReports(
-      { agency: agency.name, sortBy: "date_desc" },
+      { agency: agency.slug, sortBy: "date_desc" },
       1,
       limit,
     );
@@ -1017,8 +1152,10 @@ export class DatabaseStorage implements IStorage {
       .select({
         assignmentId: reportTopicAssignments.id,
         id: reports.id,
+        slug: reports.slug,
         reportTitle: reports.reportTitle,
-        agency: reports.auditOrganization,
+        publisherKey: reports.publisherKey,
+        agency: publishers.displayName,
         state: reports.state,
         sourceJurisdictionCode: reports.sourceJurisdictionCode,
         jurisdictionScopeType: reports.jurisdictionScopeType,
@@ -1030,11 +1167,13 @@ export class DatabaseStorage implements IStorage {
       })
       .from(reportTopicAssignments)
       .innerJoin(reports, eq(reportTopicAssignments.reportId, reports.id))
+      .leftJoin(publishers, eq(reports.publisherKey, publishers.key))
       .where(
         and(
           eq(reportTopicAssignments.topicId, topic.topicId),
           sql`${reportTopicAssignments.retiredAt} is null`,
           eq(reports.hidden, false),
+          isNotNull(reports.slug),
         ),
       )
       .orderBy(
@@ -1151,7 +1290,9 @@ export class DatabaseStorage implements IStorage {
       hasFederalReports: jurisdictionMetadata.some(
         (report) => report.sourceJurisdiction?.code === "US",
       ),
-      agencyCount: new Set(reportRows.map((report) => report.agency)).size,
+      agencyCount: new Set(
+        reportRows.map((report) => report.publisherKey).filter(Boolean),
+      ).size,
       publicationYearStart:
         reportRows.length > 0
           ? Math.min(...reportRows.map((report) => report.publicationYear))
@@ -1172,7 +1313,7 @@ export class DatabaseStorage implements IStorage {
         return {
           id: report.id,
           reportTitle: report.reportTitle,
-          agency: report.agency,
+          agency: report.agency || "Publisher pending",
           jurisdiction,
           sourceJurisdiction: metadata?.sourceJurisdiction,
           subjectJurisdictions,
@@ -1182,7 +1323,7 @@ export class DatabaseStorage implements IStorage {
           publicationDay: report.publicationDay ?? undefined,
           rationale: report.rationale,
           evidence: evidenceByAssignment.get(report.assignmentId) || [],
-          reportPath: `/reports/${report.id}`,
+          reportPath: reportPath(report),
         };
       }),
     };
@@ -1197,7 +1338,10 @@ export class DatabaseStorage implements IStorage {
       findingsResult,
       recentReportsResult,
     ] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(reports).where(eq(reports.hidden, false)),
+      db.select({ count: sql<number>`count(*)` }).from(reports).where(and(
+        eq(reports.hidden, false),
+        isNotNull(reports.slug),
+      )),
       db
         .select({ count: sql<number>`count(distinct ${reportJurisdictionAssignments.jurisdictionCode})` })
         .from(reportJurisdictionAssignments)
@@ -1205,6 +1349,7 @@ export class DatabaseStorage implements IStorage {
         .innerJoin(jurisdictions, eq(jurisdictions.code, reportJurisdictionAssignments.jurisdictionCode))
         .where(and(
           eq(reports.hidden, false),
+          isNotNull(reports.slug),
           eq(reportJurisdictionAssignments.reviewStatus, "reviewed"),
           isNull(reportJurisdictionAssignments.retiredAt),
           inArray(reportJurisdictionAssignments.relationship, ["primary_subject", "included_in_scope"]),
@@ -1217,6 +1362,7 @@ export class DatabaseStorage implements IStorage {
         .innerJoin(jurisdictions, eq(jurisdictions.code, reportJurisdictionAssignments.jurisdictionCode))
         .where(and(
           eq(reports.hidden, false),
+          isNotNull(reports.slug),
           eq(reportJurisdictionAssignments.reviewStatus, "reviewed"),
           isNull(reportJurisdictionAssignments.retiredAt),
           inArray(reportJurisdictionAssignments.relationship, ["primary_subject", "included_in_scope"]),
@@ -1225,12 +1371,16 @@ export class DatabaseStorage implements IStorage {
       db
         .select({ count: sql<number>`count(*)` })
         .from(reports)
-        .where(and(eq(reports.hidden, false), eq(reports.sourceJurisdictionCode, "US"))),
+        .where(and(
+          eq(reports.hidden, false),
+          isNotNull(reports.slug),
+          eq(reports.sourceJurisdictionCode, "US"),
+        )),
       db
         .select({ count: sql<number>`count(*)` })
         .from(findings)
         .innerJoin(reports, eq(reports.id, findings.reportId))
-        .where(eq(reports.hidden, false)),
+        .where(and(eq(reports.hidden, false), isNotNull(reports.slug))),
       this.getFeaturedReports(4),
     ]);
 

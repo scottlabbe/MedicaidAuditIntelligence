@@ -22,7 +22,9 @@ import type {
   TopicSummary,
 } from "@/lib/types";
 import { preloadRouteHref } from "@/lib/routeLoaders";
+import { reportPath } from "@shared/reportSlugs";
 import { useSsrData } from "@/lib/ssrData";
+import { getPublisherName } from "@/lib/publishers";
 import {
   formatScopeType,
   formatSourceJurisdiction,
@@ -109,8 +111,9 @@ export default function Home() {
   const agencyLinks = useMemo(() => {
     const seen = new Set<string>();
     return latestReports.filter((report) => {
-      if (seen.has(report.auditOrganization)) return false;
-      seen.add(report.auditOrganization);
+      const publisherIdentity = report.publisherKey || getPublisherName(report);
+      if (seen.has(publisherIdentity)) return false;
+      seen.add(publisherIdentity);
       return true;
     }).slice(0, 2);
   }, [latestReports]);
@@ -449,7 +452,7 @@ function EvidenceDocket({
   details?: ReportWithDetails;
   prefetchHandlers: (href: string) => Record<string, () => void>;
 }) {
-  const reportHref = `/reports/${report.id}`;
+  const reportHref = reportPath(report);
   const summary = getReportSummary(report);
   const financialImpact =
     details?.totalFinancialImpact ?? report.totalFinancialImpact;
@@ -467,9 +470,8 @@ function EvidenceDocket({
           />
           <DocketField label="Examines" value={formatSubjectJurisdictions(report)} />
           <DocketField label="Scope" value={formatScopeType(report.jurisdictionScopeType)} />
-          <DocketField label="Publishing agency" value={report.auditOrganization} />
+          <DocketField label="Publishing agency" value={getPublisherName(report)} />
           <DocketField label="Published" value={formatPublicationDate(report)} />
-          <DocketField label="Report ID" value={`REPORT ${report.id}`} mono />
           <div className="mt-6 border-t border-primary/25 pt-4">
             <span className="flex items-center gap-2 text-sm font-semibold text-primary">
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
@@ -610,8 +612,8 @@ function BrowseEvidence({
       href: "/agencies",
       intro: "Publishing auditors and oversight offices.",
       examples: agencies.map((report) => ({
-        label: report.auditOrganization,
-        href: `/reports?agency=${encodeURIComponent(report.auditOrganization)}`,
+        label: getPublisherName(report),
+        href: `/reports?agency=${encodeURIComponent(report.publisherKey || getPublisherName(report))}`,
       })),
     },
     {

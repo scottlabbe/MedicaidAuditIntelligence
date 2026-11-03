@@ -73,7 +73,7 @@ export default function ResearchSection({
                     href={source.resolvedHref}
                     className="block text-sm font-semibold leading-5 text-primary underline decoration-primary/40 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
-                    Report {source.reportId}
+                    {source.reportTitle || `Report ${source.reportId}`}
                   </a>
                 </li>
               ))}
@@ -102,15 +102,7 @@ function getSectionCitations(
   html: string,
   sourcesById: Map<number, ResearchReportSource>,
 ): ResearchReportSource[] {
-  const ids = new Set<number>();
-  const pattern = /href="\/reports\/(\d+)"/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = pattern.exec(html)) !== null) {
-    ids.add(Number(match[1]));
-  }
-
-  return Array.from(ids)
-    .map((id) => sourcesById.get(id))
-    .filter((source): source is ResearchReportSource => Boolean(source));
+  return Array.from(sourcesById.values()).filter((source) =>
+    html.includes(`href="${source.resolvedHref}"`),
+  );
 }

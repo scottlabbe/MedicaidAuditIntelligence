@@ -3,6 +3,9 @@ export interface Report {
   title: string;
   state: string;
   agency: string;
+  publisher_key?: string;
+  publisher_name?: string;
+  publisher_jurisdiction_code?: string;
   publication_year: number;
   publication_month?: number;
   publication_day?: number;

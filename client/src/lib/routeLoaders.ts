@@ -52,7 +52,7 @@ function getLoaderForPath(pathname: string): RouteLoader | null {
   if (/^\/topics\/[a-z0-9-]+$/.test(path)) return loaders.topicDetail;
   if (path === "/research") return loaders.researchIndex;
   if (/^\/research\/[a-z0-9-]+$/.test(path)) return loaders.researchReport;
-  if (/^\/reports\/\d+$/.test(path)) return loaders.reportDetail;
+  if (/^\/reports\/[a-z0-9-]+$/.test(path)) return loaders.reportDetail;
   if (/^\/states\/[a-z0-9-]+$/.test(path)) return loaders.stateDetail;
   if (path === "/federal") return loaders.federal;
   if (path === "/dashboard") return loaders.dashboard;
