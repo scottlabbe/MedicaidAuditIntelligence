@@ -1192,6 +1192,7 @@ export class DatabaseStorage implements IStorage {
         db
           .select({
             assignmentId: reportTopicFindingEvidence.assignmentId,
+            sourceId: reportTopicFindingEvidence.findingId,
             text: reportTopicFindingEvidence.snapshot,
             rank: reportTopicFindingEvidence.rank,
           })
@@ -1200,6 +1201,7 @@ export class DatabaseStorage implements IStorage {
         db
           .select({
             assignmentId: reportTopicRecommendationEvidence.assignmentId,
+            sourceId: reportTopicRecommendationEvidence.recommendationId,
             text: reportTopicRecommendationEvidence.snapshot,
             rank: reportTopicRecommendationEvidence.rank,
           })
@@ -1230,6 +1232,7 @@ export class DatabaseStorage implements IStorage {
       findingRows.forEach((row) =>
         addEvidence(row.assignmentId, {
           sourceType: "finding",
+          sourceId: row.sourceId,
           sourceLabel: "Finding",
           text: row.text,
           rank: row.rank,
@@ -1238,6 +1241,7 @@ export class DatabaseStorage implements IStorage {
       recommendationRows.forEach((row) =>
         addEvidence(row.assignmentId, {
           sourceType: "recommendation",
+          sourceId: row.sourceId,
           sourceLabel: "Recommendation",
           text: row.text,
           rank: row.rank,

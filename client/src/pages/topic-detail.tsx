@@ -16,6 +16,8 @@ interface GuideEvidenceItem {
   key: string;
   text: string;
   rank: number;
+  sourceId?: number;
+  sourceType: TopicEvidenceSourceType;
   report: TopicReport;
 }
 
@@ -364,7 +366,9 @@ function EvidenceSchedule({
           </blockquote>
           <p className="mt-4 pl-6 text-sm leading-6 text-muted-foreground">
             <Link
-              href={item.report.reportPath}
+              href={`${item.report.reportPath}${
+                item.sourceId ? `#${item.sourceType}-${item.sourceId}` : ""
+              }`}
               className="font-semibold text-primary underline decoration-1 underline-offset-4 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {item.report.reportTitle}
@@ -492,6 +496,8 @@ function buildGuideEvidence(
           key: `${report.id}-${sourceType}-${evidence.rank}-${index}`,
           text: evidence.text,
           rank: evidence.rank,
+          sourceId: evidence.sourceId,
+          sourceType: evidence.sourceType,
           report,
         })),
     )

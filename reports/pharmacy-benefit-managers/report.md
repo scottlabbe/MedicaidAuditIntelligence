@@ -1,6 +1,6 @@
 # Executive Summary
 
-The recurring PBM oversight problem is not simply drug-price variation; it is the inability of Medicaid agencies to see, validate, and enforce what happens between claim adjudication, pharmacy payment, encounter reporting, rebate invoicing, and managed-care rate setting. Across 10 reports and 53 findings, the most consistently supported pattern is inadequate transparency and contract governance over PBM pricing, fees, adjustments, and subcontract terms.
+The recurring PBM oversight problem is not simply drug-price variation; it is the inability of Medicaid agencies to see, validate, and enforce what happens between claim adjudication, pharmacy payment, encounter reporting, rebate invoicing, and managed-care rate setting. Across nine reports and 49 findings, the most consistently supported pattern is inadequate transparency and contract governance over PBM pricing, fees, adjustments, and subcontract terms.
 
 The evidence identifies substantial control failures at several points in the pharmacy-payment lifecycle. Texas, Pennsylvania, and Oregon reported pricing or contractual structures that obscured final pharmacy payments, fees, or Medicaid-specific accountability. Other audits found incomplete encounter-data validation, weak claim edits and postpayment surveillance, missed manufacturer rebates, and insufficient assurance over the systems and third parties that process sensitive pharmacy and financial data. The highest-priority audit work is therefore transaction-level: trace PBM-adjudicated claims to pharmacy remittances and final system disposition, then reconcile the same claims through rebate invoicing and collection.
 
@@ -18,7 +18,7 @@ The practical consequence is that an agency may lack assurance over whether phar
 
 This review covers PBM-specific reports as well as Medicaid pharmacy, rebate, managed-care, rate-setting, and information-technology control audits. Direct PBM evidence is strongest in Texas, Pennsylvania, and Oregon. Pharmacy claims, rebate, and systems findings from Maryland, Missouri, New York, and Virginia are included because they test the data, payment, recovery, and service-provider control environment on which PBM oversight depends.
 
-Contextual figures—such as Missouri’s approximately $959 million in 2016 outpatient prescription-drug payments—describe program scale, not improper payments or estimated loss. Direct financial findings are limited: only 16 of the 53 scoped findings contain extracted financial values. [Report 80]
+Contextual figures—such as Missouri’s approximately $959 million in 2016 outpatient prescription-drug payments—describe program scale, not improper payments or estimated loss. Direct financial findings are limited: only 16 of the 49 scoped findings contain extracted financial values. [Report 80]
 
 # Key Findings
 
@@ -36,9 +36,9 @@ The synthesis is clear: aggregate reporting cannot substitute for claim-level tr
 
 ## Weak encounter-data controls allowed reporting errors to reach oversight and rate setting
 
-**This theme is supported by seven findings in four Texas reports, although the evidence comes from one jurisdiction.** The risk is that incomplete pharmacy encounter data and delayed financial reconciliation can distort both operational oversight and managed-care payment decisions.
+**This theme is supported by five findings in three Texas reports, although the evidence comes from one jurisdiction.** The risk is that incomplete pharmacy encounter data and delayed financial reconciliation can distort both operational oversight and managed-care payment decisions.
 
-The Texas State Auditor’s Office’s managed-care contract-process audits found that the Commission had planned to use External Quality Review Organization (EQRO) information and encounter-data validation to monitor MCOs, but had not fully implemented those plans. The reports also called for PBM performance audits, corrective-action policies based on agreed-upon procedures (AUP) engagements, and verification that corrective actions were implemented. [Report 6] [Report 26]
+The Texas State Auditor’s Office’s managed-care contract-process audit found that the Commission had planned to use External Quality Review Organization (EQRO) information and encounter-data validation to monitor MCOs, but had not fully implemented those plans. The report also called for PBM performance audits, corrective-action policies based on agreed-upon procedures (AUP) engagements, and verification that corrective actions were implemented. [Report 6]
 
 The Blue Cross Blue Shield of Texas audit provided a concrete example: 1,297 compound-drug encounters totaling $132,511 were not reported because of coding errors. The health plan did not work with the Commission to correct and resubmit the encounters. That amount represents the value of the unreported encounters, not a finding of improper payment. [Report 7]
 
@@ -48,9 +48,9 @@ The broader lesson is that encounter accuracy, corrective-action follow-up, and 
 
 ## Security and third-party assurance determine whether pharmacy oversight data can be trusted
 
-**This theme is supported by 10 findings in four reports across Texas, Maryland, and Virginia.** It is not exclusively a PBM finding, but it is foundational: agencies cannot reliably test PBM performance if the systems, data repositories, and service providers handling claims and financial information lack controlled change, access, and security practices.
+**This theme is supported by nine findings in three reports across Texas, Maryland, and Virginia.** It is not exclusively a PBM finding, but it is foundational: agencies cannot reliably test PBM performance if the systems, data repositories, and service providers handling claims and financial information lack controlled change, access, and security practices.
 
-The Texas managed-care contract-process audit found that change authorizations and testing for programming changes were not consistently documented. Its substantially similar companion report also characterized change-management documentation as needing improvement. [Report 6] [Report 26]
+The Texas managed-care contract-process audit found that change authorizations and testing for programming changes were not consistently documented. [Report 6]
 
 The Virginia Auditor of Public Accounts reported material weaknesses in the Department of Medical Assistance Services’ information-security program and database security. The audit called for timely closure of corrective actions, formal database-security policies and baselines, scheduled configuration reviews, annual access reviews, and remediation of vulnerabilities. It also identified significant deficiencies in fiscal-agent oversight and third-party risk management. [Report 86]
 
@@ -179,9 +179,9 @@ The following work program is prioritized by potential effect on payment accurac
 
 # How to Read This Evidence Base
 
-This review draws on 10 of the 108 active reports in the database, covering Maryland, Missouri, New York, Oregon, Pennsylvania, Texas, and Virginia and published between December 2018 and December 2024. It includes 53 findings.
+This review draws on nine of the 108 active reports in the database, covering Maryland, Missouri, New York, Oregon, Pennsylvania, Texas, and Virginia and published between December 2018 and December 2024. It includes 49 findings.
 
-Scoped findings are not statistically representative of all Medicaid programs or all PBM arrangements. The corpus combines PBM-specific audits with broader pharmacy, managed-care, rebate, rate-setting, and information-technology reports; not every finding is exclusively attributable to PBM operations. Reports 6 and 26 contain substantially similar Texas managed-care oversight content, and the available evidence does not establish whether they reflect separate audit work or duplicated reporting. [Report 6] [Report 26]
+Scoped findings are not statistically representative of all Medicaid programs or all PBM arrangements. The corpus combines PBM-specific audits with broader pharmacy, managed-care, rebate, rate-setting, and information-technology reports; not every finding is exclusively attributable to PBM operations. [Report 6]
 
 Financial fields are sparse, and a redacted Maryland cybersecurity finding cannot support substantive assessment of the underlying condition. Most importantly, New York’s $183.7 million audit-period rebate figure is not combined with its component missed-rebate figures because overlap is not established. [Report 83] [Report 115]
 
@@ -189,7 +189,6 @@ Financial fields are sparse, and a redacted Maryland cybersecurity finding canno
 
 - **[Report 6]** *An Audit Report on Medicaid Managed Care Contract Processes at the Health and Human Services Commission* — Texas; Texas State Auditor’s Office; 2019.
 - **[Report 7]** *An Audit Report on Blue Cross Blue Shield of Texas, a Managed Care Organization* — Texas; Texas State Auditor’s Office; 2021.
-- **[Report 26]** *Medicaid Managed Care Contract Processes at the Health and Human Services Commission* — Texas; Texas State Auditor’s Office; 2019.
 - **[Report 65]** *Performance Audit Report: Pharmacy Benefit Manager Services for the Physical HealthChoices Medicaid Program in Pennsylvania* — Pennsylvania; Pennsylvania Department of the Auditor General; 2024.
 - **[Report 80]** *Department of Social Services Prescription Drug Oversight* — Missouri; Missouri State Auditor; 2018.
 - **[Report 83]** *Maryland Department Of Health Pharmacy Services Audit Report* — Maryland; Maryland Office of Legislative Audits; 2024.

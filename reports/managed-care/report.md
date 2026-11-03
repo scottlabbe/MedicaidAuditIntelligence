@@ -54,7 +54,7 @@ Rate-setting reviews exposed a related timing problem. Maryland lacked sufficien
 
 The OIG assessed North Carolina’s Medicaid control environment as moderate risk overall and identified high risk in internal-control adoption and compliance monitoring [Report 56]. Washington’s State Auditor found that the Health Care Authority had not provided federally required oversight of sister agencies’ Medicaid program-integrity efforts and needed more risk-based audit selection [Report 33]. GAO found inconsistent CMS oversight of the Medicaid Recovery Audit Contractor program, including monitoring of state-plan-amendment expiration dates and effectiveness reporting [Report 17].
 
-Texas illustrates the implementation gap: the State Auditor found that the Commission needed to improve execution of planned performance audits, corrective-action processes, and use of external quality review organization information [Report 26]. An audit program without documented closure testing is not a complete control.
+Texas illustrates the implementation gap: the State Auditor found that the Commission needed to improve execution of planned performance audits, corrective-action processes, and use of external quality review organization information [Report 6]. An audit program without documented closure testing is not a complete control.
 
 ## Incomplete oversight data can conceal access and beneficiary-protection failures
 
@@ -102,7 +102,7 @@ The following procedures are **synthesized from source-audit recommendations**. 
 
 4. **Test the rate-setting control timeline.** Trace financial-statistical-report submission through agreed-upon procedures, reconciliation, actuarial review, exception resolution, and final approval. Verify that actuaries receive validated data before rates are finalized [Reports 84, 114].
 
-5. **Audit corrective-action governance.** Inspect the risk assessment, audit plan, MCO oversight universe, and corrective-action register. Test whether high-risk findings have owners, milestones, escalation, effectiveness testing, and documented closure [Reports 26, 33, 56].
+5. **Audit corrective-action governance.** Inspect the risk assessment, audit plan, MCO oversight universe, and corrective-action register. Test whether high-risk findings have owners, milestones, escalation, effectiveness testing, and documented closure [Reports 6, 33, 56].
 
 6. **Test beneficiary-protection oversight records.** Sample network reviews, parity analyses, denials, grievances, and provider reviews for source-data completeness, supervisory review, deficiency documentation, timely corrective action, and trend analysis [Reports 9, 39, 43, 112, 123].
 
@@ -133,7 +133,7 @@ The scoped findings are not statistically representative of all Medicaid program
 - [Report 12] *Medicaid Managed Care Improper Payment Estimate* — Federal; U.S. Government Accountability Office; 2025.
 - [Report 17] *Medicaid CMS Oversight and Guidance Could Improve Recovery Audit Contractor Program* — Federal; U.S. Government Accountability Office; 2023.
 - [Report 18] *Oregon Medicaid Managed Care Medical Loss Ratio Audit* — Oregon; Centers for Medicare & Medicaid Services; 2023.
-- [Report 26] *Medicaid Managed Care Contract Processes at the Health and Human Services Commission* — Texas; Texas State Auditor’s Office; 2019.
+- [Report 6] *An Audit Report on Medicaid Managed Care Contract Processes at the Health and Human Services Commission* — Texas; Texas State Auditor’s Office; 2019.
 - [Report 27] *Additional Actions Needed to Enhance Program Integrity and Save Billions* — Federal; U.S. Government Accountability Office; 2024.
 - [Report 33] *Medicaid Program Integrity Examining the Health Care Authority’s oversight of efforts at state agencies* — Washington; Office of the Washington State Auditor; 2021.
 - [Report 39] *The Comprehensive Perinatal Services Program* — California; California State Auditor; 2024.

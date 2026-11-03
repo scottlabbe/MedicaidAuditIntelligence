@@ -87,7 +87,9 @@ export default function ResearchReportPage() {
             name: "Medicaid Audit Intelligence",
             url: "https://www.medicaidintelligence.com",
           },
-          citation: report.sources.map((source) => source.resolvedHref),
+          citation: report.sources.map(
+            (source) => `https://www.medicaidintelligence.com${source.resolvedHref}`,
+          ),
         }}
       />
 

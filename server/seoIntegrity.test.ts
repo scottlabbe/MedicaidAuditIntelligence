@@ -4,6 +4,11 @@ import { isPublicSourceUrl } from "@shared/sourceUrls";
 import { resolveHtmlRoute } from "./seo";
 import { storage } from "./storage";
 import { renderSsrFailureHtml } from "./vite";
+import { validateResearchReports } from "./researchReports";
+
+test("every research report resolves against a public canonical source", async () => {
+  await assert.doesNotReject(validateResearchReports());
+});
 
 test("report collection pages beyond the last page return a real 404", async () => {
   const reports = await storage.getReports({}, 1, 1);

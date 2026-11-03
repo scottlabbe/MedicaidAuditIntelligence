@@ -18,4 +18,9 @@ test("isPublicSourceUrl rejects internal provenance and empty values", () => {
   assert.equal(isPublicSourceUrl(null), false);
   assert.equal(isPublicSourceUrl(undefined), false);
   assert.equal(normalizePublicSourceUrl("Manual Upload: report.pdf"), undefined);
+  assert.equal(isPublicSourceUrl("http://localhost/report.pdf"), false);
+  assert.equal(isPublicSourceUrl("http://127.0.0.1/report.pdf"), false);
+  assert.equal(isPublicSourceUrl("http://10.0.0.1/report.pdf"), false);
+  assert.equal(isPublicSourceUrl("https://user:pass@example.gov/report"), false);
+  assert.equal(isPublicSourceUrl("https://example.gov/\ninternal"), false);
 });

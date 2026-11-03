@@ -48,6 +48,7 @@ export default function ReportDetail() {
       name: report.reportTitle,
       url: `https://www.medicaidintelligence.com${reportPath(report)}`,
       mainEntityOfPage: `https://www.medicaidintelligence.com${reportPath(report)}`,
+      identifier: `MAI-${report.id}`,
       author: { "@type": "Organization", name: report.auditOrganization },
       datePublished: dateStr,
       dateModified: report.updatedAt,

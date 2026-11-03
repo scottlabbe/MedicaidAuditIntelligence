@@ -281,7 +281,7 @@ export function RecordHeader({
   return (
     <header className="mt-6 border-t-4 border-primary pt-6">
       <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-        Evidence record
+        Evidence record · MAI-{report.id}
       </p>
       <h1 className="mt-3 max-w-5xl text-3xl font-semibold leading-tight tracking-[-0.025em] text-foreground sm:text-4xl lg:text-5xl">
         {report.reportTitle}
@@ -581,7 +581,7 @@ function CopyButton({
 }
 
 function createCitation(report: ReportWithDetails) {
-  return `${getPublisherName(report)}. (${report.publicationYear}). ${report.reportTitle}. ${SITE_URL}${reportPath(report)}`;
+  return `${getPublisherName(report)}. (${report.publicationYear}). ${report.reportTitle}. Medicaid Audit Intelligence (Record MAI-${report.id}). ${SITE_URL}${reportPath(report)}`;
 }
 
 function formatPublicationDate(report: ReportWithDetails) {

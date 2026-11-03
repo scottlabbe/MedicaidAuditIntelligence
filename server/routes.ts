@@ -12,16 +12,42 @@ import {
   ResearchReportNotFoundError,
   ResearchReportValidationError,
 } from "./researchReports";
+import { getAgentFiles } from "./llms/agentFiles";
 
 // Rate limiting storage
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 60;
+const RATE_LIMIT_MAX_CLIENTS = 10000;
+let lastRateLimitSweep = 0;
+
+function sweepRateLimitStore(now: number): void {
+  if (
+    now - lastRateLimitSweep < RATE_LIMIT_WINDOW &&
+    rateLimitStore.size < RATE_LIMIT_MAX_CLIENTS
+  ) {
+    return;
+  }
+
+  rateLimitStore.forEach((clientData, clientIp) => {
+    if (now > clientData.resetTime) {
+      rateLimitStore.delete(clientIp);
+    }
+  });
+
+  while (rateLimitStore.size >= RATE_LIMIT_MAX_CLIENTS) {
+    const oldestClient = rateLimitStore.keys().next().value;
+    if (!oldestClient) break;
+    rateLimitStore.delete(oldestClient);
+  }
+  lastRateLimitSweep = now;
+}
 
 // Middleware for rate limiting
 function rateLimit(req: Request, res: Response, next: Function) {
   const clientIp = req.ip || req.connection.remoteAddress || "unknown";
   const now = Date.now();
+  sweepRateLimitStore(now);
   
   let clientData = rateLimitStore.get(clientIp);
   
@@ -292,6 +318,44 @@ Sitemap: ${siteUrl}/sitemap.xml`
     } catch (error) {
       console.error("Error generating sitemap:", error);
       res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  app.get("/sitemap_index.xml", (_req, res) => {
+    res.redirect(301, "/sitemap.xml");
+  });
+
+  app.get("/llms.txt", async (_req, res) => {
+    try {
+      const files = await getAgentFiles();
+      res.set(
+        "Cache-Control",
+        "public, s-maxage=3600, stale-while-revalidate=86400",
+      );
+      res.type("text/plain").send(files.index);
+    } catch (error) {
+      console.error("Error generating llms.txt:", error);
+      res
+        .status(500)
+        .type("text/plain")
+        .send("Agent catalog temporarily unavailable.");
+    }
+  });
+
+  app.get("/llms-full.txt", async (_req, res) => {
+    try {
+      const files = await getAgentFiles();
+      res.set(
+        "Cache-Control",
+        "public, s-maxage=3600, stale-while-revalidate=86400",
+      );
+      res.type("text/plain").send(files.full);
+    } catch (error) {
+      console.error("Error generating llms-full.txt:", error);
+      res
+        .status(500)
+        .type("text/plain")
+        .send("Agent catalog temporarily unavailable.");
     }
   });
 

@@ -93,6 +93,18 @@ export class ResearchReportValidationError extends Error {
   }
 }
 
+export class ResearchCorpusValidationError extends Error {
+  details: string[];
+
+  constructor(details: string[]) {
+    super(
+      `Research corpus validation failed (${details.length} report${details.length === 1 ? "" : "s"})`,
+    );
+    this.name = "ResearchCorpusValidationError";
+    this.details = details;
+  }
+}
+
 export async function listResearchReportSlugs(): Promise<string[]> {
   const entries = await readResearchDirectories();
   return entries.map((entry) => entry.slug);
@@ -120,6 +132,35 @@ export async function listResearchReports(): Promise<ResearchReportListItem[]> {
   return reports
     .filter((report): report is ResearchReportListItem => report !== null)
     .sort(compareResearchReports);
+}
+
+export async function validateResearchReports(): Promise<void> {
+  const entries = await readResearchDirectories();
+  const results = await Promise.allSettled(
+    entries.map((entry) => getResearchReportBySlug(entry.slug)),
+  );
+  const errors = results.flatMap((result, index) => {
+    if (result.status === "fulfilled") {
+      return [];
+    }
+
+    const slug = entries[index]?.slug || "unknown";
+    const reason = result.reason;
+    if (reason instanceof ResearchReportValidationError) {
+      const details = reason.details?.length
+        ? ` (${reason.details.join(", ")})`
+        : "";
+      return [`${slug}: ${reason.message}${details}`];
+    }
+    if (reason instanceof Error) {
+      return [`${slug}: ${reason.message}`];
+    }
+    return [`${slug}: ${String(reason)}`];
+  });
+
+  if (errors.length) {
+    throw new ResearchCorpusValidationError(errors);
+  }
 }
 
 export async function getResearchReportBySlug(

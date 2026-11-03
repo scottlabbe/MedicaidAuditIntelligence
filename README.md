@@ -178,27 +178,19 @@ The application uses a star schema design centered around audit reports:
 - `npm run db:push` - Push schema changes to database
 - `npm run db:migrate` - Apply committed database migrations
 - `npm run topic:import` - Preview, activate, or publish a reviewed topic bundle
-- `npm run llms:generate` - Generate `/llms.txt` and `/llms-full.txt` from live report data
+- `npm run llms:validate` - Validate the live `/llms.txt` and `/llms-full.txt` catalogs
+- `npm run research:validate` - Verify that every research citation resolves to a public report
 - `npm run db:studio` - Open Drizzle Studio for database management
 
 ### LLM Context Files
 
-Run this manually before deploy/release to refresh the public LLM context files:
+The application builds `/llms.txt` and `/llms-full.txt` from the live public corpus and caches each response at the edge. Validate the catalogs before deploy/release with:
 
 ```bash
-npm run llms:generate
+npm run llms:validate
 ```
 
-The command writes:
-
-- `client/public/llms.txt` (lightweight index)
-- `client/public/llms-full.txt` (full latest report context)
-
-Optional environment variables:
-
-- `LLMS_AUDIT_LIMIT` (default: `20`)
-- `LLMS_RESEARCH_LIMIT` (default: `5`)
-- `SITE_URL` (default: `https://www.medicaidintelligence.com`)
+The lightweight file provides navigation and citation guidance. The full file is a compact, complete catalog of public audit reports and validated research reports. Non-public source fields are labeled as library records and are never emitted as links. `SITE_URL` controls the canonical host.
 
 ### Code Style
 

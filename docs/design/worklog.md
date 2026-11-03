@@ -602,3 +602,39 @@ Keep the field-guide structure and desktop coverage rail. On mobile, prioritize 
 - The temporary SSR fixture produced no browser console warnings after hydration. It was removed after review and did not alter application data access.
 - Reduced-motion review: the cutover adds no animation. Keyboard review: native selects, the mobile filter disclosure, report links, state links, source links, and Federal search action retain visible approved focus treatment and document order.
 - Verification completed: `npm run check` and `npm run build`.
+
+## 2026-11-03 — Agent citation provenance improvements
+
+**User job**
+
+- Let retrieval agents find the complete public corpus without introducing a parallel content system.
+- Move from a topic excerpt or copied citation to the exact underlying finding, recommendation, canonical report, and original public source.
+- Keep non-public provenance records and deployment details out of agent-readable output.
+
+**Design direction**
+
+- Preserve canonical SSR HTML as the source of truth; use `/llms.txt` and `/llms-full.txt` only as live navigation and catalog surfaces.
+- Reuse the approved ruled evidence-record fields for a stable `MAI-{id}` identifier rather than introducing a badge, card, or agent-only page mode.
+- Link topic evidence citations to existing finding and recommendation anchors. Keep the current evidence schedule and its source-adjacent reading order.
+- Preserve the existing palette, Public Sans / Source Serif 4 / IBM Plex Mono roles, square-small geometry, rules, and focus treatment. No visual token is added.
+
+**Pre-build critique**
+
+- A separate agent API or duplicated “agent-ready” page was rejected because it would create another content contract that could drift from public HTML.
+- A large static context dump was rejected because it becomes stale, exposed non-URL source strings, and arbitrarily omitted most reports. The live catalog is complete but deliberately compact.
+- New citation cards and colored provenance badges were rejected because the existing definition-list and ruled-source patterns already express identity and provenance without adding dashboard ornament.
+- Enforcing an untested CSP was rejected for this phase because inline JSON-LD and build tooling need a measured nonce/hash migration. A report-only edge rollout is documented instead.
+
+**Rendered review**
+
+- Viewports reviewed: `1440 × 900` desktop and `390 × 844` mobile for report 6, the Managed Care topic guide, and the repaired PBM and Managed Care research reports.
+- Report detail: the first pass added `Record ID` as a fifth metadata cell, leaving `Source record` alone on a second desktop row. The final design places `MAI-6` in the existing monospaced `Evidence record` line and restores the four-column provenance ledger.
+- Topic evidence: finding and recommendation citations resolve to exact existing anchors. A sampled Managed Care finding opened with `#finding-1301`, the target existed, and it landed near the top of the mobile viewport.
+- Research: the PBM page renders nine cited reports and its corrected 49-finding scope; neither repaired page contains a Report 26 citation. Research JSON-LD contains absolute canonical report URLs.
+- Responsive review: document width equaled viewport width on all reviewed pages at both sizes. Long titles, source metadata, evidence excerpts, and research navigation wrap without clipping.
+- Accessibility review: each reviewed page contains one `main` and one `h1`; native links preserve the approved focus treatment; existing finding/recommendation IDs provide stable fragment targets; no new motion was added.
+- Browser diagnostics: no console warnings or errors were recorded during the review.
+
+**Decision**
+
+Keep the stable identifier in the evidence-record line, preserve the existing provenance grid, and use exact evidence anchors without adding a new agent-specific visual mode. The result improves citation precision while keeping the human page structure unchanged.

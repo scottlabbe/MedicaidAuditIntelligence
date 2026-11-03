@@ -158,6 +158,7 @@ export type TopicEvidenceSourceType =
 
 export interface TopicEvidence {
   sourceType: TopicEvidenceSourceType;
+  sourceId?: number;
   sourceLabel: string;
   text: string;
   rank: number;
